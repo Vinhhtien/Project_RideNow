@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
@@ -16,16 +17,17 @@
     </style>
 </head>
 <body class="admin">
+    <fmt:setLocale value="vi_VN" scope="session"/>
+    
     <aside class="sidebar">
         <div class="brand">RideNow Admin</div>
         <nav>
-            <a href="${ctx}/admindashboard">Dashboard</a>
-            <a href="${ctx}/adminpaymentverify">Xác Minh Thanh Toán</a>
-            <a href="${ctx}/adminpickup">Giao Nhận Xe</a>
-            <a class="active" href="${ctx}/adminreturn">Trả Xe</a>
-            <a href="${ctx}/adminreturns">Hoàn Cọc</a>
-            <a href="${ctx}/adminwithdrawals">Rút Tiền</a>
-            <a href="${ctx}/logout">Logout</a>
+            <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
+            <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
+            <a href="${pageContext.request.contextPath}/adminpickup">Giao Nhận Xe</a>
+            <a href="${pageContext.request.contextPath}/adminreturn" class="active">Trả Xe</a>
+            <a href="${pageContext.request.contextPath}/adminreturns">Kiểm tra và Hoàn Cọc</a>
+            <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
         </nav>
     </aside>
 
@@ -40,6 +42,7 @@
         <div class="panel">
             <div class="panel-head">
                 <h2>Đơn Hàng Đang Thuê</h2>
+                <p class="text-muted">Xác nhận khách hàng đã trả xe để bắt đầu quy trình hoàn cọc</p>
             </div>
 
             <c:choose>
@@ -68,19 +71,25 @@
                                 <tr>
                                     <td>#${o[0]}</td>
                                     <td>
-                                        ${o[1]}<br>
-                                        <small class="text-muted">${o[2]}</small>
+                                        <c:out value="${o[1]}" /><br>
+                                        <small class="text-muted"><c:out value="${o[2]}" /></small>
                                     </td>
-                                    <td>${o[4]}</td>
+                                    <td><c:out value="${o[3]}" /></td>
                                     <td>
-                                        <fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/> - 
-                                        <fmt:formatDate value="${o[6]}" pattern="dd/MM/yyyy"/>
+                                        <fmt:parseDate value="${o[4]}" pattern="yyyy-MM-dd" var="startDate"/>
+                                        <fmt:parseDate value="${o[5]}" pattern="yyyy-MM-dd" var="endDate"/>
+                                        <fmt:formatDate value="${startDate}" pattern="dd/MM/yyyy"/> - 
+                                        <fmt:formatDate value="${endDate}" pattern="dd/MM/yyyy"/>
                                     </td>
-                                    <td><fmt:formatNumber value="${o[7]}" type="currency"/></td>
-                                    <td><fmt:formatNumber value="${o[8]}" type="currency"/></td>
+                                    <td>
+                                        <fmt:formatNumber value="${o[6]}" type="currency" currencyCode="VND"/>
+                                    </td>
+                                    <td>
+                                        <fmt:formatNumber value="${o[7]}" type="currency" currencyCode="VND"/>
+                                    </td>
                                     <td>
                                         <form method="post" action="${ctx}/adminreturn" 
-                                              onsubmit="return confirm('Xác nhận khách đã trả xe?');">
+                                              onsubmit="return confirm('Xác nhận khách đã trả xe? Đơn hàng sẽ chuyển sang trạng thái chờ kiểm tra để hoàn cọc.');">
                                             <input type="hidden" name="orderId" value="${o[0]}">
                                             <button type="submit" class="btn btn-sm btn-primary">
                                                 <i class="fas fa-check"></i> Đã Trả Xe
@@ -97,5 +106,18 @@
     </main>
 
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const notice = document.querySelector('.notice');
+            if (notice) {
+                setTimeout(() => {
+                    notice.style.opacity = '0';
+                    notice.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => notice.remove(), 500);
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>

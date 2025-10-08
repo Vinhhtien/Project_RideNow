@@ -21,13 +21,13 @@
     <aside class="sidebar">
         <div class="brand">RideNow Admin</div>
         <nav>
-            <a href="${ctx}/admin/dashboard">Dashboard</a>
-            <a class="active" href="${ctx}/adminpaymentverify">Xác Minh Thanh Toán</a>
-            <a href="${ctx}/adminpickup">Giao Nhận Xe</a>
-            <a href="${ctx}/adminreturn">Trả Xe</a>
-            <a href="${ctx}/adminreturns">Hoàn Cọc</a>
-            <a href="${ctx}/adminwithdrawals">Rút Tiền</a>
-            <a href="${ctx}/logout">Logout</a>
+            <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
+            <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
+            <a href="${pageContext.request.contextPath}/adminpickup">Giao Nhận Xe</a>
+            <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
+            <a href="${pageContext.request.contextPath}/adminreturns"> Kiểm tra và Hoàn Cọc</a>
+            <!--<a href="${pageContext.request.contextPath}/adminwithdrawals">Rút Tiền</a>-->
+            <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
         </nav>
     </aside>
 

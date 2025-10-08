@@ -6,19 +6,9 @@ public class OrderStatusHistory {
     private int historyId;
     private int orderId;
     private String status;
-    private Integer adminId;
+    private int adminId;
     private String notes;
     private Timestamp createdAt;
-    
-    // Constructors
-    public OrderStatusHistory() {}
-    
-    public OrderStatusHistory(int orderId, String status, Integer adminId, String notes) {
-        this.orderId = orderId;
-        this.status = status;
-        this.adminId = adminId;
-        this.notes = notes;
-    }
     
     // Getters and Setters
     public int getHistoryId() { return historyId; }
@@ -30,8 +20,8 @@ public class OrderStatusHistory {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     
-    public Integer getAdminId() { return adminId; }
-    public void setAdminId(Integer adminId) { this.adminId = adminId; }
+    public int getAdminId() { return adminId; }
+    public void setAdminId(int adminId) { this.adminId = adminId; }
     
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

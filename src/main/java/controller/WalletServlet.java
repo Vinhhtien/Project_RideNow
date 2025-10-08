@@ -14,7 +14,7 @@ import java.util.List;
 
 @WebServlet(name="WalletServlet", urlPatterns={"/wallet"})
 public class WalletServlet extends HttpServlet {
-
+//
     // View model cho 1 dòng giao dịch hiển thị
     public static class Tx {
         private String type;       // REFUND | ADJUST | PENALTY | WITHDRAW

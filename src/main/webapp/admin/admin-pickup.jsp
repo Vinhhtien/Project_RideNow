@@ -21,13 +21,13 @@
     <aside class="sidebar">
         <div class="brand">RideNow Admin</div>
         <nav>
-            <a href="${ctx}/admindashboard">Dashboard</a>
-            <a href="${ctx}/adminpaymentverify">Xác Minh Thanh Toán</a>
-            <a class="active" href="${ctx}/adminpickup">Giao Nhận Xe</a>
-            <a href="${ctx}/adminreturn">Trả Xe</a>
-            <a href="${ctx}/adminreturns">Hoàn Cọc</a>
-            <a href="${ctx}/adminwithdrawals">Rút Tiền</a>
-            <a href="${ctx}/logout">Logout</a>
+            <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
+            <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
+            <a href="${pageContext.request.contextPath}/adminpickup" class="active">Giao Nhận Xe</a>
+            <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
+            <a href="${pageContext.request.contextPath}/adminreturns">Kiểm tra và Hoàn Cọc</a>
+            <!--<a href="${pageContext.request.contextPath}/adminwithdrawals">Rút Tiền</a>-->
+            <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
         </nav>
     </aside>
 
@@ -74,14 +74,14 @@
                                         ${o[1]}<br>
                                         <small class="text-muted">${o[2]}</small>
                                     </td>
-                                    <td>${o[4]}</td>
+                                    <td>${o[3]}</td> <!-- ĐÃ SỬA: bike_name từ index 3 -->
                                     <td>
-                                        <fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/> - 
-                                        <fmt:formatDate value="${o[6]}" pattern="dd/MM/yyyy"/>
+                                        <fmt:formatDate value="${o[4]}" pattern="dd/MM/yyyy"/> - <!-- ĐÃ SỬA: start_date từ index 4 -->
+                                        <fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/> <!-- ĐÃ SỬA: end_date từ index 5 -->
                                     </td>
-                                    <td><fmt:formatNumber value="${o[7]}" type="currency"/></td>
-                                    <td><fmt:formatNumber value="${o[8]}" type="currency"/></td>
-                                    <td><span class="badge not_picked_up">${o[9]}</span></td>
+                                    <td><fmt:formatNumber value="${o[6]}" type="currency"/></td> <!-- ĐÃ SỬA: total_price từ index 6 -->
+                                    <td><fmt:formatNumber value="${o[7]}" type="currency"/></td> <!-- ĐÃ SỬA: deposit_amount từ index 7 -->
+                                    <td><span class="badge not_picked_up">${o[8]}</span></td> <!-- ĐÃ SỬA: pickup_status từ index 8 -->
                                     <td>
                                         <form method="post" action="${ctx}/adminpickup" 
                                               onsubmit="return confirm('Xác nhận khách đã nhận xe?');">

@@ -11,14 +11,20 @@ public class PaymentVerifyDao implements IPaymentVerifyDao {
     public List<Object[]> getPendingPayments() throws SQLException {
         List<Object[]> payments = new ArrayList<>();
         String sql = """
-            SELECT p.payment_id, p.order_id, c.full_name, c.phone, 
-                   p.amount, p.method, p.payment_date, p.status,
-                   r.total_price, r.deposit_amount
+            SELECT 
+                p.payment_id,
+                p.order_id,
+                c.full_name,
+                c.phone,
+                p.amount,
+                p.method,
+                p.payment_date,
+                p.status
             FROM Payments p
-            JOIN RentalOrders r ON r.order_id = p.order_id
-            JOIN Customers c ON c.customer_id = r.customer_id
+            JOIN RentalOrders ro ON ro.order_id = p.order_id
+            JOIN Customers c ON c.customer_id = ro.customer_id
             WHERE p.status = 'pending'
-            ORDER BY p.payment_date DESC
+            ORDER BY p.payment_date ASC
             """;
         
         try (Connection con = DBConnection.getConnection();
@@ -26,7 +32,7 @@ public class PaymentVerifyDao implements IPaymentVerifyDao {
              ResultSet rs = ps.executeQuery()) {
             
             while (rs.next()) {
-                Object[] payment = new Object[10]; // Tăng lên 10 phần tử
+                Object[] payment = new Object[8];
                 payment[0] = rs.getInt("payment_id");
                 payment[1] = rs.getInt("order_id");
                 payment[2] = rs.getString("full_name");
@@ -35,29 +41,51 @@ public class PaymentVerifyDao implements IPaymentVerifyDao {
                 payment[5] = rs.getString("method");
                 payment[6] = rs.getTimestamp("payment_date");
                 payment[7] = rs.getString("status");
-                payment[8] = rs.getBigDecimal("total_price");
-                payment[9] = rs.getBigDecimal("deposit_amount");
                 payments.add(payment);
             }
         }
         return payments;
     }
     
+    
+    public boolean verifyPayment(int paymentId, int adminId) throws SQLException {
+        String sql = """
+            UPDATE Payments 
+            SET status = 'paid', 
+                verified_by = ?, 
+                verified_at = GETDATE()
+            WHERE payment_id = ? 
+              AND status = 'pending'
+            """;
+        
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, adminId);
+            ps.setInt(2, paymentId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     @Override
     public boolean updatePaymentStatus(int paymentId, String status, Integer adminId) throws SQLException {
-        String sql = "UPDATE Payments SET status = ?, verified_by = ?, verified_at = GETDATE() WHERE payment_id = ? AND status = 'pending'";
+        String sql = """
+            UPDATE Payments 
+            SET status = ?, 
+                verified_by = ?, 
+                verified_at = GETDATE()
+            WHERE payment_id = ? 
+              AND status = 'pending'
+            """;
+        
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, status);
-            ps.setInt(2, adminId); // adminId = 1
+            ps.setObject(2, adminId); // Sử dụng Object vì có thể null
             ps.setInt(3, paymentId);
-
-            int rowsUpdated = ps.executeUpdate();
-            System.out.println("DEBUG: Updated " + rowsUpdated + " rows for payment #" + paymentId);
-            return rowsUpdated > 0;
+            return ps.executeUpdate() > 0;
         }
     }
-    
+
     @Override
     public int getOrderIdByPayment(int paymentId) throws SQLException {
         String sql = "SELECT order_id FROM Payments WHERE payment_id = ?";
@@ -66,14 +94,10 @@ public class PaymentVerifyDao implements IPaymentVerifyDao {
             ps.setInt(1, paymentId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    int orderId = rs.getInt("order_id");
-                    System.out.println("DEBUG: Found order_id " + orderId + " for payment #" + paymentId);
-                    return orderId;
-                } else {
-                    System.out.println("DEBUG: No order_id found for payment #" + paymentId);
-                    return 0;
+                    return rs.getInt("order_id");
                 }
             }
         }
+        return 0; // Trả về 0 nếu không tìm thấy
     }
 }

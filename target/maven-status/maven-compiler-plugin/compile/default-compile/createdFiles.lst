@@ -56,7 +56,6 @@ service\PaymentVerifyService.class
 controller\AdminPaymentVerifyServlet.class
 model\OrderListItem.class
 controller\ViewMotorBikeServlet.class
-controller\AdminReturnsServlet$WithdrawalRow.class
 controller\AdminReturnInspectServlet$InspectionOrderVM.class
 controller\WalletServlet.class
 utils\DBConnection.class
@@ -64,6 +63,7 @@ service\IMotorbikeService.class
 dao\CustomerDao.class
 model\Customer.class
 service\IPaymentVerifyService.class
+service\IRefundInspectionService.class
 controller\AdminPaymentsServlet.class
 model\Motorbike.class
 dao\IOrderManageDao.class
@@ -80,6 +80,7 @@ dao\IOrderDao.class
 model\OrderDetail.class
 com\mycompany\project_ridenow\JakartaRestConfiguration.class
 service\IAdminService.class
+controller\AdminReturnsServlet$RefundRequestVM.class
 filter\AdminOnlyFilter.class
 controller\WalletServlet$Tx.class
 dao\IPaymentVerifyDao.class
