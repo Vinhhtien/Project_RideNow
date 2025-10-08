@@ -1,0 +1,243 @@
+/* ===============================
+   SEARCH PAGE (optimized)
+   =============================== */
+
+/* ---- Banner kết quả + tóm tắt filter ---- */
+.search-hero{
+  position: relative;
+  padding: 36px 0 28px;
+  border-bottom: 1px solid var(--primary-light);
+  background:
+    radial-gradient(60% 50% at 50% -10%, rgba(59,130,246,.18), transparent 70%),
+    linear-gradient(180deg, rgba(15,16,20,.96), rgba(15,16,20,.94));
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.search-hero:after{
+  content:"";
+  position:absolute; inset:0; pointer-events:none; opacity:.06;
+  background-image: radial-gradient(#fff 0.6px, transparent 0.6px);
+  background-size: 3px 3px;
+}
+.search-hero h1{
+  font-size: 32px; line-height: 1.15;
+  color: var(--white);
+  font-weight: 800; letter-spacing: -.5px;
+  text-shadow: 0 2px 10px rgba(0,0,0,.5);
+}
+.search-hero p{
+  color: var(--gray-light);
+  margin-top: 8px; font-size: 15px;
+}
+
+/* ---- Filter pills ---- */
+.filter-pills{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; justify-content:center;
+}
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  height:34px; padding: 0 12px;
+  background: linear-gradient(180deg, var(--secondary), var(--secondary-light));
+  border: 1px solid var(--primary-light);
+  color: var(--white);
+  border-radius: 999px; font-size: 13px; font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  transition: var(--transition);
+}
+.pill i{ color: var(--accent); opacity: .9; }
+.pill:hover{ border-color: var(--accent); transform: translateY(-1px); }
+.pill-clear{
+  background: rgba(59,130,246,.12);
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
+/* ---- Bố cục 2 cột + nền video ---- */
+.search-layout{
+  position: relative;
+  display:grid; grid-template-columns: 300px 1fr;
+  gap: 28px; margin: 28px auto 64px;
+}
+
+/* video background inside layout */
+.search-bg{
+  position:fixed; inset:0; z-index:-1; overflow:hidden; border-radius: 16px;
+}
+.search-bg video{
+  width:100%; height:100%; object-fit: cover;
+  filter: brightness(.9) saturate(1.05);
+}
+.bg-overlay{
+  position:absolute; inset:0;
+  background: radial-gradient(60% 60% at 50% 0%, rgba(0,0,0,.25), transparent 60%),
+              linear-gradient(180deg, rgba(10,12,18,.72), rgba(10,12,18,.78));
+}
+
+/* ---- Thẻ chung ---- */
+.card{
+  background: linear-gradient(180deg, rgba(34,36,43,.85), rgba(34,36,43,.92));
+  border: 1px solid rgba(255,255,255,.06);
+  color: var(--white);
+  border-radius: 14px; padding: 18px;
+  box-shadow: 0 14px 30px rgba(0,0,0,.45);
+  backdrop-filter: blur(6px);
+}
+
+/* ---- Sidebar filter ---- */
+.sidebar{ position: sticky; top: 96px; height: fit-content; }
+
+.filter-card h3{
+  display:flex; align-items:center; gap:8px;
+  font-size: 16px; font-weight: 800; margin-bottom: 14px;
+  color: var(--accent);
+}
+.filter-card label{
+  display:block; font-size:13px; color: var(--gray-light);
+  margin: 10px 0 6px 2px; font-weight:600;
+}
+
+/* ---- Khu vực kết quả ---- */
+.results-top{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom: 16px;
+}
+.results-top h2{
+  font-size: 18px; font-weight: 800; color: var(--white);
+}
+
+/* ---- Lưới xe (FIX căn lệch) ---- */
+.bike-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 26px;
+  align-items: stretch;   /* đồng bộ chiều cao */
+}
+
+/* thẻ xe nổi bật + đồng bộ chiều cao */
+.bike-card{
+  display:flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(27,29,36,.9), rgba(27,29,36,.96));
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px; overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  box-shadow: 0 12px 28px rgba(0,0,0,.5);
+}
+.bike-card:hover{
+  transform: translateY(-6px);
+  border-color: rgba(59,130,246,.45);
+  box-shadow: 0 18px 36px rgba(0,0,0,.6), 0 0 0 1px rgba(59,130,246,.15) inset;
+}
+
+/* ảnh xe */
+.bike-image{
+  position: relative;
+  height: 220px; background:#0e1016;
+}
+.bike-image img{
+  width:100%; height:100%;
+  object-fit: cover;               /* đổi 'contain' nếu muốn không crop */
+  object-position:center;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+/* nội dung card */
+.bike-details{
+  flex:1;
+  display:flex; flex-direction: column;
+  padding: 18px 20px 20px;
+}
+.bike-title{
+  display:flex; align-items:flex-start; justify-content:space-between; gap: 14px;
+}
+.bike-title h3 a{
+  color: var(--white); text-decoration:none; font-weight: 800; letter-spacing: -.2px;
+  transition: var(--transition);
+}
+.bike-title h3 a:hover{ color: var(--accent); text-decoration: underline; }
+
+.bike-price{
+  color: var(--accent); font-weight: 800; white-space: nowrap;
+}
+
+/* meta */
+.bike-specs{
+  display:flex; gap: 12px; flex-wrap:wrap; margin: 10px 0 18px;
+  color: var(--gray-light); font-size: 14px;
+}
+.bike-specs span{ display:inline-flex; align-items:center; gap:6px; }
+.bike-specs i{ color: var(--accent); opacity:.9; }
+
+/* CTA trong card (dính đáy) */
+.bike-action{
+  margin-top: auto;
+  display:block; width:100%; text-align:center;
+  padding: 12px 16px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: var(--white); text-decoration:none; font-weight:700;
+  transition: var(--transition); border:none; cursor:pointer;
+  box-shadow: 0 6px 14px rgba(59,130,246,.35);
+}
+.bike-action:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(59,130,246,.45);
+}
+
+/* badge trạng thái trên ảnh */
+.bike-badge{
+  position:absolute; top: 14px; right: 14px;
+  padding: 6px 12px; font-size: 12px; font-weight: 700;
+  color: var(--white); background: var(--accent);
+  border-radius: 999px; box-shadow: var(--shadow-sm);
+}
+
+/* ---- Không có kết quả ---- */
+.no-results{
+  display:flex; align-items:center; gap:10px;
+  color: var(--gray-light);
+  background: linear-gradient(180deg, rgba(26,27,32,.9), rgba(26,27,32,.95));
+  border: 1px dashed rgba(255,255,255,.18);
+  border-left: 4px solid var(--accent);
+  font-weight: 600; padding: 16px; border-radius: 12px;
+}
+
+/* ---- Phân trang ---- */
+.pagination{
+  display:flex; gap: 10px; align-items:center; justify-content:center;
+  margin-top: 28px;
+}
+.page-link{
+  min-width: 42px; height: 42px; padding: 0 12px;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  border-radius: 10px; text-decoration:none; font-weight:700;
+  background: linear-gradient(180deg, var(--secondary), var(--secondary-light));
+  color: var(--white);
+  border: 1px solid var(--primary-light);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.page-link:hover{
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.page-link.active{
+  background: var(--accent-dark);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1100px){
+  .search-layout{ grid-template-columns: 280px 1fr; }
+}
+@media (max-width: 992px){
+  .search-layout{ grid-template-columns: 1fr; }
+  .sidebar{ position: static; }
+}
+@media (max-width: 768px){
+  .bike-grid{ grid-template-columns: 1fr; }
+}
+@media (max-width: 576px){
+  .search-hero h1{ font-size: 26px; }
+  .bike-image{ height: 200px; }
+}
