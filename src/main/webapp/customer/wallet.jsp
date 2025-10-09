@@ -248,86 +248,80 @@
         </div>
       </div>
     </div>
-
-    <!-- Transaction History -->
-    <div class="card">
-      <h3 style="margin:0 0 20px;color:var(--accent);">
+<!-- Transaction History -->
+<div class="card">
+    <h3 style="margin:0 0 20px;color:var(--accent);">
         <i class="fas fa-history"></i> Lịch sử giao dịch
-      </h3>
-      <c:choose>
+    </h3>
+    <c:choose>
         <c:when test="${empty txs}">
-          <div style="text-align:center; padding:40px 20px; color:var(--gray-light);">
-            <i class="fas fa-receipt" style="font-size:3rem; margin-bottom:16px; opacity:0.5;"></i>
-            <p>Chưa có giao dịch nào</p>
-          </div>
+            <div style="text-align:center; padding:40px 20px; color:var(--gray-light);">
+                <i class="fas fa-receipt" style="font-size:3rem; margin-bottom:16px; opacity:0.5;"></i>
+                <p>Chưa có giao dịch nào</p>
+            </div>
         </c:when>
         <c:otherwise>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Mã GD</th>
-                  <th>Đơn hàng</th>
-                  <th>Thời gian</th>
-                  <th>Loại giao dịch</th>
-                  <th>Trạng thái</th>
-                  <th>Số tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                <c:forEach var="t" items="${txs}">
-                  <tr>
-                    <td><strong>#${t.paymentId}</strong></td>
-                    <td>
-                      <c:if test="${t.orderId > 0}">
-                        <a href="${ctx}/customerorders" style="color:var(--accent); text-decoration:none;">
-                          #${t.orderId}
-                        </a>
-                      </c:if>
-                    </td>
-                    <td><fmt:formatDate value="${t.date}" pattern="dd/MM/yyyy HH:mm"/></td>
-                    <td>
-                      <c:choose>
-                        <c:when test="${t.method == 'DEPOSIT'}">
-                          <span class="badge refund"><i class="fas fa-coins"></i> Tiền cọc</span>
-                        </c:when>
-                        <c:when test="${t.method == 'REFUND'}">
-                          <span class="badge withdraw"><i class="fas fa-hand-holding-usd"></i> Hoàn cọc</span>
-                        </c:when>
-                        <c:when test="${t.method == 'WITHDRAW'}">
-                          <span class="badge withdraw"><i class="fas fa-money-bill-wave"></i> Rút tiền</span>
-                        </c:when>
-                        <c:otherwise>
-                          <span class="badge">${t.method}</span>
-                        </c:otherwise>
-                      </c:choose>
-                    </td>
-                    <td>
-                      <c:choose>
-                        <c:when test="${t.status == 'completed'}">
-                          <span class="badge success"><i class="fas fa-check"></i> Hoàn thành</span>
-                        </c:when>
-                        <c:when test="${t.status == 'pending'}">
-                          <span class="badge pending"><i class="fas fa-clock"></i> Đang chờ</span>
-                        </c:when>
-                        <c:otherwise>
-                          <span class="badge">${t.status}</span>
-                        </c:otherwise>
-                      </c:choose>
-                    </td>
-                    <td>
-                      <span class="amount ${t.amount >= 0 ? 'positive' : 'negative'}">
-                        <c:if test="${t.amount >= 0}">+</c:if><fmt:formatNumber value="${t.amount}" type="number"/> đ
-                      </span>
-                    </td>
-                  </tr>
-                </c:forEach>
-              </tbody>
-            </table>
-          </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mã GD</th>
+                            <th>Thời gian</th>
+                            <th>Loại giao dịch</th>
+                            <th>Mô tả</th>
+                            <th>Đơn hàng</th>
+                            <th>Số tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:forEach var="t" items="${txs}">
+                            <tr>
+                                <td><strong>#${t.id}</strong></td>
+                                <td><fmt:formatDate value="${t.date}" pattern="dd/MM/yyyy HH:mm"/></td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${t.type == 'topup'}">
+                                            <span class="badge refund"><i class="fas fa-coins"></i> Nạp tiền</span>
+                                        </c:when>
+                                        <c:when test="${t.type == 'withdraw'}">
+                                            <span class="badge withdraw"><i class="fas fa-hand-holding-usd"></i> Rút tiền</span>
+                                        </c:when>
+                                        <c:when test="${t.type == 'refund'}">
+                                            <span class="badge success"><i class="fas fa-undo"></i> Hoàn cọc</span>
+                                        </c:when>
+                                        <c:when test="${t.type == 'payment'}">
+                                            <span class="badge pending"><i class="fas fa-credit-card"></i> Thanh toán</span>
+                                        </c:when>
+                                        <c:when test="${t.type == 'adjust'}">
+                                            <span class="badge"><i class="fas fa-adjust"></i> Điều chỉnh</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge">${t.type}</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>${t.description}</td>
+                                <td>
+                                    <c:if test="${t.orderId != null && t.orderId > 0}">
+                                        <a href="${ctx}/customerorders" style="color:var(--accent); text-decoration:none;">
+                                            #${t.orderId}
+                                        </a>
+                                    </c:if>
+                                </td>
+                                <td>
+                                    <span class="amount ${t.amount.compareTo(BigDecimal.ZERO) >= 0 ? 'positive' : 'negative'}">
+                                        <c:if test="${t.amount.compareTo(BigDecimal.ZERO) >= 0}">+</c:if>
+                                        <fmt:formatNumber value="${t.amount}" type="number"/> đ
+                                    </span>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </div>
         </c:otherwise>
-      </c:choose>
-    </div>
+    </c:choose>
+</div>
   </div>
 </body>
 </html>

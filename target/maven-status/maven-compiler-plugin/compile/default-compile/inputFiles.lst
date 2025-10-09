@@ -79,7 +79,6 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\PaymentVerifyS
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\Account.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\PasswordUtil.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\BookingServlet.java
-D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\AdminWithdrawalsServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\WalletDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderStatusHistory.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\VerifyEmailServlet.java

@@ -336,56 +336,88 @@ public class AdminReturnsServlet extends HttpServlet {
         }
     }
 
-    private void updateWalletBalance(Connection con, int orderId) throws SQLException {
-            // Lấy thông tin refund amount và customer_id
-            String selectSql = """
-                SELECT ri.refund_amount, ro.customer_id 
-                FROM RefundInspections ri
-                JOIN RentalOrders ro ON ri.order_id = ro.order_id
-                WHERE ri.order_id = ? AND ri.refund_status = 'completed'
-                """;
+private void updateWalletBalance(Connection con, int orderId) throws SQLException {
+    System.out.println("=== DEBUG WALLET UPDATE START ===");
+    
+    // Lấy thông tin refund amount và customer_id
+    String selectSql = """
+        SELECT ri.refund_amount, ro.customer_id, c.account_id
+        FROM RefundInspections ri
+        JOIN RentalOrders ro ON ri.order_id = ro.order_id
+        JOIN Customers c ON ro.customer_id = c.customer_id
+        WHERE ri.order_id = ? AND ri.refund_status = 'completed'
+        """;
 
-            try (PreparedStatement ps = con.prepareStatement(selectSql)) {
-                ps.setInt(1, orderId);
-                ResultSet rs = ps.executeQuery();
+    try (PreparedStatement ps = con.prepareStatement(selectSql)) {
+        ps.setInt(1, orderId);
+        ResultSet rs = ps.executeQuery();
 
-                if (rs.next()) {
-                    BigDecimal refundAmount = rs.getBigDecimal("refund_amount");
-                    int customerId = rs.getInt("customer_id");
+        if (rs.next()) {
+            BigDecimal refundAmount = rs.getBigDecimal("refund_amount");
+            int customerId = rs.getInt("customer_id");
+            int accountId = rs.getInt("account_id");
+            
+            System.out.println("DEBUG: Customer ID: " + customerId + ", Account ID: " + accountId + ", Refund Amount: " + refundAmount);
 
-                    // Cập nhật hoặc tạo wallet
-                    String walletSql = """
-                        MERGE Wallets AS target
-                        USING (SELECT ? AS customer_id, ? AS amount) AS source
-                        ON target.customer_id = source.customer_id
-                        WHEN MATCHED THEN
-                            UPDATE SET balance = balance + source.amount, updated_at = GETDATE()
-                        WHEN NOT MATCHED THEN
-                            INSERT (customer_id, balance, updated_at) 
-                            VALUES (source.customer_id, source.amount, GETDATE());
-                        """;
-
-                    try (PreparedStatement psWallet = con.prepareStatement(walletSql)) {
-                        psWallet.setInt(1, customerId);
-                        psWallet.setBigDecimal(2, refundAmount);
-                        psWallet.executeUpdate();
-                    }
-
-                    // Sửa câu lệnh SQL để sử dụng cột 'type' thay vì 'transaction_type'
-                    String transactionSql = """
-                        INSERT INTO Wallet_Transactions (wallet_id, amount, type, description, created_at)
-                        SELECT wallet_id, ?, 'refund', ?, GETDATE()
-                        FROM Wallets WHERE customer_id = ?
-                        """;
-
-                    try (PreparedStatement psTrans = con.prepareStatement(transactionSql)) {
-                        psTrans.setBigDecimal(1, refundAmount);
-                        psTrans.setString(2, "Hoàn tiền cọc đơn hàng #" + orderId);
-                        psTrans.setInt(3, customerId);
-                        psTrans.executeUpdate();
-                    }
+            // 1. Lấy wallet_id từ customer_id
+            String getWalletSql = "SELECT wallet_id FROM Wallets WHERE customer_id = ?";
+            Integer walletId = null;
+            try (PreparedStatement psWallet = con.prepareStatement(getWalletSql)) {
+                psWallet.setInt(1, customerId);
+                ResultSet rsWallet = psWallet.executeQuery();
+                if (rsWallet.next()) {
+                    walletId = rsWallet.getInt("wallet_id");
+                    System.out.println("DEBUG: Found existing wallet ID: " + walletId);
                 }
             }
+
+            // 2. Nếu chưa có wallet, tạo mới
+            if (walletId == null) {
+                String createWalletSql = """
+                    INSERT INTO Wallets (customer_id, balance, created_at, updated_at)
+                    VALUES (?, ?, GETDATE(), GETDATE());
+                    SELECT SCOPE_IDENTITY();
+                    """;
+                try (PreparedStatement psCreate = con.prepareStatement(createWalletSql)) {
+                    psCreate.setInt(1, customerId);
+                    psCreate.setBigDecimal(2, refundAmount);
+                    ResultSet rsCreate = psCreate.executeQuery();
+                    if (rsCreate.next()) {
+                        walletId = rsCreate.getInt(1);
+                        System.out.println("DEBUG: Created new wallet ID: " + walletId);
+                    }
+                }
+            } else {
+                // 3. Cập nhật balance cho wallet đã tồn tại
+                String updateWalletSql = "UPDATE Wallets SET balance = balance + ?, updated_at = GETDATE() WHERE wallet_id = ?";
+                try (PreparedStatement psUpdate = con.prepareStatement(updateWalletSql)) {
+                    psUpdate.setBigDecimal(1, refundAmount);
+                    psUpdate.setInt(2, walletId);
+                    int walletUpdated = psUpdate.executeUpdate();
+                    System.out.println("DEBUG: Wallet updated rows: " + walletUpdated);
+                }
+            }
+
+            // 4. Thêm giao dịch vào Wallet_Transactions với type='refund' (giá trị hợp lệ)
+            String transactionSql = """
+                INSERT INTO Wallet_Transactions (wallet_id, amount, type, order_id, description, created_at)
+                VALUES (?, ?, 'refund', ?, ?, GETDATE())
+                """;
+
+            try (PreparedStatement psTrans = con.prepareStatement(transactionSql)) {
+                psTrans.setInt(1, walletId);
+                psTrans.setBigDecimal(2, refundAmount);
+                psTrans.setInt(3, orderId);
+                psTrans.setString(4, "Hoàn tiền cọc đơn hàng #" + orderId);
+                int transInserted = psTrans.executeUpdate();
+                System.out.println("DEBUG: Transaction inserted rows: " + transInserted);
+            }
+            
+            System.out.println("=== DEBUG WALLET UPDATE SUCCESS ===");
+        } else {
+            System.out.println("DEBUG: No refund record found for order: " + orderId);
         }
+    }
+}
 
 }

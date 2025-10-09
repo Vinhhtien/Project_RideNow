@@ -444,7 +444,7 @@
           <h3>Giỏ hàng trống</h3>
           <p>Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy tìm và thêm những chiếc xe phù hợp với nhu cầu của bạn!</p>
           <a class="btn-search" href="${ctx}/motorbikesearch">
-            <i class="fas fa-magnifying-glass"></i> Tiếp tục tìm xe
+             Tiếp tục tìm xe
           </a>
         </div>
       </div>

@@ -88,7 +88,6 @@ service\IPartnerService.class
 model\RentalOrder.class
 controller\PartnerServlet.class
 service\AccountService.class
-controller\AdminWithdrawalsServlet.class
 dao\IOrderQueryDao.class
 service\IPaymentService.class
 dao\PartnerDao.class
@@ -96,6 +95,5 @@ service\ICustomerService.class
 utils\EmailUtil$1.class
 model\MotorbikeListItem.class
 controller\AdminReturnInspectServlet.class
-controller\AdminWithdrawalsServlet$WithdrawalVM.class
 controller\PayNowServlet.class
 service\IAccountService.class
