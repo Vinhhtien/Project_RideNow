@@ -1,4 +1,3 @@
-// MyOrdersServlet.java
 package controller;
 
 import jakarta.servlet.ServletException;
@@ -76,13 +75,25 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        System.out.println("🔍 DEBUG MyOrdersServlet - doGet called");
+        
         Account acc = (Account) req.getSession().getAttribute("account");
-        if (acc == null) { resp.sendRedirect(req.getContextPath()+"/login.jsp"); return; }
+        if (acc == null) { 
+            System.out.println("❌ No account found, redirecting to login");
+            resp.sendRedirect(req.getContextPath()+"/login.jsp"); 
+            return; 
+        }
 
         try {
             Customer c = customerService.getProfile(acc.getAccountId());
-            if (c == null) { resp.sendRedirect(req.getContextPath()+"/customer/profile.jsp?need=1"); return; }
+            if (c == null) { 
+                System.out.println("❌ No customer profile found");
+                resp.sendRedirect(req.getContextPath()+"/customer/profile.jsp?need=1"); 
+                return; 
+            }
 
+            System.out.println("✅ Loading orders for customer: " + c.getCustomerId());
+            
             // rows: [order_id, bike_name, start, end, total, status, has_pending_payment, payment_submitted]
             List<Object[]> rows = qdao.findOrdersOfCustomerWithPaymentStatus(c.getCustomerId());
 
@@ -127,8 +138,11 @@ public class MyOrdersServlet extends HttpServlet {
             // Fallback cho JSP cũ nếu vẫn còn dùng "rows"
             req.setAttribute("rows", rows);
 
+            System.out.println("✅ Loaded " + ordersVm.size() + " orders, redirecting to JSP");
+            
             req.getRequestDispatcher("/customer/my-orders.jsp").forward(req, resp);
         } catch (Exception e) {
+            System.err.println("❌ ERROR in MyOrdersServlet doGet: " + e.getMessage());
             e.printStackTrace();
             throw new ServletException("Error loading orders: " + e.getMessage(), e);
         }
@@ -138,16 +152,31 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        System.out.println("🔍 DEBUG MyOrdersServlet - doPost called");
+        System.out.println("📝 Request URL: " + req.getRequestURL());
+        System.out.println("📝 Query String: " + req.getQueryString());
+        System.out.println("📝 Method: " + req.getMethod());
+        
+        // Log all parameters
+        System.out.println("📝 Parameters:");
+        req.getParameterMap().forEach((key, values) -> {
+            System.out.println("  " + key + ": " + String.join(", ", values));
+        });
+
         Account acc = (Account) req.getSession().getAttribute("account");
         if (acc == null) {
+            System.out.println("❌ No account in session");
             resp.sendRedirect(req.getContextPath()+"/login.jsp");
             return;
         }
 
         String action = req.getParameter("action");
+        System.out.println("📝 Action parameter: " + action);
+        
         if ("cancel".equals(action)) {
             cancelOrder(req, resp, acc);
         } else {
+            System.out.println("❌ Unknown action: " + action);
             resp.sendRedirect(req.getContextPath() + "/customerorders");
         }
     }
@@ -155,8 +184,17 @@ public class MyOrdersServlet extends HttpServlet {
     private void cancelOrder(HttpServletRequest req, HttpServletResponse resp, Account acc)
             throws ServletException, IOException {
 
+        System.out.println("🚨🚨🚨 CANCEL ORDER DEBUG 🚨🚨🚨");
+        System.out.println("📝 Request URI: " + req.getRequestURI());
+        System.out.println("📝 Context Path: " + req.getContextPath());
+        System.out.println("📝 Servlet Path: " + req.getServletPath());
+        System.out.println("📝 Path Info: " + req.getPathInfo());
+
         String orderIdParam = req.getParameter("orderId");
+        System.out.println("📝 Order ID parameter: " + orderIdParam);
+        
         if (orderIdParam == null || orderIdParam.trim().isEmpty()) {
+            System.out.println("❌ Order ID parameter is missing or empty");
             req.getSession().setAttribute("flash", "Mã đơn hàng không hợp lệ.");
             resp.sendRedirect(req.getContextPath() + "/customerorders");
             return;
@@ -164,27 +202,36 @@ public class MyOrdersServlet extends HttpServlet {
 
         try {
             int orderId = Integer.parseInt(orderIdParam);
+            System.out.println("🔄 Processing cancel for order #" + orderId);
 
             Customer c = customerService.getProfile(acc.getAccountId());
             if (c == null) {
+                System.out.println("❌ Customer profile not found for account: " + acc.getAccountId());
                 resp.sendRedirect(req.getContextPath()+"/customer/profile.jsp?need=1");
                 return;
             }
 
+            System.out.println("🔄 Calling customerService.cancelOrder for customer: " + c.getCustomerId() + ", order: " + orderId);
             boolean success = customerService.cancelOrder(c.getCustomerId(), orderId);
 
             if (success) {
+                System.out.println("✅ SUCCESS: Cancelled order #" + orderId);
                 req.getSession().setAttribute("flash", "Đã hủy đơn hàng #" + orderId + " thành công.");
             } else {
+                System.out.println("❌ FAILED: Could not cancel order #" + orderId);
                 req.getSession().setAttribute("flash", "Hủy đơn hàng thất bại. Đơn hàng không tồn tại hoặc không thể hủy.");
             }
 
+            System.out.println("🔄 Redirecting to customerorders page");
             resp.sendRedirect(req.getContextPath() + "/customerorders");
 
         } catch (NumberFormatException e) {
+            System.out.println("❌ Invalid orderId format: " + orderIdParam);
             req.getSession().setAttribute("flash", "Mã đơn hàng không hợp lệ.");
             resp.sendRedirect(req.getContextPath() + "/customerorders");
         } catch (Exception e) {
+            System.err.println("❌ ERROR in cancelOrder: " + e.getMessage());
+            e.printStackTrace();
             req.getSession().setAttribute("flash", "Lỗi hệ thống: " + e.getMessage());
             resp.sendRedirect(req.getContextPath() + "/customerorders");
         }

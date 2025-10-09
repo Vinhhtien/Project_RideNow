@@ -1,17 +1,34 @@
-// src/main/java/dao/IOrderDao.java
 package dao;
 
+import model.RentalOrder;
+import model.OrderDetail;
+import model.OrderStatusHistory;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.SQLException;
+import java.util.List;
 
 public interface IOrderDao {
-
-    /** Trả về giá/ngày nếu xe còn bookable (status != 'maintenance'), ngược lại null */
+    // Basic order operations
+    RentalOrder getOrderById(int orderId) throws SQLException;
+    List<OrderDetail> getOrderDetailsByOrderId(int orderId) throws SQLException;
+    List<RentalOrder> getOrdersByCustomerId(int customerId) throws SQLException;
+    List<RentalOrder> getAllOrders() throws SQLException;
+    List<RentalOrder> searchOrders(String keyword) throws SQLException;
+    List<RentalOrder> filterByStatus(String status) throws SQLException;
+    
+    // Bike booking methods
     BigDecimal getBikePriceIfBookable(int bikeId) throws Exception;
-
-    /** Kiểm tra có đơn chồng chéo (pending/confirmed) với khoảng ngày không */
     boolean isOverlappingLocked(int bikeId, Date start, Date end) throws Exception;
-
-    /** Tạo đơn pending + 1 dòng chi tiết; có ghi cả tiền cọc vào RentalOrders */
     int createPendingOrder(int customerId, int bikeId, Date start, Date end, BigDecimal pricePerDay) throws Exception;
+    
+    // Order management methods
+    boolean updateOrderStatus(int orderId, String newStatus) throws SQLException;
+    boolean markOrderPickedUp(int orderId, int adminId) throws SQLException;
+    boolean markOrderReturned(int orderId, int adminId) throws SQLException;
+    void addStatusHistory(OrderStatusHistory history) throws SQLException;
+    List<Object[]> getOrdersForPickup() throws SQLException;
+    
+    // Statistics method
+    Object[] getOrderStatsByCustomerId(int customerId) throws SQLException;
 }

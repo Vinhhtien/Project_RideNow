@@ -59,9 +59,24 @@ public class PayNowServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        String action = req.getParameter("action");
+        
+        // XỬ LÝ HỦY ĐƠN HÀNG
+        if ("cancel".equals(action)) {
+            handleCancelOrder(req, resp);
+            return;
+        }
+
+        // PHẦN XỬ LÝ THANH TOÁN BAN ĐẦU
         Account acc = (Account) req.getSession().getAttribute("account");
-        if (acc == null) { resp.sendRedirect(req.getContextPath() + "/login"); return; }
-        if (!"customer".equalsIgnoreCase(acc.getRole())) { resp.sendRedirect(req.getContextPath() + "/"); return; }
+        if (acc == null) { 
+            resp.sendRedirect(req.getContextPath() + "/login"); 
+            return; 
+        }
+        if (!"customer".equalsIgnoreCase(acc.getRole())) { 
+            resp.sendRedirect(req.getContextPath() + "/"); 
+            return; 
+        }
 
         List<Integer> orderIds = parseIds(req.getParameter("orders"));
         
@@ -76,29 +91,8 @@ public class PayNowServlet extends HttpServlet {
 
         try (Connection con = DBConnection.getConnection()) {
             String qs = orderIds.stream().map(id -> "?").collect(Collectors.joining(","));
-            // MỖI ĐƠN 1 DÒNG, gộp tên xe, dùng total_price của đơn
-//            String sql = ("""
-//                SELECT r.order_id,
-//                       STUFF((SELECT ', ' + b2.bike_name
-//                              FROM OrderDetails d2
-//                              JOIN Motorbikes b2 ON b2.bike_id = d2.bike_id
-//                              WHERE d2.order_id = r.order_id
-//                              FOR XML PATH(''), TYPE).value('.','NVARCHAR(MAX)'),1,2,'') AS bikes,
-//                       r.start_date, r.end_date,
-//                       r.total_price,
-//                       ISNULL(r.deposit_amount,0) AS deposit_amount,
-//                       CASE WHEN EXISTS (SELECT 1 FROM Payments p WHERE p.order_id=r.order_id AND p.status='pending')
-//                                 OR r.payment_submitted=1
-//                            THEN 1 ELSE 0 END AS has_pending
-//                  FROM RentalOrders r
-//                  JOIN Customers c ON c.customer_id = r.customer_id
-//                  JOIN Accounts  a ON a.account_id  = c.account_id
-//                 WHERE r.order_id IN (%s)
-//                   AND a.account_id = ?
-//                   AND r.status = 'pending'
-//            """).formatted(qs);
-
-                String sql = ("""
+            
+            String sql = ("""
                 SELECT r.order_id,
                        STUFF((SELECT ', ' + b2.bike_name
                               FROM OrderDetails d2
@@ -111,13 +105,12 @@ public class PayNowServlet extends HttpServlet {
                        CASE WHEN EXISTS (SELECT 1 FROM Payments p WHERE p.order_id=r.order_id AND p.status='pending')
                                  OR r.payment_submitted=1
                             THEN 1 ELSE 0 END AS has_pending,
-                       r.status  -- ← THÊM status để kiểm tra
+                       r.status
                   FROM RentalOrders r
                   JOIN Customers c ON c.customer_id = r.customer_id
                   JOIN Accounts  a ON a.account_id  = c.account_id
                  WHERE r.order_id IN (%s)
                    AND a.account_id = ?
-                -- BỎ điều kiện r.status = 'pending' để xem tất cả đơn được chọn
             """).formatted(qs);
 
             List<Row> rows = new ArrayList<>();
@@ -140,7 +133,7 @@ public class PayNowServlet extends HttpServlet {
                         r.setTotalPrice(total);
                         r.setDeposit(deposit);
 
-                        BigDecimal thirty = total.multiply(new BigDecimal("0.30")); // làm tròn nếu muốn
+                        BigDecimal thirty = total.multiply(new BigDecimal("0.30"));
                         r.setThirtyPct(thirty);
                         r.setToPayNow(thirty.add(deposit));
 
@@ -154,7 +147,7 @@ public class PayNowServlet extends HttpServlet {
             }
 
             if (rows.isEmpty()) {
-                flash(req, "Không có đơn hợp lệ để thanh toán (đơn đã gửi xác minh / không còn pending).");
+                flash(req, "Không có đơn hợp lệ để thanh toán.");
                 resp.sendRedirect(req.getContextPath() + "/customerorders");
                 return;
             }
@@ -168,18 +161,15 @@ public class PayNowServlet extends HttpServlet {
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
 
-            // QR info (demo)
             req.setAttribute("rows", rows);
             req.setAttribute("grandTotal", grandTotal);
             req.setAttribute("ordersCsv", ordersCsv);
-            req.setAttribute("hasPendingPayment", hasPending);     // ← bổ sung cho JSP
+            req.setAttribute("hasPendingPayment", hasPending);
             req.setAttribute("qrAccountNo",   "0916134642");
             req.setAttribute("qrAccountName", "Cua Hang RideNow");
             req.setAttribute("qrAddInfo",     "RN " + ordersCsv);
 
-            // CHỌN ĐÚNG ĐƯỜNG DẪN TỚI FILE JSP CỦA BẠN
-            //req.getRequestDispatcher("/paynow.jsp").forward(req, resp);
-             req.getRequestDispatcher("/cart/paynow.jsp").forward(req, resp);
+            req.getRequestDispatcher("/cart/paynow.jsp").forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);
@@ -191,7 +181,10 @@ public class PayNowServlet extends HttpServlet {
             throws ServletException, IOException {
 
         Account acc = (Account) req.getSession().getAttribute("account");
-        if (acc == null) { resp.sendRedirect(req.getContextPath() + "/login"); return; }
+        if (acc == null) { 
+            resp.sendRedirect(req.getContextPath() + "/login"); 
+            return; 
+        }
 
         List<Integer> orderIds = parseIds(req.getParameter("orders"));
         if (orderIds.isEmpty()) {
@@ -205,7 +198,6 @@ public class PayNowServlet extends HttpServlet {
             con.setAutoCommit(false);
             try {
                 String qs = orderIds.stream().map(id -> "?").collect(Collectors.joining(","));
-                // Chốt lại đơn đủ điều kiện
                 String check = ("""
                     SELECT r.order_id, r.total_price, ISNULL(r.deposit_amount,0) AS deposit
                       FROM RentalOrders r
@@ -240,7 +232,6 @@ public class PayNowServlet extends HttpServlet {
                     return;
                 }
 
-                // tạo payment pending + mark submitted
                 for (Map.Entry<Integer, BigDecimal> e : payMap.entrySet()) {
                     String ref = "RN-" + e.getKey() + "-" + (System.currentTimeMillis() % 100000);
                     paymentService.createPendingForOrder(e.getKey(), e.getValue(), ref);
@@ -264,12 +255,92 @@ public class PayNowServlet extends HttpServlet {
         }
     }
 
+    /**
+     * XỬ LÝ HỦY ĐƠN HÀNG
+     */
+    private void handleCancelOrder(HttpServletRequest req, HttpServletResponse resp) 
+            throws ServletException, IOException {
+        
+        Account acc = (Account) req.getSession().getAttribute("account");
+        if (acc == null) { 
+            resp.sendRedirect(req.getContextPath() + "/login"); 
+            return; 
+        }
+
+        // SỬA LỖI: Dùng orderId thay vì orderld
+        String orderIdStr = req.getParameter("orderId");
+        if (orderIdStr == null) {
+            // Fallback: kiểm tra cả tham số cũ (nếu có)
+            orderIdStr = req.getParameter("orderld");
+        }
+        
+        if (orderIdStr == null || orderIdStr.trim().isEmpty()) {
+            flash(req, "Không tìm thấy đơn hàng để hủy.");
+            resp.sendRedirect(req.getContextPath() + "/customerorders");
+            return;
+        }
+
+        try {
+            int orderId = Integer.parseInt(orderIdStr.trim());
+            
+            // KIỂM TRA VÀ HỦY ĐƠN HÀNG
+            boolean cancelSuccess = cancelOrder(orderId, acc.getAccountId());
+            
+            if (cancelSuccess) {
+                flash(req, "Đã hủy đơn hàng #" + orderId + " thành công.");
+            } else {
+                flash(req, "Không thể hủy đơn hàng #" + orderId + ". Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
+            }
+            
+        } catch (NumberFormatException e) {
+            flash(req, "Mã đơn hàng không hợp lệ.");
+        } catch (Exception e) {
+            flash(req, "Có lỗi xảy ra khi hủy đơn hàng.");
+            e.printStackTrace();
+        }
+        
+        resp.sendRedirect(req.getContextPath() + "/customerorders");
+    }
+
+    /**
+     * HỦY ĐƠN HÀNG TRONG DATABASE
+     */
+    private boolean cancelOrder(int orderId, int accountId) {
+        String sql = "UPDATE RentalOrders SET status = 'cancelled' " +
+                     "WHERE order_id = ? " +
+                     "AND customer_id IN (SELECT customer_id FROM Customers WHERE account_id = ?) " +
+                     "AND status = 'pending'";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, orderId);
+            ps.setInt(2, accountId);
+            
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private static List<Integer> parseIds(String csv) {
         if (csv == null || csv.isBlank()) return List.of();
         List<Integer> ids = new ArrayList<>();
-        for (String s : csv.split(",")) { try { ids.add(Integer.parseInt(s.trim())); } catch (Exception ignore) {} }
+        for (String s : csv.split(",")) { 
+            try { ids.add(Integer.parseInt(s.trim())); } 
+            catch (Exception ignore) {} 
+        }
         return ids;
     }
-    private static BigDecimal safe(BigDecimal v){ return v==null?BigDecimal.ZERO:v; }
-    private static void flash(HttpServletRequest req, String msg){ req.getSession().setAttribute("flash", msg); }
+    
+    private static BigDecimal safe(BigDecimal v){ 
+        return v==null?BigDecimal.ZERO:v; 
+    }
+    
+    private static void flash(HttpServletRequest req, String msg){ 
+        req.getSession().setAttribute("flash", msg); 
+    }
 }

@@ -21,6 +21,12 @@
       --white:#fff; --shadow-sm:0 2px 6px rgba(0,0,0,.35);
       --shadow-md:0 6px 14px rgba(0,0,0,.5); --shadow-lg:0 14px 30px rgba(0,0,0,.55);
       --radius:8px; --radius-lg:12px; --transition:all .3s ease;
+      
+      /* Alert colors for dark theme */
+      --error-bg:rgba(220,38,38,.15); --error-border:rgba(220,38,38,.4); --error-text:#fca5a5;
+      --warning-bg:rgba(245,158,11,.15); --warning-border:rgba(245,158,11,.4); --warning-text:#fcd34d;
+      --success-bg:rgba(34,197,94,.15); --success-border:rgba(34,197,94,.4); --success-text:#86efac;
+      --info-bg:rgba(59,130,246,.15); --info-border:rgba(59,130,246,.4); --info-text:#93c5fd;
     }
     *{box-sizing:border-box}
     body{
@@ -106,8 +112,199 @@
       padding:28px;box-shadow:var(--shadow-md);border:1px solid var(--primary-light)}
     .summary-row{display:flex;justify-content:space-between;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--primary-light)}
     .summary-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-    .summary-total{font-weight:700;font-size:1.3rem;color:var(--accent);padding-top:16px;border-top:2px solid var(--accent)}
+    .summary-total{font-weight:700;font-size:1.1rem;color:var(--accent);padding-top:16px;border-top:2px solid var(--accent)}
     .summary-label{color:var(--gray-light)} .summary-value{font-weight:600;color:var(--light)}
+
+    /* ALERTS - ĐÃ SỬA ĐỂ CHUYÊN NGHIỆP HƠN */
+    .alert {
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      border-radius: var(--radius-lg);
+      border: 1px solid;
+      font-weight: 500;
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      animation: slideInUp 0.5s ease;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .alert:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .alert-icon {
+      font-size: 1.4rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+      width: 24px;
+      text-align: center;
+    }
+
+    .alert-content {
+      flex: 1;
+      line-height: 1.6;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .alert-message {
+      font-size: 1rem;
+      opacity: 0.95;
+      line-height: 1.5;
+    }
+
+    .alert-danger {
+      background: var(--error-bg);
+      border-color: var(--error-border);
+      color: var(--error-text);
+    }
+
+    .alert-warning {
+      background: var(--warning-bg);
+      border-color: var(--warning-border);
+      color: var(--warning-text);
+    }
+
+    .alert-success {
+      background: var(--success-bg);
+      border-color: var(--success-border);
+      color: var(--success-text);
+    }
+
+    .alert-info {
+      background: var(--info-bg);
+      border-color: var(--info-border);
+      color: var(--info-text);
+    }
+
+    .btn-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      color: inherit;
+      opacity: 0.7;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-close:hover {
+      opacity: 1;
+      background: rgba(255,255,255,0.1);
+      transform: scale(1.1);
+    }
+
+    /* Process Notice - ĐÃ SỬA ĐỂ ĐẸP HƠN */
+    .process-notice {
+      background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.05) 100%);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid var(--accent);
+    }
+
+    .process-notice h4 {
+      margin: 0 0 16px 0;
+      color: var(--accent-light);
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .process-notice ol {
+      margin: 0;
+      padding-left: 24px;
+      color: var(--gray-light);
+    }
+
+    .process-notice li {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      font-size: 1rem;
+    }
+
+    .process-notice li:last-child {
+      margin-bottom: 0;
+    }
+
+    .process-notice li strong {
+      color: var(--accent-light);
+    }
+
+    /* Nút tìm xe */
+    .btn-search{
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      padding: 16px 32px !important;
+      border-radius: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+      line-height: 1 !important;
+      min-height: 56px;
+      position: relative;
+      z-index: 6;
+    }
+    .btn-search::before,
+    .btn-search::after { content:none !important; }
+    .btn-search i {
+      display:inline-block !important;
+      opacity:1 !important;
+      width:1.25em;
+      height:1.25em;
+      font-size:1.1em;
+      margin-right:8px;
+      transform:none !important;
+    }
+    .btn-search:hover {
+      background:var(--accent-dark);
+      transform:translateY(-3px);
+      box-shadow:0 12px 32px rgba(59,130,246,.4);
+    }
+
+    .btn:focus,.btn-search:focus,.btn-gray:focus{
+      outline:2px solid var(--accent-light);outline-offset:2px
+    }
 
     /* Responsive */
     @media (max-width:768px){
@@ -125,49 +322,22 @@
       .table th,.table td{padding:16px}
       .actions{justify-content:center}
       .summary-card{max-width:100%}
+      .alert {
+        padding: 16px 20px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .btn-close {
+        position: relative;
+        top: auto;
+        right: auto;
+        align-self: flex-end;
+        margin-top: 8px;
+      }
     }
 
-    /* --- FIX NÚT "TIẾP TỤC TÌM XE" BỊ NHẢY KHI HOVER --- */
-    .btn-search{
-      background:var(--accent);
-      color:var(--white);
-      border:none;
-      padding:14px 28px !important;
-      border-radius:12px;
-      font-weight:700;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      transition:background .25s ease, box-shadow .25s ease, transform .2s ease;
-      font-size:1.1rem;
-      line-height:1 !important;
-      min-height:56px;
-      position:relative;
-      z-index:6;
-    }
-    .btn-search::before,
-    .btn-search::after { content:none !important; }
-    .btn-search i {
-      display:inline-block !important;
-      opacity:1 !important;
-      width:1.25em;
-      height:1.25em;
-      font-size:1.1em;
-      margin-right:6px;
-      transform:none !important;
-    }
-    .btn-search:hover {
-      background:var(--accent-dark);
-      transform:translateY(-2px);
-      box-shadow:0 10px 28px rgba(59,130,246,.3);
-    }
-
-    .btn:focus,.btn-search:focus,.btn-gray:focus{
-      outline:2px solid var(--accent-light);outline-offset:2px
-    }
-    @media (prefers-reduced-motion: reduce){*{transition:none !important}}
+    @media (prefers-reduced-motion: reduce){*{transition:none !important; animation: none !important;}}
+    
   </style>
 </head>
 
@@ -195,19 +365,75 @@
 
 <main class="container">
   <h1 class="page-title"><i class="fas fa-shopping-cart"></i> Giỏ hàng</h1>
-  
-  <%-- Thêm đoạn này sau thẻ <h1> --%>
-<div class="process-notice" style="background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-    <h4 style="margin: 0 0 8px 0; color: #1e40af;">
-        <i class="fas fa-info-circle"></i> Quy trình thuê xe mới
+
+  <c:if test="${not empty sessionScope.warning}">
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle alert-icon"></i>
+        <div class="alert-content">
+            <span class="alert-title">Thông báo</span>
+            <div class="alert-message">${sessionScope.warning}</div>
+        </div>
+        <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <c:remove var="warning" scope="session"/>
+</c:if>
+
+<c:if test="${not empty sessionScope.error}">
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle alert-icon"></i>
+        <div class="alert-content">
+            <span class="alert-title">Không thể xử lý</span>
+            <div class="alert-message">${sessionScope.error}</div>
+        </div>
+        <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <c:remove var="error" scope="session"/>
+</c:if>
+
+<c:if test="${not empty sessionScope.success}">
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle alert-icon"></i>
+        <div class="alert-content">
+            <span class="alert-title">Thành công</span>
+            <div class="alert-message">${sessionScope.success}</div>
+        </div>
+        <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <c:remove var="success" scope="session"/>
+</c:if>
+
+<!-- THÔNG BÁO LỖI TRỰC TIẾP TỪ REQUEST (nếu có) -->
+<c:if test="${not empty requestScope.error}">
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle alert-icon"></i>
+        <div class="alert-content">
+            <span class="alert-title">Lỗi đặt xe</span>
+            <div class="alert-message">${requestScope.error}</div>
+        </div>
+        <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</c:if>
+
+  <!-- QUY TRÌNH THUÊ XE - ĐÃ ĐƯỢC THIẾT KẾ LẠI -->
+  <div class="process-notice">
+    <h4>
+      <i class="fas fa-info-circle"></i> Quy trình thuê xe tại RideNow
     </h4>
-    <ol style="margin: 0; padding-left: 20px; color: #374151;">
-        <li>Thanh toán 30% + cọc qua chuyển khoản</li>
-        <li>Admin xác minh thanh toán (trong vòng 30 phút)</li>
-        <li>Đến cửa hàng nhận xe khi được xác nhận</li>
-        <li>Trả xe và nhận lại tiền cọc</li>
+    <ol>
+      <li><strong>Thanh toán 30% + tiền cọc</strong> qua chuyển khoản ngân hàng</li>
+      <li><strong>Admin xác minh thanh toán</strong> trong vòng 30 phút làm việc</li>
+      <li><strong>Đến cửa hàng nhận xe</strong> khi đơn hàng được xác nhận</li>
+      <li><strong>Trả xe và nhận lại tiền cọc</strong> sau khi hoàn tất thuê</li>
     </ol>
-</div>
+  </div>
   
   <c:choose>
     <c:when test="${empty cartItems}">
@@ -216,9 +442,9 @@
         <div class="empty-cart-content">
           <i class="fas fa-shopping-cart"></i>
           <h3>Giỏ hàng trống</h3>
-          <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+          <p>Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy tìm và thêm những chiếc xe phù hợp với nhu cầu của bạn!</p>
           <a class="btn-search" href="${ctx}/motorbikesearch">
-            Tiếp tục tìm xe
+            <i class="fas fa-magnifying-glass"></i> Tiếp tục tìm xe
           </a>
         </div>
       </div>
@@ -230,13 +456,13 @@
           <table class="table">
             <thead>
               <tr>
-                <th style="text-align:left">Xe</th>
-                <th>Ngày thuê</th>
+                <th style="text-align:left">Xe thuê</th>
+                <th>Thời gian thuê</th>
                 <th>Giá/ngày</th>
                 <th>Số ngày</th>
                 <th>Tạm tính</th>
-                <th>Cọc</th>
-                <th></th>
+                <th>Tiền cọc</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -260,7 +486,7 @@
                     <form action="${ctx}/cart" method="post">
                       <input type="hidden" name="action" value="remove"/>
                       <input type="hidden" name="index" value="${st.index}"/>
-                      <button class="btn-gray" type="submit" title="Xóa">
+                      <button class="btn-gray" type="submit" title="Xóa khỏi giỏ hàng">
                         <i class="fas fa-trash"></i>
                       </button>
                     </form>
@@ -272,33 +498,52 @@
         </div>
       </div>
 
-      <%-- THAY THẾ ĐOẠN NÀY --%>
-<div class="actions">
-  <div class="summary-card">
-    <div class="summary-row">
-      <span class="summary-label">Tổng tiền xe</span>
-      <span class="summary-value"><fmt:formatNumber value="${total}" type="number"/> đ</span>
-    </div>
-    <div class="summary-row">
-      <span class="summary-label">Cọc</span>
-      <span class="summary-value"><fmt:formatNumber value="${depositTotal}" type="number"/> đ</span>
-    </div>
-    <div class="summary-row summary-total">
-      <span>Trả ngay (30% + cọc)</span>
-      <span><fmt:formatNumber value="${toPayNow}" type="number"/> đ</span>
-    </div>
-    
-    <%-- SỬA NÚT THÀNH FORM --%>
-    <form action="${ctx}/cart" method="post" style="display: inline; width: 100%;">
-      <input type="hidden" name="action" value="checkout"/>
-      <button type="submit" class="btn-search" style="border: none; background: none; cursor: pointer; width: 100%; font: inherit; color: inherit;">
-        Tiếp tục thanh toán <i class="fas fa-arrow-right"></i>
-      </button>
-    </form>
-  </div>
-</div>
+      <div class="actions">
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">Tổng tiền thuê xe</span>
+            <span class="summary-value"><fmt:formatNumber value="${total}" type="number"/> đ</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Tổng tiền cọc</span>
+            <span class="summary-value"><fmt:formatNumber value="${depositTotal}" type="number"/> đ</span>
+          </div>
+          <div class="summary-row summary-total">
+            <span>Thanh toán ngay (30% + cọc)</span>
+            <span><fmt:formatNumber value="${toPayNow}" type="number"/> đ</span>
+          </div>
+
+          <form action="${ctx}/cart" method="post" style="display: inline; width: 100%; margin-top: 20px;">
+            <input type="hidden" name="action" value="checkout"/>
+            <button type="submit" class="btn-search" style="border: none; background: none; cursor: pointer; width: 100%; font: inherit; color: inherit;">
+              <i class="fas fa-credit-card"></i> Tiến hành thanh toán
+            </button>
+          </form>
+        </div>
+      </div>
+                     
     </c:otherwise>
   </c:choose>
 </main>
+    
+<script>
+// Tự động ẩn thông báo sau 8 giây
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            if (alert.parentElement) {
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (alert.parentElement) {
+                        alert.remove();
+                    }
+                }, 300);
+            }
+        }, 8000);
+    });
+});
+</script>
 </body>
 </html>

@@ -182,7 +182,7 @@
                       </td>
                       <td>
                         <c:if test="${o.canCancel}">
-                          <form method="post" action="${ctx}/customerorders"
+                          <form method="post" action="${pageContext.request.contextPath}/customerorders"
                                 onsubmit="return confirm('Bạn có chắc muốn hủy đơn #${o.orderId}?');"
                                 style="display:inline">
                             <input type="hidden" name="action" value="cancel"/>
@@ -237,7 +237,7 @@
                       </td>
                       <td>
                         <c:if test="${canCancel}">
-                          <form method="post" action="${ctx}/customerorders"
+                          <form method="post" action="${pageContext.request.contextPath}/customerorders"
                                 onsubmit="return confirm('Bạn có chắc muốn hủy đơn #${r[0]}?');"
                                 style="display:inline">
                             <input type="hidden" name="action" value="cancel"/>
