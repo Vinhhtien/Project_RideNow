@@ -405,7 +405,7 @@ public class PayNowServlet extends HttpServlet {
             // SỬA: Dùng 'wallet' (được phép bởi CK_Payments_Method)
             String paymentSql = """
                 INSERT INTO Payments (order_id, amount, method, status, payment_date, reference)
-                VALUES (?, ?, 'wallet', 'completed', GETDATE(), ?)
+                VALUES (?, ?, 'wallet', 'paid', GETDATE(), ?)
                 """;
             try (PreparedStatement ps = con.prepareStatement(paymentSql)) {
                 ps.setInt(1, orderId);

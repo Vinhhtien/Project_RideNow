@@ -1,6 +1,9 @@
+
 package dao;
 
 import model.Customer;
+import java.util.List;
+
 
 public interface ICustomerDao {
     Customer findByAccountId(int accountId) throws Exception;
@@ -11,4 +14,7 @@ public interface ICustomerDao {
     /** Đổi mật khẩu cho tài khoản.
      *  Trả về true nếu đổi thành công (mật khẩu hiện tại đúng), ngược lại false. */
     boolean updatePassword(int accountId, String currentPw, String newPw) throws Exception;
+    // LẤY TẤT CẢ KHÁCH HÀNG
+
+    List<model.Customer> findAll() throws Exception;
 }

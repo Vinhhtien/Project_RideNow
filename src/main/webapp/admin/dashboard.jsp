@@ -21,7 +21,7 @@
       <a href="${pageContext.request.contextPath}/admin/bikes">Motorbikes</a>
       <a href="${pageContext.request.contextPath}/admin/orders">Orders</a> 
       <a href="${pageContext.request.contextPath}/adminreturns">Returns</a>
-      <a href="${pageContext.request.contextPath}/adminwithdrawals">Withdrawals</a>
+      
 
       <a href="${pageContext.request.contextPath}/admin/payments">Payments</a>
       <a href="${pageContext.request.contextPath}/admin/reports">Reports</a>
@@ -30,14 +30,14 @@
     -->
         
     <nav>
-    <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
-    <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
-    <a href="${pageContext.request.contextPath}/adminpickup">Giao Nhận Xe</a>
-    <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
-    <a href="${pageContext.request.contextPath}/adminreturns">Hoàn Cọc</a>
-    <a href="${pageContext.request.contextPath}/adminwithdrawals">Rút Tiền</a>
-    <a href="${pageContext.request.contextPath}/logout">Logout</a>
-</nav>
+        <a href="${pageContext.request.contextPath}/admin/dashboard" class="active">Dashboard</a>
+      <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
+      <a href="${pageContext.request.contextPath}/adminpickup">Giao Nhận Xe</a>
+      <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
+      <a href="${pageContext.request.contextPath}/adminreturns" >Kiểm tra và Hoàn Cọc</a>
+      <!--<a href="${pageContext.request.contextPath}/adminwithdrawals">Rút Tiền</a>-->
+      <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
+    </nav>
   </aside>
 
   <main class="content">

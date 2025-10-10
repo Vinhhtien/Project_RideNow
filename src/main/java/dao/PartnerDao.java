@@ -1,3 +1,4 @@
+
 package dao;
 
 import model.Partner;
@@ -34,46 +35,78 @@ public class PartnerDao implements IPartnerDao {
     }
 
     @Override
-    public boolean updateAccountInfo(Partner partner) throws Exception {
-        final String sql =
-            "UPDATE Partners SET company_name = ?, address = ?, phone = ? WHERE account_id = ?"; // KHÔNG có email
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            // LƯU Ý: đổi setCompanyName/setFullname cho đúng model của bạn
-            // Nếu model có setCompanyName:
-            // ps.setString(1, partner.getCompanyName());
-            // Nếu model hiện tại đang là setFullname (như code trước):
-            ps.setString(1, partner.getFullname());
-
-            ps.setString(2, partner.getAddress());
-            ps.setString(3, partner.getPhone());
-            ps.setInt(4, partner.getAccountId());
-
+    public boolean updateAccountInfo(Partner p) {
+        String sql = "UPDATE Partners SET company_name = ?, address = ?, phone = ? WHERE account_id = ?";
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, p.getFullname());   // lưu ý method đang là getFullname()
+            ps.setString(2, p.getAddress());
+            ps.setString(3, p.getPhone());
+            ps.setInt(4, p.getAccountId());
             return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
+    @Override
+    public boolean updateAccountName(int accountId, String accountName) {
+        String sql = "UPDATE Accounts SET username = ? WHERE account_id = ?";
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, accountName);
+            ps.setInt(2, accountId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
     @Override
-    public Partner getByAccountId(int accountId) throws Exception {
-        final String sql =
-            "SELECT partner_id, account_id, company_name, address, phone, admin_id " + // KHÔNG có email
-            "FROM Partners WHERE account_id = ?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, accountId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapRow(rs);
-                }
-                return null;
-            }
+    public boolean updatePassword(int accountId, String newPassword) {
+        String sql = "UPDATE Accounts SET password = ? WHERE account_id = ?";
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, newPassword);     // nếu có hashing, thay bằng hash
+            ps.setInt(2, accountId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
+    
+
+
+   @Override
+public Partner getByAccountId(int accountId) {
+    String sql = "SELECT partner_id, account_id, company_name, address, phone, admin_id " +
+                 "FROM Partners WHERE account_id = ?";
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, accountId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                Partner p = new Partner();
+                p.setPartnerId(rs.getInt("partner_id"));
+                p.setAccountId(rs.getInt("account_id"));
+                p.setFullname(rs.getString("company_name"));
+                p.setAddress(rs.getString("address"));
+                p.setPhone(rs.getString("phone"));
+                int adminId = rs.getInt("admin_id");
+                if (rs.wasNull()) {
+                    p.setAdminId(null);
+                } else {
+                    p.setAdminId(adminId);
+                }
+                return p;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+
 
     // --- Helper ---
     private Partner mapRow(ResultSet rs) throws SQLException {

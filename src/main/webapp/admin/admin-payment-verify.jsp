@@ -22,7 +22,7 @@
         <div class="brand">RideNow Admin</div>
         <nav>
             <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
-            <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
+            <a href="${pageContext.request.contextPath}/adminpaymentverify" class="active">Xác Minh Thanh Toán</a>
             <a href="${pageContext.request.contextPath}/adminpickup">Giao Nhận Xe</a>
             <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
             <a href="${pageContext.request.contextPath}/adminreturns"> Kiểm tra và Hoàn Cọc</a>

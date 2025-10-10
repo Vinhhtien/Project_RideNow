@@ -9,6 +9,7 @@ import utils.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 public class CustomerService implements ICustomerService {
     private final ICustomerDao dao = new CustomerDao();
@@ -65,5 +66,10 @@ public class CustomerService implements ICustomerService {
             ps.setInt(1, orderId);
             ps.executeUpdate();
         }
+    }
+    
+    @Override
+    public List<model.Customer> getAll() throws Exception {
+        return dao.findAll();
     }
 }

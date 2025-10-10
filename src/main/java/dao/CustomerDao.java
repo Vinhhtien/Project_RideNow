@@ -2,6 +2,8 @@ package dao;
 
 import model.Customer;
 import utils.DBConnection;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.sql.*;
 
@@ -103,6 +105,25 @@ public class CustomerDao implements ICustomerDao {
             ps2.setInt(2, accountId);
             return ps2.executeUpdate() > 0;
         }
+    }
+    @Override
+    public List<model.Customer> findAll() throws Exception {
+        List<model.Customer> customers = new ArrayList<>();
+        String sql = "SELECT customer_id, account_id, full_name, email, phone, address FROM Customers";
+        try (java.sql.Connection con = utils.DBConnection.getConnection(); java.sql.PreparedStatement ps = con.prepareStatement(sql); java.sql.ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                model.Customer c = new model.Customer();
+                c.setCustomerId(rs.getInt("customer_id"));
+                c.setAccountId(rs.getInt("account_id"));
+                c.setFullName(rs.getString("full_name"));
+                c.setEmail(rs.getString("email"));
+                c.setPhone(rs.getString("phone"));
+                c.setAddress(rs.getString("address"));
+                customers.add(c);
+            }
+        }
+        return customers;
     }
 
 

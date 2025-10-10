@@ -8,6 +8,7 @@ import model.Partner;
 import model.Review;
 
 import java.util.List;
+import model.MotorbikeListItem;
 
 public class PartnerService implements IPartnerService {
     private final IPartnerDao dao = new PartnerDao();          // gọi xuống DAO
@@ -24,11 +25,19 @@ public class PartnerService implements IPartnerService {
     public boolean updateAccountInfo(Partner partner) throws Exception {
         return dao.updateAccountInfo(partner);
     }
-
+    @Override
+    public boolean updateAccountName(int accountId, String accountName) {
+        return dao.updateAccountName(accountId, accountName);
+    }
+    @Override
+    public boolean updatePassword(int accountId, String newPassword) {
+        // TODO: nếu dự án đang dùng hash, đổi sang băm trước khi lưu
+        return dao.updatePassword(accountId, newPassword);
+    }
     // 3. View Bike Details
     @Override
-    public Motorbike getBikeDetails(int bikeId) throws Exception {
-        return (Motorbike) motorbikeService.findByTypeId(bikeId);
+    public MotorbikeListItem getBikeDetails(int bikeId) throws Exception {
+        return motorbikeService.getDetail(bikeId);
     }
 
     // 4. View My Bikes (danh sách xe của partner)

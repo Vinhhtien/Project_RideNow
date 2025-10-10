@@ -1,4 +1,6 @@
+
 package dao;
+
 
 import model.Partner;
 
@@ -14,6 +16,8 @@ public interface IPartnerDao {
      * Trả về true nếu có bản ghi được cập nhật.
      */
     boolean updateAccountInfo(Partner partner) throws Exception;
+    boolean updateAccountName(int accountId, String accountName);
+    boolean updatePassword(int accountId, String newPassword);
 
     /**
      * 3) Lấy Partner theo account_id (phục vụ getByAccountId trong service).
