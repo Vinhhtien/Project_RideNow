@@ -33,6 +33,7 @@ public class MyOrdersServlet extends HttpServlet {
         private String status; // pending|confirmed|completed|cancelled
         private boolean hasPendingPayment;   // có payment ở trạng thái 'pending'
         private boolean paymentSubmitted;    // cờ r.order.payment_submitted (đã bấm "tôi đã chuyển")
+        private String paymentMethod;
 
         // ==== Getters/Setters tiêu chuẩn ====
         public int getOrderId() { return orderId; }
@@ -58,6 +59,14 @@ public class MyOrdersServlet extends HttpServlet {
 
         public boolean isPaymentSubmitted() { return paymentSubmitted; }
         public void setPaymentSubmitted(boolean paymentSubmitted) { this.paymentSubmitted = paymentSubmitted; }
+        
+        public String getPaymentMethod() {
+            return paymentMethod;
+        }
+
+        public void setPaymentMethod(String paymentMethod) {
+            this.paymentMethod = paymentMethod;
+        }
 
         // ==== Các thuộc tính tính toán cho JSP ====
         /** Được phép tick để thanh toán? */
@@ -67,7 +76,7 @@ public class MyOrdersServlet extends HttpServlet {
 
         /** Hiển thị nút Hủy? */
         public boolean isCanCancel() {
-            return "pending".equalsIgnoreCase(status) && !hasPendingPayment; // đã gửi xác minh thì không cho hủy ở đây
+            return "pending".equalsIgnoreCase(status) && !hasPendingPayment && !paymentSubmitted;
         }
     }
 
@@ -94,57 +103,77 @@ public class MyOrdersServlet extends HttpServlet {
 
             System.out.println("✅ Loading orders for customer: " + c.getCustomerId());
             
-            // rows: [order_id, bike_name, start, end, total, status, has_pending_payment, payment_submitted]
-            List<Object[]> rows = qdao.findOrdersOfCustomerWithPaymentStatus(c.getCustomerId());
+            // SỬA: Sử dụng query mới với validation tốt hơn
+            List<Object[]> rows = getOrdersWithPaymentStatus(c.getCustomerId());
 
             // Map sang OrderVM để JSP dùng thuộc tính đọc dễ hơn
             List<OrderVM> ordersVm = new ArrayList<>();
             boolean hasPendingPayments = false;
 
             for (Object[] r : rows) {
+                if (r == null || r.length < 6) {
+                    System.out.println("⚠️ Skipping invalid row: " + (r == null ? "null" : "length=" + r.length));
+                    continue;
+                }
+                
                 OrderVM vm = new OrderVM();
-                vm.setOrderId((Integer) r[0]);
-                vm.setBikeName((String) r[1]);
-                vm.setStart((Date) r[2]);
-                vm.setEnd((Date) r[3]);
-                vm.setTotal((BigDecimal) r[4]);
-                vm.setStatus((String) r[5]);
+                try {
+                    vm.setOrderId((Integer) r[0]);
+                    vm.setBikeName((String) r[1]);
+                    vm.setStart((Date) r[2]);
+                    vm.setEnd((Date) r[3]);
+                    vm.setTotal((BigDecimal) r[4]);
+                    vm.setStatus((String) r[5]);
 
-                boolean pendingPay = false;
-                if (r.length > 6 && r[6] != null) {
-                    // r[6] có thể là Boolean, Integer hoặc Number -> ép về boolean
-                    if (r[6] instanceof Boolean) pendingPay = (Boolean) r[6];
-                    else if (r[6] instanceof Number) pendingPay = ((Number) r[6]).intValue() != 0;
-                    else pendingPay = Boolean.parseBoolean(r[6].toString());
+                    boolean pendingPay = false;
+                    if (r.length > 6 && r[6] != null) {
+                        if (r[6] instanceof Boolean) pendingPay = (Boolean) r[6];
+                        else if (r[6] instanceof Number) pendingPay = ((Number) r[6]).intValue() != 0;
+                        else pendingPay = Boolean.parseBoolean(r[6].toString());
+                    }
+                    vm.setHasPendingPayment(pendingPay);
+                    
+                    // SỬA: Xử lý payment method
+                    String paymentMethod = "";
+                    if (r.length > 7 && r[7] != null) {
+                        paymentMethod = r[7].toString();
+                    }
+                    vm.setPaymentMethod(paymentMethod);
+                    
+                    boolean submitted = false;
+                    if (r.length > 8 && r[8] != null) {
+                        if (r[8] instanceof Boolean) submitted = (Boolean) r[8];
+                        else if (r[8] instanceof Number) submitted = ((Number) r[8]).intValue() != 0;
+                        else submitted = Boolean.parseBoolean(r[8].toString());
+                    }
+                    vm.setPaymentSubmitted(submitted);
+
+                    if (pendingPay || submitted) hasPendingPayments = true;
+
+                    ordersVm.add(vm);
+                    
+                    System.out.println("📦 Order #" + vm.getOrderId() + " - Status: " + vm.getStatus() + 
+                                     ", PendingPay: " + vm.isHasPendingPayment() + 
+                                     ", Submitted: " + vm.isPaymentSubmitted() +
+                                     ", Method: " + vm.getPaymentMethod());
+                } catch (Exception e) {
+                    System.err.println("❌ Error processing order row: " + e.getMessage());
+                    e.printStackTrace();
                 }
-                vm.setHasPendingPayment(pendingPay);
-
-                boolean submitted = false;
-                if (r.length > 7 && r[7] != null) {
-                    if (r[7] instanceof Boolean) submitted = (Boolean) r[7];
-                    else if (r[7] instanceof Number) submitted = ((Number) r[7]).intValue() != 0;
-                    else submitted = Boolean.parseBoolean(r[7].toString());
-                }
-                vm.setPaymentSubmitted(submitted);
-
-                if (pendingPay || submitted) hasPendingPayments = true;
-
-                ordersVm.add(vm);
             }
 
             req.setAttribute("ordersVm", ordersVm);
             req.setAttribute("hasPendingPayments", hasPendingPayments);
-
-            // Fallback cho JSP cũ nếu vẫn còn dùng "rows"
             req.setAttribute("rows", rows);
 
-            System.out.println("✅ Loaded " + ordersVm.size() + " orders, redirecting to JSP");
+            System.out.println("✅ Loaded " + ordersVm.size() + " orders, hasPendingPayments: " + hasPendingPayments);
             
             req.getRequestDispatcher("/customer/my-orders.jsp").forward(req, resp);
         } catch (Exception e) {
             System.err.println("❌ ERROR in MyOrdersServlet doGet: " + e.getMessage());
             e.printStackTrace();
-            throw new ServletException("Error loading orders: " + e.getMessage(), e);
+            req.getSession().setAttribute("flash", "Lỗi khi tải danh sách đơn hàng: " + e.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/customerorders");
         }
     }
 
@@ -153,16 +182,7 @@ public class MyOrdersServlet extends HttpServlet {
             throws ServletException, IOException {
 
         System.out.println("🔍 DEBUG MyOrdersServlet - doPost called");
-        System.out.println("📝 Request URL: " + req.getRequestURL());
-        System.out.println("📝 Query String: " + req.getQueryString());
-        System.out.println("📝 Method: " + req.getMethod());
         
-        // Log all parameters
-        System.out.println("📝 Parameters:");
-        req.getParameterMap().forEach((key, values) -> {
-            System.out.println("  " + key + ": " + String.join(", ", values));
-        });
-
         Account acc = (Account) req.getSession().getAttribute("account");
         if (acc == null) {
             System.out.println("❌ No account in session");
@@ -181,15 +201,37 @@ public class MyOrdersServlet extends HttpServlet {
         }
     }
 
+    /**
+     * SỬA: Query mới với validation tốt hơn
+     */
+    private List<Object[]> getOrdersWithPaymentStatus(int customerId) {
+        try {
+            // Sử dụng DAO hiện có, nhưng thêm logging
+            List<Object[]> results = qdao.findOrdersOfCustomerWithPaymentStatus(customerId);
+            System.out.println("📊 Query returned " + (results != null ? results.size() : "null") + " orders");
+            
+            if (results != null) {
+                for (int i = 0; i < results.size(); i++) {
+                    Object[] row = results.get(i);
+                    if (row != null) {
+                        System.out.println("📋 Row " + i + ": " + java.util.Arrays.toString(row));
+                    }
+                }
+            }
+            
+            return results != null ? results : new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("❌ Error in getOrdersWithPaymentStatus: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
     private void cancelOrder(HttpServletRequest req, HttpServletResponse resp, Account acc)
             throws ServletException, IOException {
 
-        System.out.println("🚨🚨🚨 CANCEL ORDER DEBUG 🚨🚨🚨");
-        System.out.println("📝 Request URI: " + req.getRequestURI());
-        System.out.println("📝 Context Path: " + req.getContextPath());
-        System.out.println("📝 Servlet Path: " + req.getServletPath());
-        System.out.println("📝 Path Info: " + req.getPathInfo());
-
+        System.out.println("🚨 CANCEL ORDER REQUEST 🚨");
+        
         String orderIdParam = req.getParameter("orderId");
         System.out.println("📝 Order ID parameter: " + orderIdParam);
         
