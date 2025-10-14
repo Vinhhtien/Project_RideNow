@@ -8,98 +8,244 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giao Nhận Xe - RideNow Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${ctx}/css/admin.css">
-    <style>
-        .badge.not_picked_up { background: #fef3c7; color: #92400e; }
-        .badge.picked_up { background: #dcfce7; color: #166534; }
-        .empty-state { text-align: center; padding: 40px; color: #666; }
-        .empty-state i { font-size: 48px; margin-bottom: 16px; color: #ccc; }
-    </style>
 </head>
 <body class="admin">
+    <!-- Sidebar Navigation -->
     <aside class="sidebar">
-        <div class="brand">RideNow Admin</div>
-        <nav>
-            <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
-            <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
-            <a href="${pageContext.request.contextPath}/adminpickup" class="active">Giao Nhận Xe</a>
-            <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
-            <a href="${pageContext.request.contextPath}/adminreturns">Kiểm tra và Hoàn Cọc</a>
-            <!--<a href="${pageContext.request.contextPath}/adminwithdrawals">Rút Tiền</a>-->
-            <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
+        <div class="brand">
+            <div class="brand-logo">
+                <i class="fas fa-motorcycle"></i>
+            </div>
+            <h1>RideNow Admin</h1>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="${ctx}/admin/dashboard" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="${ctx}/admin/partners" class="nav-item">
+                <i class="fas fa-handshake"></i>
+                <span>Partners</span>
+            </a>
+            <a href="${ctx}/admin/customers" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </a>
+            <a href="${ctx}/admin/bikes" class="nav-item">
+                <i class="fas fa-motorcycle"></i>
+                <span>Motorbikes</span>
+            </a>
+            <a href="${ctx}/admin/orders" class="nav-item">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Orders</span>
+            </a>
+            <a href="${ctx}/adminpaymentverify" class="nav-item">
+                <i class="fas fa-money-check-alt"></i>
+                <span>Verify Payments</span>
+            </a>
+            <a href="${ctx}/adminpickup" class="nav-item active">
+                <i class="fas fa-shipping-fast"></i>
+                <span>Vehicle Pickup</span>
+            </a>
+            <a href="${ctx}/adminreturn" class="nav-item">
+                <i class="fas fa-undo-alt"></i>
+                <span>Vehicle Return</span>
+            </a>
+            <a href="${ctx}/adminreturns" class="nav-item">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Verify & Refund</span>
+            </a>
+            <a href="${ctx}/admin/reports" class="nav-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+            <a href="${ctx}/admin/feedback" class="nav-item">
+                <i class="fas fa-comment-alt"></i>
+                <span>Feedback</span>
+            </a>
+            <a href="${ctx}/logout" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
         </nav>
     </aside>
 
+    <!-- Main Content -->
     <main class="content">
-        <h1>Giao Nhận Xe</h1>
+        <header class="content-header">
+            <div class="header-left">
+                <h1>Giao Nhận Xe</h1>
+                <div class="breadcrumb">
+                    <span>Admin</span>
+                    <i class="fas fa-chevron-right"></i>
+                    <span class="active">Giao Nhận Xe</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <span>Administrator</span>
+                </div>
+            </div>
+        </header>
 
         <c:if test="${not empty sessionScope.flash}">
-            <div class="notice">${sessionScope.flash}</div>
+            <div class="notice">
+                <i class="fas fa-info-circle"></i>
+                ${sessionScope.flash}
+            </div>
             <c:remove var="flash" scope="session"/>
         </c:if>
 
-        <div class="panel">
-            <div class="panel-head">
-                <h2>Đơn Hàng Chờ Giao Xe</h2>
+        <!-- KPI Cards -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value">${not empty orders ? orders.size() : 0}</div>
+                    <div class="kpi-label">Chờ Giao Nhận</div>
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value">
+                        <c:set var="todayPickups" value="0" />
+                        <c:forEach var="o" items="${orders}">
+                            <c:if test="${o[4] eq today}">
+                                <c:set var="todayPickups" value="${todayPickups + 1}" />
+                            </c:if>
+                        </c:forEach>
+                        ${todayPickups}
+                    </div>
+                    <div class="kpi-label">Giao Hôm Nay</div>
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-value">
+                        <c:set var="totalDeposit" value="0" />
+                        <c:forEach var="o" items="${orders}">
+                            <c:set var="totalDeposit" value="${totalDeposit + o[7]}" />
+                        </c:forEach>
+                        <fmt:formatNumber value="${totalDeposit}" type="currency"/>
+                    </div>
+                    <div class="kpi-label">Tổng Tiền Cọc</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders Panel -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2>
+                    <i class="fas fa-truck-loading"></i>
+                    Đơn Hàng Chờ Giao Xe
+                </h2>
+                <div class="panel-stats">
+                    <span class="stat-badge">
+                        <i class="fas fa-list"></i>
+                        Tổng số: ${not empty orders ? orders.size() : 0}
+                    </span>
+                </div>
             </div>
 
-            <c:choose>
-                <c:when test="${empty orders}">
-                    <div class="empty-state">
-                        <i class="fas fa-motorcycle"></i>
-                        <h3>Không có đơn hàng nào chờ giao xe</h3>
-                        <p>Tất cả các đơn hàng đã được xử lý</p>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Mã Đơn</th>
-                                <th>Khách Hàng</th>
-                                <th>Xe Thuê</th>
-                                <th>Ngày Thuê</th>
-                                <th>Tổng Tiền</th>
-                                <th>Tiền Cọc</th>
-                                <th>Trạng Thái</th>
-                                <th>Thao Tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="o" items="${orders}">
-                                <tr>
-                                    <td>#${o[0]}</td>
-                                    <td>
-                                        ${o[1]}<br>
-                                        <small class="text-muted">${o[2]}</small>
-                                    </td>
-                                    <td>${o[3]}</td> <!-- ĐÃ SỬA: bike_name từ index 3 -->
-                                    <td>
-                                        <fmt:formatDate value="${o[4]}" pattern="dd/MM/yyyy"/> - <!-- ĐÃ SỬA: start_date từ index 4 -->
-                                        <fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/> <!-- ĐÃ SỬA: end_date từ index 5 -->
-                                    </td>
-                                    <td><fmt:formatNumber value="${o[6]}" type="currency"/></td> <!-- ĐÃ SỬA: total_price từ index 6 -->
-                                    <td><fmt:formatNumber value="${o[7]}" type="currency"/></td> <!-- ĐÃ SỬA: deposit_amount từ index 7 -->
-                                    <td><span class="badge not_picked_up">${o[8]}</span></td> <!-- ĐÃ SỬA: pickup_status từ index 8 -->
-                                    <td>
-                                        <form method="post" action="${ctx}/adminpickup" 
-                                              onsubmit="return confirm('Xác nhận khách đã nhận xe?');">
-                                            <input type="hidden" name="orderId" value="${o[0]}">
-                                            <button type="submit" class="btn btn-sm btn-primary">
-                                                <i class="fas fa-check"></i> Đã Nhận Xe
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
-                </c:otherwise>
-            </c:choose>
-        </div>
+            <div class="panel-body">
+                <c:choose>
+                    <c:when test="${empty orders}">
+                        <div class="empty-state">
+                            <i class="fas fa-motorcycle"></i>
+                            <h3>Không có đơn hàng nào chờ giao xe</h3>
+                            <p>Tất cả các đơn hàng đã được xử lý</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mã Đơn</th>
+                                        <th>Khách Hàng</th>
+                                        <th>Xe Thuê</th>
+                                        <th>Ngày Thuê</th>
+                                        <th>Tổng Tiền</th>
+                                        <th>Tiền Cọc</th>
+                                        <th>Trạng Thái</th>
+                                        <th>Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="o" items="${orders}">
+                                        <tr>
+                                            <td><strong>#${o[0]}</strong></td>
+                                            <td>
+                                                <div class="customer-info">
+                                                    <div class="customer-name">${o[1]}</div>
+                                                    <div class="text-muted">${o[2]}</div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="bike-info">
+                                                    <i class="fas fa-motorcycle"></i>
+                                                    ${o[3]}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="date-range">
+                                                    <strong>Từ:</strong> <fmt:formatDate value="${o[4]}" pattern="dd/MM/yyyy"/><br>
+                                                    <strong>Đến:</strong> <fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong style="color: #3b82f6;">
+                                                    <fmt:formatNumber value="${o[6]}" type="currency"/>
+                                                </strong>
+                                            </td>
+                                            <td>
+                                                <strong style="color: #059669;">
+                                                    <fmt:formatNumber value="${o[7]}" type="currency"/>
+                                                </strong>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge pending">
+                                                    <i class="fas fa-clock"></i>
+                                                    ${o[8]}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <!-- GIỮ NGUYÊN FORM - KHÔNG THAY ĐỔI CHỨC NĂNG -->
+                                                <form method="post" action="${ctx}/adminpickup" 
+                                                      onsubmit="return confirm('Xác nhận khách đã nhận xe?');">
+                                                    <input type="hidden" name="orderId" value="${o[0]}">
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-check"></i> Đã Nhận Xe
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </section>
     </main>
-
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>

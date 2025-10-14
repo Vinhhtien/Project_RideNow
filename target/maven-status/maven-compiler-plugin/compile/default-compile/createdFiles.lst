@@ -9,7 +9,6 @@ controller\VerifyEmailServlet.class
 dao\WalletDao.class
 dao\OrderDao.class
 service\PartnerService.class
-controller\admin\AdminDashboardServlet.class
 controller\BookingServlet.class
 dao\IRentalOrderDao.class
 dao\IPaymentDao.class
@@ -24,6 +23,7 @@ controller\StatusServlet.class
 service\RentalOrderService.class
 controller\AdminPickupServlet.class
 dao\NotificationDao.class
+controller\AdminDashboardServlet.class
 controller\AdminPaymentsServlet$Row.class
 controller\AdminReturnServlet.class
 controller\AdminReturnsServlet$RefundOrderVM.class

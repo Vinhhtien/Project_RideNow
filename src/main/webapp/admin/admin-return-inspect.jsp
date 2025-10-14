@@ -7,286 +7,309 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kiểm Tra Xe & Hoàn Cọc - RideNow Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin.css">
     <style>
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
         
         .info-card {
-            background: var(--card);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid #22306b;
-        }
-        
-        .info-card strong {
-            color: var(--text);
-            font-weight: 600;
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--shadow);
         }
         
         .inspection-section {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid #22306b;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
         }
         
         .inspection-grid {
             display: grid;
-            gap: 12px;
-            margin: 16px 0;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         }
         
         .inspection-item {
             position: relative;
             display: flex;
-            gap: 12px;
+            gap: 1rem;
             align-items: flex-start;
-            padding: 16px;
-            border: 2px solid #22306b;
-            border-radius: 10px;
-            background: var(--card);
+            padding: 1.5rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            background: white;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
         
         .inspection-item input[type="radio"] {
-            margin-top: 2px;
+            margin-top: 0.25rem;
         }
         
         .inspection-item:hover {
-            border-color: var(--accent);
+            border-color: var(--primary);
             transform: translateY(-2px);
         }
         
         .inspection-item.selected {
-            border-color: var(--accent);
-            background: rgba(91, 120, 255, 0.1);
+            border-color: var(--primary);
+            background: var(--primary-light);
         }
         
-        .inspection-item strong {
-            color: var(--text);
-            display: block;
-            margin-bottom: 4px;
+        .refund-options {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin: 1.5rem 0;
         }
         
-        .inspection-item small {
-            color: var(--muted);
-            font-size: 0.875rem;
+        .refund-option {
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .refund-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .refund-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        
+        .refund-option h4 {
+            margin: 0 0 0.5rem;
+            color: var(--gray-900);
+            font-weight: 600;
+        }
+        
+        .calculation-section {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        #displayRefundAmount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #059669;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
         }
         
         .damage-notes, .fee-input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #22306b;
+            padding: 1rem;
+            border: 1px solid var(--gray-300);
             border-radius: 8px;
-            background: rgba(11, 16, 32, 0.5);
-            color: var(--text);
+            background: white;
+            color: var(--gray-900);
             font-family: inherit;
             font-size: 0.875rem;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
         
         .damage-notes {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
         
         .damage-notes:focus, .fee-input:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(91, 120, 255, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
-        .refund-options {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            margin: 16px 0 8px;
-        }
-        
-        @media (max-width: 720px) {
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .inspection-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .refund-options {
                 grid-template-columns: 1fr;
             }
-        }
-        
-        .refund-option {
-            border: 2px solid #22306b;
-            border-radius: 12px;
-            padding: 20px;
-            background: var(--card);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .refund-option:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-        
-        .refund-option.selected {
-            border-color: var(--accent);
-            background: rgba(91, 120, 255, 0.1);
-        }
-        
-        .refund-option h4 {
-            margin: 0 0 8px;
-            color: var(--text);
-            font-weight: 600;
-        }
-        
-        .refund-option p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 0.875rem;
-        }
-        
-        .refund-option input[type="radio"] {
-            display: none;
-        }
-        
-        .calculation-section {
-            background: rgba(21, 128, 61, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        #displayRefundAmount {
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: #22c55e;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 10px;
-            text-decoration: none;
-            border: none;
-            font-family: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn:hover {
-            background: #4a6cff;
-            transform: translateY(-1px);
-        }
-        
-        .btn.secondary {
-            background: transparent;
-            color: var(--muted);
-            border: 1px solid #22306b;
-        }
-        
-        .btn.secondary:hover {
-            background: rgba(34, 48, 107, 0.3);
-            color: var(--text);
-        }
-        
-        .text-muted {
-            color: var(--muted);
-            font-size: 0.875rem;
-        }
-        
-        label {
-            font-weight: 500;
-            color: var(--text);
-            margin-bottom: 8px;
-            display: block;
-        }
-        
-        .notice {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            color: #f59e0b;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        
-        @media (max-width: 860px) {
-            .info-grid {
-                grid-template-columns: 1fr;
+            
+            .action-buttons {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body class="admin">
     <fmt:setLocale value="vi_VN"/>
+    
+    <!-- Sidebar Navigation -->
     <aside class="sidebar">
-        <div class="brand">RideNow Admin</div>
-        <nav>
-            <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
-            <a href="${pageContext.request.contextPath}/adminpaymentverify">Xác Minh Thanh Toán</a>
-            <a href="${pageContext.request.contextPath}/adminpickup">Giao Nhận Xe</a>
-            <a href="${pageContext.request.contextPath}/adminreturn">Trả Xe</a>
-            <a href="${pageContext.request.contextPath}/adminreturns" class="active">Kiểm tra và Hoàn Cọc</a>
-            <!--<a href="${pageContext.request.contextPath}/adminwithdrawals">Rút Tiền</a>-->
-            <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
+        <div class="brand">
+            <div class="brand-logo">
+                <i class="fas fa-motorcycle"></i>
+            </div>
+            <h1>RideNow Admin</h1>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/partners" class="nav-item">
+                <i class="fas fa-handshake"></i>
+                <span>Partners</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item">
+                <i class="fas fa-motorcycle"></i>
+                <span>Motorbikes</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Orders</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
+                <i class="fas fa-money-check-alt"></i>
+                <span>Verify Payments</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item">
+                <i class="fas fa-shipping-fast"></i>
+                <span>Vehicle Pickup</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/adminreturn" class="nav-item">
+                <i class="fas fa-undo-alt"></i>
+                <span>Vehicle Return</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/adminreturns" class="nav-item active">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Verify & Refund</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/reports" class="nav-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/feedback" class="nav-item">
+                <i class="fas fa-comment-alt"></i>
+                <span>Feedback</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/logout" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
         </nav>
     </aside>
 
+    <!-- Main Content -->
     <main class="content">
-        <h1>Kiểm Tra Xe & Hoàn Cọc</h1>
+        <header class="content-header">
+            <div class="header-left">
+                <h1>Kiểm Tra Xe & Hoàn Cọc</h1>
+                <div class="breadcrumb">
+                    <span>Admin</span>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Quản lý Đơn hàng</span>
+                    <i class="fas fa-chevron-right"></i>
+                    <span class="active">Kiểm Tra & Hoàn Cọc</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <span>Administrator</span>
+                </div>
+            </div>
+        </header>
 
         <c:if test="${not empty sessionScope.flash}">
-            <div class="notice">${sessionScope.flash}</div>
+            <div class="notice">
+                <i class="fas fa-info-circle"></i>
+                ${sessionScope.flash}
+            </div>
             <c:remove var="flash" scope="session"/>
         </c:if>
 
-        <div class="panel">
-            <div class="panel-head">
-                <h2>Thông Tin Đơn Hàng</h2>
+        <!-- Order Information -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2>
+                    <i class="fas fa-info-circle"></i>
+                    Thông Tin Đơn Hàng
+                </h2>
             </div>
             <div class="panel-body">
                 <div class="info-grid">
                     <div class="info-card">
-                        <strong>Mã đơn:</strong> #${order.orderId}<br>
-                        <strong>Khách hàng:</strong> ${order.customerName}<br>
-                        <strong>Điện thoại:</strong> ${order.customerPhone}
+                        <div class="info-item">
+                            <strong>Mã đơn:</strong> #${order.orderId}
+                        </div>
+                        <div class="info-item">
+                            <strong>Khách hàng:</strong> ${order.customerName}
+                        </div>
+                        <div class="info-item">
+                            <strong>Điện thoại:</strong> ${order.customerPhone}
+                        </div>
                     </div>
                     <div class="info-card">
-                        <strong>Xe thuê:</strong> ${order.bikeName}<br>
-                        <strong>Tiền cọc:</strong> <fmt:formatNumber value="${order.depositAmount}" type="currency"/><br>
-                        <strong>Ngày trả:</strong> 
-                        <c:if test="${not empty order.returnedAt}">
-                            <fmt:formatDate value="${order.returnedAt}" pattern="dd/MM/yyyy HH:mm"/>
-                        </c:if>
+                        <div class="info-item">
+                            <strong>Xe thuê:</strong> ${order.bikeName}
+                        </div>
+                        <div class="info-item">
+                            <strong>Tiền cọc:</strong> 
+                            <span style="color: #059669; font-weight: 600;">
+                                <fmt:formatNumber value="${order.depositAmount}" type="currency"/>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Ngày trả:</strong> 
+                            <c:if test="${not empty order.returnedAt}">
+                                <fmt:formatDate value="${order.returnedAt}" pattern="dd/MM/yyyy HH:mm"/>
+                            </c:if>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
+        <!-- Vehicle Inspection Form -->
         <form method="post" action="${pageContext.request.contextPath}/adminreturninspect">
             <input type="hidden" name="orderId" value="${order.orderId}">
             
-            <div class="panel">
-                <div class="panel-head">
-                    <h2>Kiểm Tra Tình Trạng Xe</h2>
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>
+                        <i class="fas fa-clipboard-check"></i>
+                        Kiểm Tra Tình Trạng Xe
+                    </h2>
                 </div>
                 <div class="panel-body">
                     <div class="inspection-section">
@@ -315,10 +338,10 @@
                             </label>
                         </div>
 
-                        <div id="damageSection" style="display:none; margin-top:20px;">
+                        <div id="damageSection" style="display:none; margin-top:2rem;">
                             <h4>Chi tiết hư hỏng & Phí</h4>
                             <textarea name="damageNotes" placeholder="Mô tả chi tiết hư hỏng (vị trí, mức độ hư hỏng, ước tính chi phí sửa chữa)..." class="damage-notes"></textarea>
-                            <div style="margin-top:16px;">
+                            <div style="margin-top:1rem;">
                                 <label>Phí sửa chữa (VNĐ):</label>
                                 <input type="number" name="damageFee" min="0" max="${order.depositAmount}" 
                                        step="1000" class="fee-input" placeholder="0" value="0">
@@ -326,13 +349,21 @@
                             </div>
                         </div>
 
-                        <!-- Hiển thị tính toán tiền hoàn -->
+                        <!-- Refund Calculation -->
                         <div class="calculation-section" id="refundCalculation" style="display:none;">
                             <h4>Kết Quả Tính Toán</h4>
                             <div class="info-grid">
                                 <div>
-                                    <strong>Tiền cọc:</strong> <fmt:formatNumber value="${order.depositAmount}" type="currency"/><br>
-                                    <strong>Phí hư hỏng:</strong> <span id="displayDamageFee">0 VNĐ</span>
+                                    <div class="info-item">
+                                        <strong>Tiền cọc:</strong> 
+                                        <span style="color: #3b82f6;">
+                                            <fmt:formatNumber value="${order.depositAmount}" type="currency"/>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <strong>Phí hư hỏng:</strong> 
+                                        <span id="displayDamageFee" style="color: #dc2626;">0 VNĐ</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <strong style="font-size: 1.1em;">Tiền hoàn cọc:</strong><br>
@@ -359,11 +390,17 @@
                     </div>
 
                     <div class="action-buttons">
-                        <button type="submit" class="btn">✅ Xác Nhận Kiểm Tra & Tạo Yêu Cầu Hoàn Cọc</button>
-                        <a href="${pageContext.request.contextPath}/adminreturns" class="btn secondary">↩ Quay Lại</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check-circle"></i>
+                            Xác Nhận Kiểm Tra & Tạo Yêu Cầu Hoàn Cọc
+                        </button>
+                        <a href="${pageContext.request.contextPath}/adminreturns" class="btn" style="background: var(--gray-100); color: var(--gray-700);">
+                            <i class="fas fa-arrow-left"></i>
+                            Quay Lại
+                        </a>
                     </div>
                 </div>
-            </div>
+            </section>
         </form>
     </main>
 
@@ -436,7 +473,7 @@
             if (refundAmount === 0) {
                 refundElement.style.color = '#ef4444';
             } else {
-                refundElement.style.color = '#22c55e';
+                refundElement.style.color = '#059669';
             }
         }
 
