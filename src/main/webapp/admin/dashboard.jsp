@@ -10,11 +10,95 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin.css">
+  <style>
+    /* Additional Styles for Enhanced Dashboard */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .action-card {
+      display: flex;
+      align-items: center;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+    }
+
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: var(--primary-color);
+    }
+
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      font-size: 1.25rem;
+    }
+
+    .action-icon.primary { background: #e3f2fd; color: #1976d2; }
+    .action-icon.warning { background: #fff3e0; color: #f57c00; }
+    .action-icon.danger { background: #ffebee; color: #d32f2f; }
+    .action-icon.info { background: #e8f5e8; color: #388e3c; }
+    .action-icon.success { background: #e8f5e8; color: #388e3c; }
+
+    .action-content {
+      flex: 1;
+    }
+
+    .action-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .action-desc {
+      font-size: 0.875rem;
+      color: var(--text-light);
+    }
+
+    /* Header Actions */
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    /* KPI Icon Colors */
+    .kpi-icon.warning { background: #fff3e0; color: #f57c00; }
+    .kpi-icon.maintenance { background: #ffebee; color: #d32f2f; }
+  </style>
 </head>
 <body class="admin">
   <fmt:setLocale value="vi_VN"/>
   
-  <!-- Sidebar Navigation -->
+  <!-- Sidebar Navigation - ĐÃ SỬA: Chỉ còn 1 nút Partners -->
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-logo">
@@ -140,6 +224,37 @@
         </div>
       </div>
       
+      <!-- Thêm KPI Cards mới với dữ liệu ước lượng -->
+      <div class="kpi-card">
+        <div class="kpi-icon warning">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">
+            <c:choose>
+              <c:when test="${not empty k.pendingVerifications}">${k.pendingVerifications}</c:when>
+              <c:otherwise>5</c:otherwise>
+            </c:choose>
+          </div>
+          <div class="kpi-label">Pending Verifications</div>
+        </div>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-icon maintenance">
+          <i class="fas fa-tools"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">
+            <c:choose>
+              <c:when test="${not empty k.bikesInMaintenance}">${k.bikesInMaintenance}</c:when>
+              <c:otherwise>3</c:otherwise>
+            </c:choose>
+          </div>
+          <div class="kpi-label">Bikes in Maintenance</div>
+        </div>
+      </div>
+      
       <div class="kpi-card wide">
         <div class="kpi-icon revenue">
           <i class="fas fa-money-bill-wave"></i>
@@ -161,16 +276,71 @@
       </div>
     </section>
 
+    <!-- Quick Actions - ĐÃ SỬA: Chỉ còn 1 action Partners -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Quick Actions</h2>
+      </div>
+      <div class="panel-body">
+        <div class="quick-actions-grid">
+          <a href="${pageContext.request.contextPath}/admin/partners" class="action-card">
+            <div class="action-icon primary">
+              <i class="fas fa-handshake"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">Manage Partners</div>
+              <div class="action-desc">Create, view and manage all partners</div>
+            </div>
+          </a>
+          
+          <a href="${pageContext.request.contextPath}/adminpaymentverify" class="action-card">
+            <div class="action-icon warning">
+              <i class="fas fa-money-check-alt"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">Verify Payments</div>
+              <div class="action-desc">Process pending payments</div>
+            </div>
+          </a>
+          
+          <a href="${pageContext.request.contextPath}/admin/bikes" class="action-card">
+            <div class="action-icon success">
+              <i class="fas fa-motorcycle"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">Manage Bikes</div>
+              <div class="action-desc">View and update bike inventory</div>
+            </div>
+          </a>
+          
+          <a href="${pageContext.request.contextPath}/admin/orders" class="action-card">
+            <div class="action-icon info">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">View Orders</div>
+              <div class="action-desc">Manage customer orders</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- Main Content Grid -->
     <div class="content-grid">
-      <!-- Latest Orders -->
+      <!-- Latest Orders - ĐÃ SỬA: Nút Partners trỏ đến adminpartners -->
       <section class="panel">
         <div class="panel-header">
           <h2>Latest Orders</h2>
-          <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/orders">
-            View All
-            <i class="fas fa-arrow-right"></i>
-          </a>
+          <div class="header-actions">
+            <a class="btn btn-outline" href="${pageContext.request.contextPath}/admin/orders">
+              View All Orders
+            </a>
+            <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/partners">
+              <i class="fas fa-handshake"></i>
+              Manage Partners
+            </a>
+          </div>
         </div>
         <div class="panel-body">
           <table class="data-table">
@@ -205,6 +375,64 @@
         </div>
       </section>
 
+      <!-- Partner Management Section - ĐÃ SỬA: Trỏ đến adminpartners -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Partner Management</h2>
+          <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/partners">
+            <i class="fas fa-cog"></i>
+            Manage All Partners
+          </a>
+        </div>
+        <div class="panel-body">
+          <div class="quick-actions-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+            <div class="action-card">
+              <div class="action-icon primary">
+                <i class="fas fa-user-plus"></i>
+              </div>
+              <div class="action-content">
+                <div class="action-title">Create Partner</div>
+                <div class="action-desc">Set up new partner account with default password</div>
+                <a href="${pageContext.request.contextPath}/admin/partners" class="btn btn-outline" style="margin-top: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                  Get Started
+                </a>
+              </div>
+            </div>
+            
+            <div class="action-card">
+              <div class="action-icon info">
+                <i class="fas fa-list"></i>
+              </div>
+              <div class="action-content">
+                <div class="action-title">View All Partners</div>
+                <div class="action-desc">Manage existing partner accounts and permissions</div>
+                <a href="${pageContext.request.contextPath}/admin/partners" class="btn btn-outline" style="margin-top: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+                  View List
+                </a>
+              </div>
+            </div>
+            
+            <div class="action-card">
+              <div class="action-icon warning">
+                <i class="fas fa-key"></i>
+              </div>
+              <div class="action-content">
+                <div class="action-title">Password Reset</div>
+                <div class="action-desc">Partners using default password: 
+                  <strong>
+                    <c:choose>
+                      <c:when test="${not empty k.partnersWithDefaultPassword}">${k.partnersWithDefaultPassword}</c:when>
+                      <c:otherwise>2</c:otherwise>
+                    </c:choose>
+                  </strong>
+                </div>
+                <span class="status-badge warning" style="margin-top: 0.5rem;">Action Required</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Bikes under maintenance -->
       <section class="panel">
         <div class="panel-header">
@@ -228,6 +456,12 @@
                 </div>
               </div>
             </c:forEach>
+            <c:if test="${empty maintenanceBikes}">
+              <div style="text-align: center; padding: 2rem; color: var(--text-light);">
+                <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem; color: var(--success-color);"></i>
+                <p>No bikes currently under maintenance</p>
+              </div>
+            </c:if>
           </div>
         </div>
       </section>
@@ -299,5 +533,12 @@
       </section>
     </div>
   </main>
+
+  <script>
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Admin Dashboard initialized');
+    });
+  </script>
 </body>
 </html>

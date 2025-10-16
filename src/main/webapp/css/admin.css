@@ -336,6 +336,35 @@ body {
   background: var(--primary-dark);
 }
 
+/* New button variants */
+.btn-secondary {
+  background: var(--dark);
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--gray-800);
+  border: 1px solid var(--gray-200);
+}
+
+.btn-ghost:hover {
+  background: var(--gray-100);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  filter: brightness(0.95);
+}
+
 .filter-btn {
   padding: 0.375rem 0.75rem;
   background: var(--gray-100);
@@ -381,6 +410,38 @@ body {
 
 .data-table tr:hover {
   background-color: var(--gray-50);
+}
+
+/* Table utilities */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  background: #fff;
+}
+
+.data-table thead th.sticky,
+.data-table thead.sticky th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable .sort-indicator {
+  margin-left: 6px;
+  opacity: .5;
+  font-size: .85em;
+}
+
+.sortable.active {
+  color: var(--primary-dark);
 }
 
 /* Status Badges */
@@ -431,6 +492,66 @@ body {
 
 .action-link i {
   font-size: 0.75rem;
+}
+
+/* Alerts */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.alert-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.375rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Tools bar and search input */
+.tools-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+
+.search-input input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: var(--gray-800);
 }
 
 /* Maintenance List */
@@ -786,5 +907,701 @@ body {
     .action-form {
         flex-direction: column;
         gap: 0.25rem;
+    }
+}
+/*.-----------------------------------------------------------------------------*/
+/* ==========================================
+   CSS Bổ Sung cho Trang Quản lý Partners
+   Scope: .partners-page
+   ========================================== */
+
+.partners-page .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* KPI Grid */
+.partners-page .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.partners-page .kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.partners-page .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.partners-page .kpi-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.partners-page .kpi-icon.partners { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.partners-page .kpi-icon.active { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.partners-page .kpi-icon.growth { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.partners-page .kpi-content {
+    flex: 1;
+}
+
+.partners-page .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.partners-page .kpi-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Action Toolbar */
+.partners-page .action-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.partners-page .toolbar-left {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.partners-page .toolbar-right {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.partners-page .search-box {
+    position: relative;
+    min-width: 300px;
+}
+
+.partners-page .search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.partners-page .search-box input {
+    width: 100%;
+    padding: 10px 12px 10px 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.partners-page .search-box input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Card Layout */
+.partners-page .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.partners-page .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    background: #fafbfc;
+}
+
+.partners-page .card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.partners-page .card-title i {
+    color: #6b7280;
+}
+
+.partners-page .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.partners-page .view-controls {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.partners-page .card-body {
+    padding: 0;
+}
+
+/* Table Styles - ĐÃ CẬP NHẬT ĐỂ FIX LAYOUT KHI SEARCH */
+.partners-page .table-container {
+    overflow-x: auto;
+}
+
+.partners-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    table-layout: fixed; /* Quan trọng: Giữ layout cố định */
+}
+
+.partners-page .data-table thead {
+    background: #f8fafc;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+/* Đặt chiều rộng cố định cho các cột */
+.partners-page .data-table th:nth-child(1) { width: 10%; } /* ID */
+.partners-page .data-table th:nth-child(2) { width: 25%; } /* Tên công ty */
+.partners-page .data-table th:nth-child(3) { width: 30%; } /* Địa chỉ */
+.partners-page .data-table th:nth-child(4) { width: 15%; } /* Điện thoại */
+.partners-page .data-table th:nth-child(5) { width: 15%; } /* Trạng thái */
+.partners-page .data-table th:nth-child(6) { width: 15%; } /* Hành động */
+
+.partners-page .data-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.partners-page .data-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.partners-page .data-table th.sortable:hover {
+    background: #f1f5f9;
+    color: #1e40af;
+}
+
+.partners-page .data-table th.sortable:hover .sort-indicator {
+    color: #1e40af;
+    opacity: 1;
+}
+
+.partners-page .data-table th .sort-indicator {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.partners-page .data-table th.sort-asc,
+.partners-page .data-table th.sort-desc {
+    color: #1e40af;
+    font-weight: 700;
+    background: #eff6ff;
+    border-bottom: 2px solid #3b82f6;
+}
+
+.partners-page .data-table th.sort-asc .sort-indicator,
+.partners-page .data-table th.sort-desc .sort-indicator {
+    color: #1e40af;
+    opacity: 1;
+    font-weight: 900;
+}
+
+.partners-page .data-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    vertical-align: middle;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+/* Quan trọng: Đảm bảo các hàng ẩn khi search không làm thay đổi layout */
+.partners-page .data-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.partners-page .data-table tbody tr[style*="display: none"] {
+    display: table-row !important;
+    height: 0;
+    opacity: 0;
+    visibility: collapse;
+}
+
+.partners-page .data-table tbody tr:not([style*="display: none"]) {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+}
+
+.partners-page .data-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.partners-page .data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Table Content Styles */
+.partners-page .id-badge {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    display: inline-block;
+}
+
+.partners-page .partner-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.partners-page .partner-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.partners-page .contact-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.partners-page .contact-info i {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.partners-page .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+/* Status Badge */
+.partners-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.partners-page .status-badge.status-active {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.partners-page .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Action Buttons */
+.partners-page .actions {
+    white-space: nowrap;
+}
+
+.partners-page .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.partners-page .delete-form {
+    margin: 0;
+}
+
+.partners-page .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.partners-page .btn:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.partners-page .btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.partners-page .btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.partners-page .btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.partners-page .btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+
+.partners-page .btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.partners-page .btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.partners-page .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+}
+
+/* Badge */
+.partners-page .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.partners-page .badge-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Empty State */
+.partners-page .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.partners-page .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+    color: #9ca3af;
+}
+
+.partners-page .empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+.partners-page .empty-state p {
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
+/* Alerts */
+.partners-page .alert {
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideIn 0.3s ease;
+}
+
+.partners-page .alert-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+.partners-page .alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+.partners-page .alert i {
+    font-size: 1.25rem;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .partners-page .container {
+        padding: 1rem;
+    }
+    
+    .partners-page .action-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .partners-page .toolbar-left,
+    .partners-page .toolbar-right {
+        width: 100%;
+    }
+    
+    .partners-page .search-box {
+        min-width: auto;
+    }
+    
+    .partners-page .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .partners-page .card-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .partners-page .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Điều chỉnh chiều rộng cột trên mobile */
+    .partners-page .data-table {
+        table-layout: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .partners-page .data-table {
+        display: block;
+        table-layout: auto;
+    }
+    
+    .partners-page .data-table thead {
+        display: none;
+    }
+    
+    .partners-page .data-table tbody,
+    .partners-page .data-table tr,
+    .partners-page .data-table td {
+        display: block;
+        width: 100%;
+    }
+    
+    .partners-page .data-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .partners-page .data-table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border-bottom: 1px solid #f9fafb;
+        width: 100%;
+    }
+    
+    .partners-page .data-table td:last-child {
+        border-bottom: none;
+    }
+    
+    .partners-page .data-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-align: left;
+    }
+    
+    .partners-page .action-buttons {
+        justify-content: flex-end;
+    }
+    
+    /* Ẩn các hàng khi search trên mobile */
+    .partners-page .data-table tbody tr[style*="display: none"] {
+        display: none !important;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .partners-page .kpi-card,
+    .partners-page .card {
+        background: #c9c9c9;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .partners-page .card-header {
+        background: #111827;
+        border-color: #374151;
+    }
+    
+    .partners-page .data-table thead {
+        background: #111827;
+        border-bottom-color: #374151;
+    }
+    
+    .partners-page .data-table th {
+        color: #f9fafb;
+        border-color: #374151;
+        background: #111827;
+    }
+    
+    .partners-page .data-table th.sortable:hover {
+        background: #374151;
+        color: #60a5fa;
+    }
+    
+    .partners-page .data-table th.sortable:hover .sort-indicator {
+        color: #60a5fa;
+    }
+    
+    .partners-page .data-table th.sort-asc,
+    .partners-page .data-table th.sort-desc {
+        color: #60a5fa;
+        background: #1e3a8a;
+        border-bottom-color: #3b82f6;
+    }
+    
+    .partners-page .data-table th.sort-asc .sort-indicator,
+    .partners-page .data-table th.sort-desc .sort-indicator {
+        color: #60a5fa;
+    }
+    
+    .partners-page .data-table td {
+        border-color: #374151;
+        color: #3997f5;
+    }
+    
+    .partners-page .data-table tbody tr:hover {
+        background: #374151;
+    }
+    
+    .partners-page .search-box input {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .partners-page .search-box input::placeholder {
+        color: #9ca3af;
+    }
+    
+    .partners-page .id-badge {
+        background: #374151;
+        color: #f9fafb;
+    }
+    
+    .partners-page .partner-name {
+        color: #3997f5;
+    }
+    
+    .partners-page .empty-state h3 {
+        color: #f9fafb;
+    }
+    
+    .partners-page .empty-state p {
+        color: #d1d5db;
+    }
+    
+    .partners-page .kpi-value {
+        color: #f9fafb;
+    }
+    
+    .partners-page .card-title {
+        color: #f9fafb;
     }
 }

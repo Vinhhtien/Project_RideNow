@@ -10,7 +10,7 @@ public class Partner {
 
     public Partner() {}
 
-    public Partner(int partnerId, int accountId, String companyName,
+    public Partner(int partnerId, int accountId, String fullName,
                    String address, String phone, Integer adminId) {
         this.partnerId = partnerId;
         this.accountId = accountId;
@@ -27,8 +27,7 @@ public class Partner {
     public void setAccountId(int accountId) { this.accountId = accountId; }
 
     public String getFullname() { return fullName; }
-    public void setFullname(String companyName) { this.fullName = fullName; }
-
+    public void setFullname(String fullName) { this.fullName = fullName; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 

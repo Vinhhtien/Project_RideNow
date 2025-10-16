@@ -37,4 +37,7 @@ public class Account {
 
     public boolean isEmailVerified() { return emailVerified; }
     public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+
+  
+    
 }

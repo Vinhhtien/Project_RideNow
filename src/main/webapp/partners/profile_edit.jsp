@@ -1,4 +1,4 @@
-<%-- an --%>
+<%-- tiến 16/10/2025 --%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
@@ -177,6 +177,7 @@
   </style>
 </head>
 <body>
+    
   <div class="wrap">
     <!-- Top -->
     <div class="topbar">
@@ -195,6 +196,27 @@
     <c:if test="${not empty error}">
       <div class="alert alert-danger">${error}</div>
     </c:if>
+      
+    <%-- Add this right before the password change form --%>
+    <c:if test="${param.forcePwd == '1'}">
+        <div class="alert alert-danger">
+            Bạn đang dùng mật khẩu mặc định "1". Vui lòng đổi mật khẩu ngay để bảo mật.
+        </div>
+    </c:if>
+
+    <script>
+        (function(){
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('forcePwd') === '1') {
+                const pwdForm = document.getElementById('pwdForm');
+                if (pwdForm) {
+                    pwdForm.scrollIntoView({behavior: 'smooth'});
+                    const newPwdInput = document.getElementById('newPassword');
+                    if (newPwdInput) newPwdInput.focus();
+                }
+            }
+        })();
+    </script>
 
     <!-- Content -->
     <div class="grid">
