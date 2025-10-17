@@ -35,9 +35,14 @@ public class LoginServlet extends HttpServlet {
             if (opt.isPresent()) {
                 Account acc = opt.get();
 
-                // Check account status - FIXED: use boolean method
-                if (!acc.isStatus()) {  // Changed from != 1 to !acc.isStatus()
-                    req.setAttribute("error", "Tài khoản của bạn đã bị khóa.");
+                // DEBUG: Kiểm tra giá trị status
+                System.out.println("Login attempt - Username: " + usernameOrEmail + 
+                                 ", Status: " + acc.isStatus() + 
+                                 ", Role: " + acc.getRole());
+
+                // Check account status - SỬA LẠI PHẦN NÀY
+                if (acc.isStatus() == false) {  // Hoặc !acc.isStatus()
+                    req.setAttribute("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
                     req.getRequestDispatcher("/login.jsp").forward(req, resp);
                     return;
                 }
@@ -64,6 +69,8 @@ public class LoginServlet extends HttpServlet {
                 req.getRequestDispatcher("/login.jsp").forward(req, resp);
             }
         } catch (Exception e) {
+            System.err.println("Login error: " + e.getMessage());
+            e.printStackTrace();
             req.setAttribute("error", "Đã xảy ra lỗi hệ thống. Vui lòng thử lại.");
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
         }

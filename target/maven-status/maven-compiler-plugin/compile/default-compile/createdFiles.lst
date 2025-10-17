@@ -1,3 +1,4 @@
+dao\AdminCustomerDAO.class
 dao\IPartnerAdminDAO.class
 controller\PayNowServlet$Row.class
 controller\CartServlet.class
@@ -22,6 +23,7 @@ dao\ICustomerDao.class
 controller\Authetication\LoginServlet.class
 controller\Authetication\GoogleLoginServlet.class
 controller\MyOrdersServlet$OrderVM.class
+controller\admin\AdminCustomersServlet.class
 service\RentalOrderService.class
 controller\Authetication\VerifyEmailServlet.class
 dao\NotificationDao.class
@@ -32,6 +34,7 @@ controller\MyOrdersServlet.class
 controller\RegisterServlet.class
 dao\INotificationDao.class
 service\OrderManageService.class
+service\AdminCustomerService.class
 utils\GoogleConstants.class
 dao\AdminDAO.class
 controller\partner\ViewMotorBikeServlet.class
@@ -42,7 +45,9 @@ utils\PasswordUtil.class
 dao\AccountDao.class
 utils\GoogleUtils.class
 service\INotificationService.class
+dao\IAdminCustomerDAO.class
 model\Account.class
+model\AdminCustomerDTO$OrderMini.class
 dao\OrderQueryDao.class
 service\IPartnerAdminService.class
 dao\PaymentDao.class
@@ -57,6 +62,7 @@ service\CustomerService.class
 dao\IMotorbikeDao.class
 model\OrderStatusHistory.class
 model\Partner.class
+controller\admin\AdminCustomerDetailServlet.class
 controller\DashboardServlet.class
 service\PaymentVerifyService.class
 service\ReviewService.class
@@ -65,6 +71,7 @@ controller\partner\ViewReviewServlet.class
 service\IRentalOrderService.class
 controller\WalletServlet.class
 utils\DBConnection.class
+model\AdminCustomerDTO.class
 service\IMotorbikeService.class
 dao\CustomerDao.class
 model\Customer.class
@@ -107,6 +114,7 @@ controller\admin\AdminReturnsServlet$RefundRequestVM.class
 controller\admin\AdminReturnsServlet$RefundOrderVM.class
 controller\admin\AdminPickupServlet.class
 dao\PartnerAdminDAO.class
+service\IAdminCustomerService.class
 controller\admin\PartnersManagementServlet.class
 dao\IOrderQueryDao.class
 dao\ReviewDao.class

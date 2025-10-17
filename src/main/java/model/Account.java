@@ -1,5 +1,7 @@
 package model;
 
+import java.sql.Timestamp;
+
 public class Account {
     private int accountId;
     private String username;
@@ -7,7 +9,7 @@ public class Account {
     private String role;       // customer | partner | admin
     private boolean status;
     private boolean emailVerified; // ✅ thêm cờ xác thực email
-
+     private Timestamp lastLogin;
     public Account() {}
 
     public Account(int accountId, String username, String password, String role, boolean status) {
@@ -38,6 +40,7 @@ public class Account {
     public boolean isEmailVerified() { return emailVerified; }
     public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
-  
+    public Timestamp getLastLogin() { return lastLogin; }
+    public void setLastLogin(Timestamp lastLogin) { this.lastLogin = lastLogin; }
     
 }

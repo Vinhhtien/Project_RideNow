@@ -1,5 +1,8 @@
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IAdminCustomerDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\ReviewDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\AdminCustomerDTO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\ViewRentalHistoryServlet.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\AdminCustomerDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\DashboardServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\PaymentDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminReturnServlet.java
@@ -13,6 +16,7 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IOrderDetailSe
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\MotorbikeDetailServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IAdminService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IRefundInspectionService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminCustomersServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\GoogleUtils.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminReturnInspectServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\CartServlet.java
@@ -96,16 +100,19 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\Partn
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\ICustomerDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminPaymentVerifyServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\CustomerDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminCustomerDetailServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\Authetication\ResetPasswordServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IAdminDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\MotorbikeSearchServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IMotorbikeDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderListItem.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\AdminCustomerService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IOrderQueryDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\OrderQueryDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\INotificationDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\PasswordUtil.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IRentalOrderDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IAdminCustomerService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\RentalOrderDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderStatusHistory.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\OrderManageService.java
