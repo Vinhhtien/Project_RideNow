@@ -40,8 +40,8 @@ public class LoginServlet extends HttpServlet {
                                  ", Status: " + acc.isStatus() + 
                                  ", Role: " + acc.getRole());
 
-                // Check account status - SỬA LẠI PHẦN NÀY
-                if (acc.isStatus() == false) {  // Hoặc !acc.isStatus()
+                
+                if (acc.isStatus() == false) {  
                     req.setAttribute("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
                     req.getRequestDispatcher("/login.jsp").forward(req, resp);
                     return;
@@ -81,7 +81,8 @@ public class LoginServlet extends HttpServlet {
             // Store username cookie (safe)
             Cookie userCookie = new Cookie("rn_user", username);
             userCookie.setHttpOnly(true);
-            userCookie.setMaxAge(14 * 24 * 60 * 60); // 14 days
+//            userCookie.setMaxAge(14 * 24 * 60 * 60); // 14 ngày 
+            userCookie.setMaxAge(60 * 60); // 1 tiếng  
             userCookie.setPath("/");
             resp.addCookie(userCookie);
 

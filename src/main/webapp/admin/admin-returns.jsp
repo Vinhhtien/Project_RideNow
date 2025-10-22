@@ -188,10 +188,10 @@
         <i class="fas fa-clipboard-list"></i>
         <span>Orders</span>
       </a>
-      <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
+<!--      <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
         <i class="fas fa-money-check-alt"></i>
         <span>Verify Payments</span>
-      </a>
+      </a>-->
       <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item">
         <i class="fas fa-shipping-fast"></i>
         <span>Vehicle Pickup</span>

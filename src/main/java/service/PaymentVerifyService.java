@@ -8,8 +8,16 @@ import dao.OrderManageDao;
 import dao.NotificationDao;
 import model.OrderStatusHistory;
 import utils.DBConnection;
+import utils.EmailUtil;
+
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class PaymentVerifyService implements IPaymentVerifyService {
@@ -35,7 +43,6 @@ public class PaymentVerifyService implements IPaymentVerifyService {
     public boolean verifyPayment(int paymentId, int adminId) {
         Connection con = null;
         try {
-            // THÊM: Kiểm tra admin_id có hợp lệ không (phải là 1)
             if (adminId != 1) {
                 System.err.println("=== PAYMENT VERIFICATION FAILED ===");
                 System.err.println("ERROR: Invalid admin ID. Only admin_id = 1 is allowed.");
@@ -114,5 +121,145 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             System.out.println("=== PAYMENT VERIFICATION END ===");
         }
     }
-    
+
+    @Override
+    public void sendPaymentConfirmationEmail(int paymentId, String baseUrl) {
+        try {
+            System.out.println("=== START SENDING PAYMENT CONFIRMATION EMAIL ===");
+            System.out.println("Payment ID: " + paymentId);
+            
+            PaymentMailDTO mailInfo = getPaymentMailInfo(paymentId);
+            if (mailInfo == null) {
+                System.out.println("❌ No mail info found for payment: " + paymentId);
+                return;
+            }
+
+            System.out.println("📧 Customer Email: " + mailInfo.customerEmail);
+            System.out.println("👤 Customer Name: " + mailInfo.customerName);
+            System.out.println("💰 Amount: " + mailInfo.amount);
+
+            if (mailInfo.customerEmail == null || mailInfo.customerEmail.trim().isEmpty()) {
+                System.out.println("❌ Customer email is empty");
+                return;
+            }
+
+            // GỬI EMAIL
+            sendVerificationEmail(mailInfo, baseUrl);
+            System.out.println("✅ Email sent successfully to: " + mailInfo.customerEmail);
+            
+        } catch (Exception e) {
+            System.err.println("❌ Email sending failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private PaymentMailDTO getPaymentMailInfo(int paymentId) throws SQLException {
+        String sql = "SELECT p.order_id, c.full_name, c.email, p.amount, p.method, " +
+                    "r.total_price, r.start_date, r.end_date, p.payment_date " +
+                    "FROM Payments p " +
+                    "JOIN RentalOrders r ON r.order_id = p.order_id " +
+                    "JOIN Customers c ON c.customer_id = r.customer_id " +
+                    "WHERE p.payment_id = ?";
+        
+        System.out.println("🔍 Executing SQL for payment: " + paymentId);
+        
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, paymentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("✅ Found customer: " + rs.getString("email"));
+                    
+                    PaymentMailDTO dto = new PaymentMailDTO();
+                    dto.orderId = rs.getInt("order_id");
+                    dto.customerName = rs.getString("full_name");
+                    dto.customerEmail = rs.getString("email");
+                    dto.amount = rs.getBigDecimal("amount");
+                    dto.method = rs.getString("method");
+                    dto.orderTotal = rs.getBigDecimal("total_price");
+                    dto.startDate = rs.getDate("start_date").toLocalDate();
+                    dto.endDate = rs.getDate("end_date").toLocalDate();
+                    dto.paymentDate = rs.getTimestamp("payment_date") != null ? 
+                                     rs.getTimestamp("payment_date").toLocalDateTime() : null;
+                    return dto;
+                } else {
+                    System.out.println("❌ No data found for payment: " + paymentId);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void sendVerificationEmail(PaymentMailDTO dto, String baseUrl) throws Exception {
+        String subject = "RideNow – Đơn #" + dto.orderId + " đã được xác nhận";
+        String link = baseUrl + "/myorders?orderId=" + dto.orderId;
+        
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+
+        String htmlContent = """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">RideNow</h1>
+                        <p style="color: #6b7280; margin: 5px 0 0 0;">Xác nhận thanh toán thành công</p>
+                    </div>
+                    
+                    <p>Chào <strong>%s</strong>,</p>
+                    <p>Đơn thuê xe <strong>#%d</strong> của bạn đã được xác nhận thanh toán thành công.</p>
+                    
+                    <table style="width: 100%%; border-collapse: collapse; margin: 20px 0;">
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Khoảng thuê</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">%s → %s</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Số tiền đã thanh toán</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">%s (%s)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Tổng giá trị đơn</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Thời điểm thanh toán</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <p style="margin: 0; color: #6b7280;">
+                            Trân trọng,<br>
+                            <strong>Đội ngũ RideNow</strong>
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        """.formatted(
+            dto.customerName,
+            dto.orderId,
+            dto.startDate.format(dateFormatter),
+            dto.endDate.format(dateFormatter),
+            dto.amount, dto.method,
+            dto.orderTotal,
+            dto.paymentDate != null ? dto.paymentDate.format(dateTimeFormatter) : "N/A",
+            link, link
+        );
+
+        System.out.println("📧 Sending email to: " + dto.customerEmail);
+        EmailUtil.sendMailHTML(dto.customerEmail, subject, htmlContent);
+    }
+
+    private static class PaymentMailDTO {
+        int orderId;
+        String customerName;
+        String customerEmail;
+        BigDecimal amount;
+        String method;
+        BigDecimal orderTotal;
+        LocalDate startDate;
+        LocalDate endDate;
+        LocalDateTime paymentDate;
+    }
 }

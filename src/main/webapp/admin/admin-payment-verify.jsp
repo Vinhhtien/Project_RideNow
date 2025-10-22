@@ -43,10 +43,10 @@
                 <i class="fas fa-clipboard-list"></i>
                 <span>Orders</span>
             </a>
-            <a href="${ctx}/adminpaymentverify" class="nav-item active">
+<!--            <a href="${ctx}/adminpaymentverify" class="nav-item active">
                 <i class="fas fa-money-check-alt"></i>
                 <span>Verify Payments</span>
-            </a>
+            </a>-->
             <a href="${ctx}/adminpickup" class="nav-item">
                 <i class="fas fa-shipping-fast"></i>
                 <span>Vehicle Pickup</span>

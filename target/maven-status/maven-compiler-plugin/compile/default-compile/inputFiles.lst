@@ -111,6 +111,7 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IOrderQueryDao.jav
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\OrderQueryDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\INotificationDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\PasswordUtil.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\AdminAvailabilityServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IRentalOrderDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IAdminCustomerService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\RentalOrderDao.java

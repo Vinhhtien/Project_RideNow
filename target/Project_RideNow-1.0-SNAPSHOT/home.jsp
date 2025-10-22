@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
@@ -56,11 +56,6 @@
                       <i class="fas fa-user-circle"></i> Xin chào, <strong>${sessionScope.account.username}</strong>
                     </a>
                   </c:when>
-                  <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/motorbikemanagelist" class="btn btn--ghost">
-                      <i class="fas fa-screwdriver-wrench"></i> Quản lý xe
-                    </a>
-                  </c:otherwise>
                 </c:choose>
 
                 <a href="${pageContext.request.contextPath}/logout" class="btn btn--ghost">

@@ -26,6 +26,7 @@ controller\MyOrdersServlet$OrderVM.class
 controller\admin\AdminCustomersServlet.class
 service\RentalOrderService.class
 controller\Authetication\VerifyEmailServlet.class
+service\PaymentVerifyService$PaymentMailDTO.class
 dao\NotificationDao.class
 service\IOrderService.class
 model\BikeType.class
@@ -83,8 +84,10 @@ service\IRefundInspectionService.class
 model\Motorbike.class
 service\IReviewService.class
 dao\IReviewDao.class
+controller\AdminAvailabilityServlet.class
 controller\Authetication\ResetPasswordServlet.class
 dao\IOrderManageDao.class
+utils\EmailUtil$2.class
 filter\RoleFilter.class
 controller\partner\PartnerServlet.class
 model\GoogleUser.class

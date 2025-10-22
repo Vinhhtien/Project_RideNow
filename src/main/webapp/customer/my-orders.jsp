@@ -41,8 +41,6 @@
     .btn-danger:hover{background:rgba(239,68,68,.12);border-color:#ef4444}
     .alert{padding:16px 20px;border-radius:var(--radius);margin-bottom:24px;background:rgba(21,128,61,.15);
            color:#86efac;border:1px solid rgba(34,197,94,.3);border-left:4px solid #22c55e}
-    .warning-alert{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);
-                   border-left:4px solid #f59e0b;padding:16px 20px;border-radius:var(--radius);margin-bottom:24px}
     .empty-state{text-align:center;padding:60px 40px;background:var(--dark-light);border-radius:var(--radius-lg);
                  box-shadow:var(--shadow-md);border:1px solid var(--primary-light)}
     .empty-state i{font-size:64px;color:var(--accent);margin-bottom:20px;opacity:.8}
@@ -58,7 +56,6 @@
     .badge.confirmed{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
     .badge.completed{background:rgba(59,130,246,.15);color:var(--accent);border:1px solid rgba(59,130,246,.3)}
     .badge.cancelled{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
-    .badge.waiting{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.25)}
     .checkbox-cell{width:40px;text-align:center}
     .checkbox-cell input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
     .checkbox-cell input[type="checkbox"]:disabled{opacity:.5;cursor:not-allowed}
@@ -66,32 +63,13 @@
           border-radius:var(--radius);border-left:4px solid var(--accent);display:flex;align-items:center;gap:10px}
     .hint i{color:var(--accent);font-size:1.1rem}
     .actions{display:flex;gap:16px;margin-top:24px}
-    .payment-note{font-size:.75rem;margin-top:4px;color:#f59e0b;font-weight:600}
-    
-    /* SỬA: Thêm style cho payment method badges */
-    .payment-method-badge {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        margin-left: 4px;
-    }
-    .payment-wallet { background: rgba(34,197,94,.15); color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
-    .payment-transfer { background: rgba(59,130,246,.15); color: var(--accent); border: 1px solid rgba(59,130,246,.3); }
-    
-    /* DEBUG styles */
-    .debug-info {
-        background: #1a1a1a;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 5px;
-        font-size: 12px;
-        border-left: 4px solid var(--accent);
-    }
-    .debug-info strong {
-        color: var(--accent);
-    }
-    
+    .payment-method-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:.7rem;margin-left:4px}
+    .payment-wallet { background: rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+    .payment-transfer { background: rgba(59,130,246,.15); color:var(--accent); border:1px solid rgba(59,130,246,.3); }
+
+    /* DEBUG (tuỳ giữ) */
+    .debug-info{background:#1a1a1a;padding:10px;margin:10px 0;border-radius:5px;font-size:12px;border-left:4px solid var(--accent)}
+    .debug-info strong{color:var(--accent)}
     @media (max-width:768px){
       .wrap{padding:20px 16px}
       .page-header{flex-direction:column;align-items:flex-start;gap:20px}
@@ -114,32 +92,16 @@
       </div>
     </div>
 
-    <!-- DEBUG: Hiển thị thông tin orders -->
-    <div class="debug-info">
-        <strong>DEBUG Info:</strong>
-        OrdersVm size: ${not empty ordersVm ? ordersVm.size() : 0} |
-        Rows size: ${not empty rows ? rows.size() : 0} |
-        HasPendingPayments: ${hasPendingPayments}
-        <c:if test="${not empty ordersVm}">
-            <br><strong>Order Details:</strong>
-            <c:forEach var="o" items="${ordersVm}" end="2">
-                #${o.orderId}(${o.status}) 
-            </c:forEach>
-        </c:if>
-    </div>
+    <!-- DEBUG (tuỳ giữ) -->
+<!--    <div class="debug-info">
+      <strong>DEBUG:</strong>
+      OrdersVm size: ${not empty ordersVm ? ordersVm.size() : 0}
+    </div>-->
 
     <!-- Flash -->
     <c:if test="${not empty sessionScope.flash}">
       <div class="alert"><i class="fas fa-info-circle"></i> ${sessionScope.flash}</div>
       <c:remove var="flash" scope="session"/>
-    </c:if>
-
-    <!-- Thông báo tạo đơn -->
-    <c:if test="${not empty param.justCreated}">
-      <div class="alert">
-        <i class="fas fa-check-circle"></i>
-        Đã tạo đơn #${param.justCreated}. Trạng thái hiện tại: <b>pending</b>.
-      </div>
     </c:if>
 
     <c:set var="hasOrders" value="${not empty ordersVm and ordersVm.size() > 0}"/>
@@ -156,20 +118,9 @@
       <c:otherwise>
         <div class="hint">
           <i class="fas fa-info-circle"></i>
-          Chọn các đơn <b>pending</b> để thanh toán (30% + cọc).
-          <c:if test="${hasPendingPayments}">
-            <span style="color:#f59e0b;margin-left:10px">
-              Có đơn đang chờ xác minh / đã gửi xác minh thanh toán.
-            </span>
-          </c:if>
+          Chọn các đơn <b>pending</b> để thanh toán (30% + cọc). 
+          Sau khi thanh toán xong, <b>đơn sẽ chuyển sang “Completed” ngay</b> và hệ thống gửi email xác nhận cho bạn.
         </div>
-
-        <c:if test="${hasPendingPayments}">
-          <div class="warning-alert">
-            <i class="fas fa-exclamation-triangle"></i>
-            <strong>Lưu ý:</strong> Vui lòng không thực hiện lại thanh toán cho các đơn đang chờ xác minh hoặc đã gửi xác minh.
-          </div>
-        </c:if>
 
         <form id="payForm" method="get" action="${ctx}/paynow" onsubmit="return buildOrdersCsv()">
           <div class="table-container">
@@ -186,121 +137,54 @@
                   <th>Thao tác</th>
                 </tr>
               </thead>
+
               <tbody>
+                <c:forEach var="o" items="${ordersVm}">
+                  <%-- Cho phép tick nếu còn pending (bỏ các cờ chờ xác minh) --%>
+                  <c:set var="canPay" value="${o.status == 'pending'}"/>
+                  <c:set var="canCancel" value="${o.status == 'pending'}"/>
 
-                <!-- Dùng OrderVM nếu có -->
-                <c:if test="${not empty ordersVm}">
-                  <c:forEach var="o" items="${ordersVm}">
-                    <tr>
-                      <td class="checkbox-cell">
-                        <c:if test="${o.canSelectForPay}">
+                  <tr>
+                    <td class="checkbox-cell">
+                      <c:choose>
+                        <c:when test="${canPay}">
                           <input type="checkbox" class="chk" value="${o.orderId}" name="selectedOrder"/>
-                        </c:if>
-                        <c:if test="${not o.canSelectForPay}">
-                          <input type="checkbox" disabled title="Không thể chọn để thanh toán"/>
-                        </c:if>
-                      </td>
-                      <td>
-                        <strong>#${o.orderId}</strong>
-                        <c:if test="${o.hasPendingPayment or o.paymentSubmitted}">
-                          <div class="payment-note">
-                            <i class="fas fa-clock"></i>
-                            <c:choose>
-                              <c:when test="${o.paymentSubmitted}">Đã gửi xác minh</c:when>
-                              <c:otherwise>Chờ xác minh</c:otherwise>
-                            </c:choose>
-                          </div>
-                        </c:if>
-                        <!-- SỬA: Hiển thị phương thức thanh toán nếu có -->
-                        <c:if test="${not empty o.paymentMethod}">
-                          <div class="payment-method-badge ${o.paymentMethod == 'wallet' ? 'payment-wallet' : 'payment-transfer'}">
-                            <c:choose>
-                              <c:when test="${o.paymentMethod == 'wallet'}">💳 Ví</c:when>
-                              <c:when test="${o.paymentMethod == 'transfer'}">🏦 Chuyển khoản</c:when>
-                              <c:otherwise>${o.paymentMethod}</c:otherwise>
-                            </c:choose>
-                          </div>
-                        </c:if>
-                      </td>
-                      <td>${o.bikeName}</td>
-                      <td><fmt:formatDate value="${o.start}" pattern="dd/MM/yyyy"/></td>
-                      <td><fmt:formatDate value="${o.end}" pattern="dd/MM/yyyy"/></td>
-                      <td><fmt:formatNumber value="${o.total}" type="number"/> đ</td>
-                      <td>
-                        <span class="badge ${o.status}">${o.status}</span>
-                        <c:if test="${o.hasPendingPayment or o.paymentSubmitted}">
-                          <span class="badge waiting">đang xử lý</span>
-                        </c:if>
-                      </td>
-                      <td>
-                        <c:if test="${o.canCancel}">
-                          <button type="button" class="btn btn-danger" 
-                                  onclick="confirmCancel(${o.orderId})">
-                            <i class="fas fa-ban"></i> Hủy
-                          </button>
-                        </c:if>
-                        
-                      </td>
-                    </tr>
-                  </c:forEach>
-                </c:if>
-
-                <!-- Fallback: rows (mảng) -->
-                <c:if test="${empty ordersVm and not empty rows}">
-                  <c:forEach var="r" items="${rows}">
-                    <c:set var="hasPending" value="${r[6]}"/>
-                    <c:set var="paymentSubmitted" value="${r[7]}"/>
-                    <c:set var="isPending" value="${r[5] == 'pending'}"/>
-                    <c:set var="canSelectForPay" value="${isPending and not hasPending and not paymentSubmitted}"/>
-                    <c:set var="canCancel" value="${isPending and not hasPending and not paymentSubmitted}"/>
-
-                    <tr>
-                      <td class="checkbox-cell">
-                        <c:if test="${canSelectForPay}">
-                          <input type="checkbox" class="chk" value="${r[0]}" name="selectedOrder"/>
-                        </c:if>
-                        <c:if test="${not canSelectForPay}">
-                          <input type="checkbox" disabled title="Không thể chọn để thanh toán"/>
-                        </c:if>
-                      </td>
-                      <td>
-                        <strong>#${r[0]}</strong>
-                        <c:if test="${hasPending or paymentSubmitted}">
-                          <div class="payment-note">
-                            <i class="fas fa-clock"></i>
-                            <c:choose>
-                              <c:when test="${paymentSubmitted}">Đã gửi xác minh</c:when>
-                              <c:otherwise>Chờ xác minh</c:otherwise>
-                            </c:choose>
-                          </div>
-                        </c:if>
-                      </td>
-                      <td>${r[1]}</td>
-                      <td><fmt:formatDate value="${r[2]}" pattern="dd/MM/yyyy"/></td>
-                      <td><fmt:formatDate value="${r[3]}" pattern="dd/MM/yyyy"/></td>
-                      <td><fmt:formatNumber value="${r[4]}" type="number"/> đ</td>
-                      <td>
-                        <span class="badge ${r[5]}">${r[5]}</span>
-                        <c:if test="${hasPending or paymentSubmitted}">
-                          <span class="badge waiting">đang xử lý</span>
-                        </c:if>
-                      </td>
-                      <td>
-                        <c:if test="${canCancel}">
-                          <button type="button" class="btn btn-danger" 
-                                  onclick="confirmCancel(${r[0]})">
-                            <i class="fas fa-ban"></i> Hủy
-                          </button>
-                        </c:if>
-                        <c:if test="${not canCancel}">
-                          <span style="color:var(--gray-light);font-size:0.8rem;">Không thể hủy</span>
-                        </c:if>
-                      </td>
-                    </tr>
-                  </c:forEach>
-                </c:if>
-
+                        </c:when>
+                        <c:otherwise>
+                          <input type="checkbox" disabled title="Chỉ có thể thanh toán đơn đang pending"/>
+                        </c:otherwise>
+                      </c:choose>
+                    </td>
+                    <td>
+                      <strong>#${o.orderId}</strong>
+                      <c:if test="${not empty o.paymentMethod}">
+                        <span class="payment-method-badge ${o.paymentMethod == 'wallet' ? 'payment-wallet' : 'payment-transfer'}">
+                          <c:choose>
+                            <c:when test="${o.paymentMethod == 'wallet'}">💳 Ví</c:when>
+                            <c:when test="${o.paymentMethod == 'transfer'}">🏦 Chuyển khoản</c:when>
+                            <c:otherwise>${o.paymentMethod}</c:otherwise>
+                          </c:choose>
+                        </span>
+                      </c:if>
+                    </td>
+                    <td>${o.bikeName}</td>
+                    <td><fmt:formatDate value="${o.start}" pattern="dd/MM/yyyy"/></td>
+                    <td><fmt:formatDate value="${o.end}" pattern="dd/MM/yyyy"/></td>
+                    <td><fmt:formatNumber value="${o.total}" type="number"/> đ</td>
+                    <td>
+                      <span class="badge ${o.status}">${o.status}</span>
+                    </td>
+                    <td>
+                      <c:if test="${canCancel}">
+                        <button type="button" class="btn btn-danger" onclick="confirmCancel(${o.orderId})">
+                          <i class="fas fa-ban"></i> Hủy
+                        </button>
+                      </c:if>
+                    </td>
+                  </tr>
+                </c:forEach>
               </tbody>
+
             </table>
           </div>
 
@@ -313,8 +197,8 @@
           </div>
         </form>
 
-        <!-- Form hủy đơn ẩn - DÙNG CHUNG -->
-        <form id="cancelForm" method="post" action="${ctx}/customerorders" style="display: none;">
+        <!-- Form hủy đơn ẩn -->
+        <form id="cancelForm" method="post" action="${ctx}/customerorders" style="display:none">
           <input type="hidden" name="action" value="cancel"/>
           <input type="hidden" name="orderId" id="cancelOrderId"/>
         </form>
@@ -337,13 +221,8 @@
 
     function syncCheckAllDisabled(){
       const anyCheck = chks().length > 0;
-      if (!anyCheck) {
-        chkAll.disabled = true;
-        chkAll.title = 'Không có đơn nào đủ điều kiện thanh toán';
-      } else {
-        chkAll.disabled = false;
-        chkAll.title = '';
-      }
+      chkAll.disabled = !anyCheck;
+      chkAll.title = anyCheck ? '' : 'Không có đơn nào đủ điều kiện thanh toán';
     }
 
     chkAll?.addEventListener('change', () => {
@@ -363,35 +242,24 @@
         alert('Vui lòng chọn ít nhất 1 đơn pending để thanh toán.');
         return false;
       }
-      if (!confirm(`Bạn sắp thực hiện thanh toán cho ${ids.length} đơn hàng.\nBạn chỉ được thực hiện thanh toán MỘT LẦN cho mỗi đơn. Tiếp tục?`)){
+      if (!confirm(`Bạn sắp thanh toán cho ${ids.length} đơn hàng.\nSau khi thanh toán xong, đơn sẽ được xác nhận ngay. Tiếp tục?`)){
         return false;
       }
       document.getElementById('ordersCsv').value = ids.join(',');
       return true;
     }
 
-    // HÀM MỚI: Xử lý hủy đơn
-    function confirmCancel(orderId) {
-      if (confirm('Bạn có chắc muốn hủy đơn #' + orderId + '?')) {
-        // Set orderId và submit form hủy
+    function confirmCancel(orderId){
+      if (confirm('Bạn có chắc muốn hủy đơn #' + orderId + ' ?')) {
         document.getElementById('cancelOrderId').value = orderId;
         document.getElementById('cancelForm').submit();
       }
     }
 
-    // SỬA: Thêm kiểm tra nếu có flash message, cuộn lên đầu trang
-    document.addEventListener('DOMContentLoaded', function() {
-      if (document.querySelector('.alert')) {
-        window.scrollTo(0, 0);
-      }
-      
-      // init
+    document.addEventListener('DOMContentLoaded', function(){
+      if (document.querySelector('.alert')) window.scrollTo(0, 0);
       syncCheckAllDisabled();
       updateSubmitButton();
-      
-      console.log('✅ My Orders page loaded successfully');
-      console.log('📊 Checkboxes found:', chks().length);
-      console.log('📊 CheckAll disabled:', chkAll?.disabled);
     });
   </script>
 </body>

@@ -6,7 +6,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import model.Account;
 
-@WebFilter(urlPatterns = {"/admin/*", "/adminpartnercreate"})
+@WebFilter(urlPatterns = {"/admin/*","/availability","/adminpartnercreate"})
 public class AdminOnlyFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

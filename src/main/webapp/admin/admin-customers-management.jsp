@@ -375,31 +375,55 @@
         </div>
         
         <nav class="sidebar-nav">
-            <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/partners" class="nav-item">
-                <i class="fas fa-handshake"></i>
-                <span>Partners</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item active">
-                <i class="fas fa-users"></i>
-                <span>Customers</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item">
-                <i class="fas fa-motorcycle"></i>
-                <span>Motorbikes</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item">
-                <i class="fas fa-clipboard-list"></i>
-                <span>Orders</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/logout" class="nav-item logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </nav>
+      <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item active">
+        <i class="fas fa-tachometer-alt"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/admin/partners" class="nav-item">
+        <i class="fas fa-handshake"></i>
+        <span>Partners</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Customers</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item">
+        <i class="fas fa-motorcycle"></i>
+        <span>Motorbikes</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item">
+        <i class="fas fa-clipboard-list"></i>
+        <span>Orders</span>
+      </a>
+<!--      <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
+        <i class="fas fa-money-check-alt"></i>
+        <span>Verify Payments</span>
+      </a>-->
+      <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item">
+        <i class="fas fa-shipping-fast"></i>
+        <span>Vehicle Pickup</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/adminreturn" class="nav-item">
+        <i class="fas fa-undo-alt"></i>
+        <span>Vehicle Return</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/adminreturns" class="nav-item">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Verify & Refund</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/admin/reports" class="nav-item">
+        <i class="fas fa-chart-bar"></i>
+        <span>Reports</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/admin/feedback" class="nav-item">
+        <i class="fas fa-comment-alt"></i>
+        <span>Feedback</span>
+      </a>
+      <a href="${pageContext.request.contextPath}/logout" class="nav-item logout">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </a>
+    </nav>
     </aside>
 
     <!-- Main Content -->

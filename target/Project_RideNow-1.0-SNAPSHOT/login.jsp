@@ -105,24 +105,17 @@
       <c:remove var="flash" scope="session"/>
     </c:if>
 
-    <!-- Nếu đã có cookie rn_auth (đã bật ghi nhớ) thì hiển thị badge gợi ý -->
-    <c:if test="${cookie.rn_auth ne null}">
-      <div class="badge badge--ok">
-        <i class="fa-solid fa-shield-halved"></i>
-        Đã bật <b>Ghi nhớ đăng nhập</b> — Bạn có thể bấm Đăng nhập mà không cần nhập mật khẩu.
-      </div>
-    </c:if>
-
+    
     <form method="post" action="${pageContext.request.contextPath}/login">
       <div class="form-group">
-        <label for="username">Tài khoản hoặc Email</label>
+        <label for="username">Tài khoản</label>
         <div class="input-container">
           <input
             type="text"
             id="username"
             name="username"
             required
-            placeholder="Nhập tài khoản hoặc email"
+            placeholder="Nhập tài khoản"
             value="${cookie.rn_user != null ? cookie.rn_user.value : ''}">
           <i class="fas fa-user input-icon"></i>
         </div>
