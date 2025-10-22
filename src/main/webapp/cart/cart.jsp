@@ -58,6 +58,56 @@
     .summary-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
     .summary-total{font-weight:700;color:var(--accent)}
     .js-error{color:#f87171;margin-top:6px;display:none}
+    /* ====== EMPTY CART – Glass style đẹp ====== */
+.empty-wrap{display:flex;align-items:center;justify-content:center;padding:60px 20px}
+.empty-card{
+  width:100%;max-width:900px;min-height:260px;
+  border-radius:16px;padding:48px 28px;text-align:center;
+  background:linear-gradient(145deg, rgba(15,23,42,.7), rgba(2,6,23,.9));
+  border:1px solid rgba(148,163,184,.25);
+  box-shadow:0 10px 40px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
+  backdrop-filter: blur(10px);
+  transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.empty-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(59,130,246,.35);
+  box-shadow:0 16px 50px rgba(59,130,246,.25), 0 10px 30px rgba(0,0,0,.5);
+}
+.empty-icon{
+  width:92px;height:92px;margin:0 auto 16px;
+  display:grid;place-items:center;border-radius:20px;
+  background:radial-gradient(90px 90px at 40% 40%, rgba(96,165,250,.35), rgba(96,165,250,.08));
+  color:#60a5fa;
+  border:1px solid rgba(96,165,250,.35);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.empty-icon i{font-size:42px}
+.empty-title{font-weight:800;font-size:28px;margin:10px 0 6px;color:#93c5fd;text-shadow:0 0 12px rgba(59,130,246,.25)}
+.empty-desc{color:#cbd5e1;max-width:600px;margin:0 auto 28px;font-size:15.5px;line-height:1.7}
+.empty-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-cta{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 20px;border-radius:12px;border:1px solid rgba(59,130,246,.45);
+  background:linear-gradient(180deg, #3b82f6, #1e40af);
+  color:#fff;text-decoration:none;font-weight:700;
+  box-shadow:0 10px 25px rgba(59,130,246,.35);
+  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.btn-cta:hover{transform:translateY(-2px);filter:saturate(1.1);box-shadow:0 16px 35px rgba(59,130,246,.4)}
+.btn-ghost{
+  padding:12px 18px;border-radius:12px;border:1px solid rgba(148,163,184,.35);
+  color:#cbd5e1;text-decoration:none;background:rgba(2,6,23,.35);
+  transition:all .2s ease;
+}
+.btn-ghost:hover{border-color:#60a5fa;color:#e2e8f0;background:rgba(59,130,246,.15)}
+@media (max-width:768px){
+  .empty-card{padding:32px 18px}
+  .empty-title{font-size:22px}
+  .empty-icon{width:72px;height:72px}
+  .empty-icon i{font-size:34px}
+}
+
   </style>
 </head>
 
@@ -101,11 +151,25 @@
 
   <c:choose>
     <c:when test="${empty cartItems}">
-      <div class="card" style="text-align:center">
-        <i class="fas fa-shopping-cart" style="font-size:64px;color:#3b82f6"></i>
-        <p>Giỏ hàng trống. <a href="${ctx}/motorbikesearch" style="color:#60a5fa">Tiếp tục tìm xe</a></p>
-      </div>
-    </c:when>
+        <div class="empty-wrap">
+          <div class="empty-card">
+            <div class="empty-icon"><i class="fas fa-shopping-cart"></i></div>
+            <div class="empty-title">Giỏ hàng của bạn đang trống</div>
+            <p class="empty-desc">
+              Hãy tiếp tục tìm kiếm chiếc xe phù hợp với nhu cầu của bạn. RideNow có hàng trăm mẫu xe với giá hấp dẫn, sẵn sàng cho chuyến đi của bạn!
+            </p>
+            <div class="empty-actions">
+              <a href="${ctx}/motorbikesearch" class="btn-cta">
+                <i class="fas fa-magnifying-glass"></i> Tiếp tục tìm xe
+              </a>
+              <a href="${ctx}/" class="btn-ghost">
+                <i class="fas fa-house"></i> Về trang chủ
+              </a>
+            </div>
+          </div>
+        </div>
+      </c:when>
+
 
     <c:otherwise>
       <!-- Form checkout: mọi input date phía dưới có form="checkoutForm" để submit trực tiếp -->

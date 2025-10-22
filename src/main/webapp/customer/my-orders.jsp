@@ -89,6 +89,7 @@
         <a class="btn" href="${ctx}/motorbikesearch"><i class="fas fa-motorcycle"></i> Tìm xe</a>
         <a class="btn" href="${ctx}/cart"><i class="fas fa-cart-shopping"></i> Giỏ hàng</a>
         <a class="btn" href="${ctx}/wallet"><i class="fas fa-wallet"></i> Ví của tôi</a>
+        <a href="${ctx}/" class="btn btn--ghost"><i class="fas fa-house"></i> Trang chủ</a>
       </div>
     </div>
 

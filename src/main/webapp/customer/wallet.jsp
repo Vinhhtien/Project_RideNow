@@ -119,12 +119,10 @@
         <i class="fas fa-wallet"></i> Ví của tôi
       </h1>
       <div class="toolbar">
-        <a class="btn" href="${ctx}/customerorders">
-          <i class="fas fa-clipboard-list"></i> Đơn của tôi
-        </a>
-        <a class="btn" href="${ctx}/motorbikesearch">
-          <i class="fas fa-motorcycle"></i> Thuê xe
-        </a>
+        <a class="btn" href="${ctx}/motorbikesearch"><i class="fas fa-motorcycle"></i> Tìm xe</a>
+        <a class="btn" href="${ctx}/cart"><i class="fas fa-cart-shopping"></i> Giỏ hàng</a>
+        <a href="${ctx}/customerorders" class="btn btn--ghost"><i class="fas fa-clipboard-list"></i> Đơn của tôi</a>
+        <a href="${ctx}/" class="btn btn--ghost"><i class="fas fa-house"></i> Trang chủ</a>
       </div>
     </div>
 
