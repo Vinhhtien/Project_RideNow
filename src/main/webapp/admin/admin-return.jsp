@@ -200,7 +200,7 @@
                             <h3>Không có đơn hàng nào đang thuê</h3>
                             <p>Tất cả các đơn hàng đã được xử lý</p>
                             <a href="${ctx}/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem;">
-                                <i class="fas fa-arrow-left"></i>
+                                <i></i>
                                 Quay lại Dashboard
                             </a>
                         </div>
