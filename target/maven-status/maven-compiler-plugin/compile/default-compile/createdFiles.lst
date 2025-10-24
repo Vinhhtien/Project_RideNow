@@ -68,6 +68,7 @@ controller\DashboardServlet.class
 service\PaymentVerifyService.class
 service\ReviewService.class
 model\OrderListItem.class
+service\IOrderService$OverlappedRange.class
 controller\partner\ViewReviewServlet.class
 service\IRentalOrderService.class
 controller\WalletServlet.class

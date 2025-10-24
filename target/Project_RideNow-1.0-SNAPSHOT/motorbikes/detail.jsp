@@ -29,7 +29,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
 
-  <!-- Gallery CSS nhỏ gọn (nếu đã có trong detailStyle.css thì giữ nguyên) -->
+  <!-- Gallery CSS -->
   <style>
     .gallery { display:grid; gap:12px; }
     .gallery-main{ position:relative; border-radius:12px; overflow:hidden; background:#0b1224; border:1px solid #334155; }
@@ -160,14 +160,12 @@
     <c:otherwise>
       <div class="grid">
         <!-- Trái: Gallery -->
-                
         <section class="card">
           <div class="gallery" id="gallery">
             <div class="gallery-main">
-              <!-- Sử dụng trực tiếp đường dẫn giống search.jsp -->
               <img id="mainImg"
                    src="${ctx}/images/bike/${imgFolder}/${bike.bikeId}/1.jpg"
-                   alt="${fn:escapeXml(bike.bikeName)}" 
+                   alt="${fn:escapeXml(bike.bikeName)}"
                    loading="eager"
                    onerror="this.onerror=null;this.src='${ctx}/images/bike_placeholder.jpg';">
               <div class="gallery-nav" id="navBtns" style="display:none">
@@ -234,6 +232,27 @@
           <div class="book card--inner">
             <div class="book-title"><i class="fa-solid fa-bolt"></i> Đặt xe nhanh</div>
 
+            <!-- ✅ Chỉ một block lỗi, kèm danh sách khoảng ngày trùng -->
+            <c:if test="${not empty sessionScope.book_error}">
+              <div class="card callout callout--error" style="margin-top:12px">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                ${sessionScope.book_error}
+                <c:if test="${not empty sessionScope.book_conflicts}">
+                  <ul style="margin:8px 0 0 24px; list-style:disc">
+                    <c:forEach var="cf" items="${sessionScope.book_conflicts}">
+                      <li>
+                        <span class="badge" style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px">
+                          ${cf}
+                        </span>
+                      </li>
+                    </c:forEach>
+                  </ul>
+                </c:if>
+              </div>
+              <c:remove var="book_error" scope="session"/>
+              <c:remove var="book_conflicts" scope="session"/>
+            </c:if>
+
             <div id="previewBox" class="card preview">
               <div><b>Giá/ngày:</b> <fmt:formatNumber value="${bike.pricePerDay}" type="number"/> đ</div>
               <div><b>Số ngày:</b> <span id="pvDays">0</span></div>
@@ -246,7 +265,7 @@
               </div>
             </div>
 
-            <form action="${ctx}/cart" method="post" class="book-form" id="addToCartForm">
+            <form action="${ctx}/cart" method="post" class="book-form" id="addToCartForm" novalidate>
               <input type="hidden" name="action" value="add"/>
               <input type="hidden" name="bikeId" value="${bike.bikeId}" />
               <label>
@@ -272,9 +291,6 @@
       </div>
     </c:otherwise>
   </c:choose>
-    
-    
-    
 </main>
 
 <footer id="contact" class="site-footer" role="contentinfo">
@@ -294,11 +310,11 @@
         <div class="footer-links fade-in delay-1">
           <h3>Liên Kết Nhanh</h3>
           <ul>
-            <li><a href="${ctx}/#home"><i class="fas fa-chevron-right"></i> Trang chủ</a></li>
-            <li><a href="#filters"><i class="fas fa-chevron-right"></i> Bộ lọc</a></li>
-            <li><a href="${ctx}/#how-it-works"><i class="fas fa-chevron-right"></i> Cách thuê</a></li>
-            <li><a href="${ctx}/#testimonials"><i class="fas fa-chevron-right"></i> Đánh giá</a></li>
-            <li><a href="${ctx}/#contact"><i class="fas fa-chevron-right"></i> Liên hệ</a></li>
+            <li><a href="#home"><i class="fas fa-chevron-right"></i> Trang chủ</a></li>
+            <li><a href="#categories"><i class="fas fa-chevron-right"></i> Loại xe</a></li>
+            <li><a href="#how-it-works"><i class="fas fa-chevron-right"></i> Cách thuê</a></li>
+            <li><a href="#testimonials"><i class="fas fa-chevron-right"></i> Đánh giá</a></li>
+            <li><a href="#contact"><i class="fas fa-chevron-right"></i> Liên hệ</a></li>
           </ul>
         </div>
 
@@ -337,13 +353,54 @@
   let fpStart, fpEnd;
   document.addEventListener('DOMContentLoaded', () => {
     fpStart = flatpickr("#startDate", {
-      locale: "vn", dateFormat: "Y-m-d", minDate: "today",
-      onChange: (d)=>{ if(d.length){ fpEnd.set("minDate", d[0]); if(!fpEnd.input.value) fpEnd.setDate(d[0], true);} calcPreview(); }
+      locale: "vn",
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      onChange: (d) => {
+        if (d.length) {
+          fpEnd.set("minDate", d[0]);
+          if (!fpEnd.input.value) fpEnd.setDate(d[0], true); // mặc định thuê 1 ngày
+        }
+        calcPreview();
+      }
     });
-    fpEnd = flatpickr("#endDate", { locale: "vn", dateFormat: "Y-m-d", minDate: "today", onChange: calcPreview });
+    fpEnd = flatpickr("#endDate", {
+      locale: "vn",
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      onChange: calcPreview
+    });
 
-    // init gallery sau khi datepicker xong
+    // init gallery
     initGallery();
+
+    // ✅ GUARD TRƯỚC KHI SUBMIT: luôn gửi đủ start & end
+    const form = document.getElementById('addToCartForm');
+    form.addEventListener('submit', function(e){
+      const s = document.getElementById('startDate');
+      const t = document.getElementById('endDate');
+
+      // Nếu người dùng chỉ chọn 1 bên, tự đồng bộ sang bên kia (thuê 1 ngày)
+      if (!s.value && t.value) s.value = t.value;
+      if (!t.value && s.value) t.value = s.value;
+
+      // Nếu vẫn thiếu -> chặn submit
+      if (!s.value || !t.value) {
+        e.preventDefault();
+        alert('Vui lòng chọn ngày nhận và ngày trả.');
+        return;
+      }
+
+      // Nếu end < start -> chặn và báo lỗi tại chỗ
+      const sd = new Date(s.value);
+      const ed = new Date(t.value);
+      if (ed < sd) {
+        e.preventDefault();
+        alert('Ngày trả phải sau hoặc bằng ngày nhận.');
+        t.focus();
+        return;
+      }
+    });
   });
 
   function calcPreview(){
@@ -360,140 +417,104 @@
     pvSubtotal.textContent = (pricePerDay * days).toLocaleString('vi-VN');
   }
 
-  // ===== Gallery: tự dò 1..6.jpg; luôn có ít nhất 1 ảnh hoặc placeholder =====
+  // ===== Gallery đơn giản & chính xác (tự dò 1..6.jpg) =====
+  function initGallery(){
+    const mainImg = document.getElementById('mainImg');
+    const thumbsWrap = document.getElementById('thumbs');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const navBtns = document.getElementById('navBtns');
 
-// ===== Gallery: tự dò 1..6.jpg =====
-// ===== Gallery đơn giản và chính xác =====
-function initGallery(){
-  const mainImg = document.getElementById('mainImg');
-  const thumbsWrap = document.getElementById('thumbs');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const navBtns = document.getElementById('navBtns');
+    const base = "${ctx}/images/bike/${imgFolder}/${bike.bikeId}";
+    const validImages = [];
 
-  // Đường dẫn cơ sở
-  const base = "${ctx}/images/bike/${imgFolder}/${bike.bikeId}";
-  const validImages = [];
-  
-  // Kiểm tra ảnh tồn tại
-  function checkImageExists(url, index) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve({url: url, index: index, exists: true});
-      img.onerror = () => resolve({url: url, index: index, exists: false});
-      img.src = url;
-    });
-  }
-
-  // Kiểm tra tất cả ảnh
-  async function loadImages() {
-    const promises = [];
-    for (let i = 1; i <= 6; i++) {
-      const url = base + '/' + i + '.jpg';
-      promises.push(checkImageExists(url, i));
+    function checkImageExists(url, index) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({url, index, exists: true});
+        img.onerror = () => resolve({url, index, exists: false});
+        img.src = url;
+      });
     }
-    
-    const results = await Promise.all(promises);
-    
-    // Lọc ảnh tồn tại và sắp xếp theo index
-    results.forEach(result => {
-      if (result.exists) {
-        validImages.push(result.url);
+
+    async function loadImages() {
+      const promises = [];
+      for (let i = 1; i <= 6; i++) promises.push(checkImageExists(base + '/' + i + '.jpg', i));
+      const results = await Promise.all(promises);
+      results.forEach(r => { if (r.exists) validImages.push(r.url); });
+
+      validImages.sort((a, b) => {
+        const na = parseInt(a.match(/\/(\d+)\.jpg$/)[1]);
+        const nb = parseInt(b.match(/\/(\d+)\.jpg$/)[1]);
+        return na - nb;
+      });
+
+      setupGallery();
+    }
+
+    function setupGallery() {
+      if (validImages.length === 0) {
+        mainImg.src = "${ctx}/images/bike_placeholder.jpg";
+        mainImg.alt = "Ảnh không khả dụng";
+        if (navBtns) navBtns.style.display = 'none';
+        if (thumbsWrap) thumbsWrap.style.display = 'none';
+        return;
       }
-    });
-    
-    // Sắp xếp theo thứ tự số
-    validImages.sort((a, b) => {
-      const numA = parseInt(a.match(/\/(\d+)\.jpg$/)[1]);
-      const numB = parseInt(b.match(/\/(\d+)\.jpg$/)[1]);
-      return numA - numB;
-    });
-    
-    setupGallery();
-  }
 
-  function setupGallery() {
-    if (validImages.length === 0) {
-      // Không có ảnh
-      mainImg.src = "${ctx}/images/bike_placeholder.jpg";
-      mainImg.alt = "Ảnh không khả dụng";
-      if (navBtns) navBtns.style.display = 'none';
-      if (thumbsWrap) thumbsWrap.style.display = 'none';
-      return;
-    }
-    
-    // Hiển thị ảnh đầu tiên
-    mainImg.src = validImages[0];
-    
-    if (validImages.length === 1) {
-      // CHỈ 1 ẢNH: Ẩn hoàn toàn nút và thumbnails
-      if (navBtns) navBtns.style.display = 'none';
-      if (thumbsWrap) thumbsWrap.style.display = 'none';
-    } else {
-      // TỪ 2 ẢNH TRỞ LÊN: Hiển thị đầy đủ
+      mainImg.src = validImages[0];
+
+      if (validImages.length === 1) {
+        if (navBtns) navBtns.style.display = 'none';
+        if (thumbsWrap) thumbsWrap.style.display = 'none';
+        return;
+      }
+
       if (navBtns) navBtns.style.display = 'flex';
       if (thumbsWrap) thumbsWrap.style.display = 'grid';
-      
-      // Tạo thumbnails - SỬA LỖI Ở ĐÂY
+
       let thumbsHTML = '';
       for (let i = 0; i < validImages.length; i++) {
-        var activeClass = i === 0 ? 'active' : '';
+        const activeClass = i === 0 ? 'active' : '';
         thumbsHTML += '<div class="thumb ' + activeClass + '" data-index="' + i + '">' +
-                     '<img src="' + validImages[i] + '" alt="Ảnh ' + (i + 1) + '">' +
-                     '</div>';
+                      '<img src="' + validImages[i] + '" alt="Ảnh ' + (i + 1) + '">' +
+                      '</div>';
       }
-      
       if (thumbsWrap) thumbsWrap.innerHTML = thumbsHTML;
-      
-      // Thêm sự kiện
+
       let currentIndex = 0;
-      
-      // Click thumbnails
+
       if (thumbsWrap) {
         thumbsWrap.addEventListener('click', function(e) {
-          var thumb = e.target.closest('.thumb');
+          const thumb = e.target.closest('.thumb');
           if (thumb) {
             currentIndex = parseInt(thumb.getAttribute('data-index'));
             showImage(currentIndex);
           }
         });
       }
-      
-      // Nút previous/next
-      if (prevBtn) {
-        prevBtn.addEventListener('click', function() {
-          currentIndex = (currentIndex - 1 + validImages.length) % validImages.length;
-          showImage(currentIndex);
-        });
-      }
-      
-      if (nextBtn) {
-        nextBtn.addEventListener('click', function() {
-          currentIndex = (currentIndex + 1) % validImages.length;
-          showImage(currentIndex);
-        });
-      }
-      
+
+      if (prevBtn) prevBtn.addEventListener('click', function() {
+        currentIndex = (currentIndex - 1 + validImages.length) % validImages.length;
+        showImage(currentIndex);
+      });
+      if (nextBtn) nextBtn.addEventListener('click', function() {
+        currentIndex = (currentIndex + 1) % validImages.length;
+        showImage(currentIndex);
+      });
+
       function showImage(index) {
         mainImg.src = validImages[index];
-        
-        // Cập nhật active thumbnail
         if (thumbsWrap) {
-          var allThumbs = thumbsWrap.querySelectorAll('.thumb');
-          for (var j = 0; j < allThumbs.length; j++) {
-            if (j === index) {
-              allThumbs[j].classList.add('active');
-            } else {
-              allThumbs[j].classList.remove('active');
-            }
+          const allThumbs = thumbsWrap.querySelectorAll('.thumb');
+          for (let j = 0; j < allThumbs.length; j++) {
+            if (j === index) allThumbs[j].classList.add('active'); else allThumbs[j].classList.remove('active');
           }
         }
       }
     }
-  }
 
-  loadImages();
-}
+    loadImages();
+  }
 </script>
 </body>
 </html>

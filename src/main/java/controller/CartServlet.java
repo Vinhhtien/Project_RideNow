@@ -86,38 +86,144 @@ public class CartServlet extends HttpServlet {
         }
     }
 
+//    private void handleAddToCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+//            throws IOException {
+//        try {
+//            int bikeId = Integer.parseInt(request.getParameter("bikeId"));
+//            Date start = Date.valueOf(request.getParameter("start"));
+//            Date end   = Date.valueOf(request.getParameter("end"));
+//            if (end.before(start)) {
+//                session.setAttribute("book_error", "Ngày trả phải sau hoặc bằng ngày nhận.");
+//                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
+//                return;
+//            }
+//            if (start.toLocalDate().isBefore(LocalDate.now())) {
+//                session.setAttribute("book_error", "Ngày nhận không được ở quá khứ.");
+//                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
+//                return;
+//            }
+//
+//            MotorbikeListItem b = motorbikeService.getDetail(bikeId);
+//            if (b == null) throw new IllegalArgumentException("Xe không tồn tại");
+//            
+//            if (!orderService.isBikeAvailable(bikeId, start, end)) {
+//                session.setAttribute("book_error",
+//                    "Xe đã được xác nhận cho khoảng ngày này. Vui lòng chọn ngày khác.");
+//                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
+//                return;
+//            }
+//            
+//            
+//            CartItem item = new CartItem(
+//                    b.getBikeId(), b.getBikeName(), b.getPricePerDay(), b.getTypeName(), start, end
+//            );
+//            getCart(session).add(item);
+//            response.sendRedirect(request.getContextPath()+"/cart");
+//        } catch (Exception ex) {
+//            session.setAttribute("book_error", "Không thể thêm vào giỏ: " + ex.getMessage());
+//            String backId = request.getParameter("bikeId");
+//            response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+backId);
+//        }
+//    }
+
     private void handleAddToCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-            throws IOException {
-        try {
-            int bikeId = Integer.parseInt(request.getParameter("bikeId"));
-            Date start = Date.valueOf(request.getParameter("start"));
-            Date end   = Date.valueOf(request.getParameter("end"));
-            if (end.before(start)) {
-                session.setAttribute("book_error", "Ngày trả phải sau hoặc bằng ngày nhận.");
-                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
-                return;
-            }
-            if (start.toLocalDate().isBefore(LocalDate.now())) {
-                session.setAttribute("book_error", "Ngày nhận không được ở quá khứ.");
-                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
-                return;
-            }
+        throws IOException {
+    int bikeId = -1;
+    try {
+        // ===== 1) Lấy & chuẩn hoá tham số =====
+        String bikeIdStr = request.getParameter("bikeId");
+        String startStr  = request.getParameter("start");
+        String endStr    = request.getParameter("end");
 
-            MotorbikeListItem b = motorbikeService.getDetail(bikeId);
-            if (b == null) throw new IllegalArgumentException("Xe không tồn tại");
+        if (bikeIdStr != null) bikeIdStr = bikeIdStr.trim();
+        if (startStr  != null) startStr  = startStr.trim();
+        if (endStr    != null) endStr    = endStr.trim();
 
-            CartItem item = new CartItem(
-                    b.getBikeId(), b.getBikeName(), b.getPricePerDay(), b.getTypeName(), start, end
-            );
-            getCart(session).add(item);
-            response.sendRedirect(request.getContextPath()+"/cart");
-        } catch (Exception ex) {
-            session.setAttribute("book_error", "Không thể thêm vào giỏ: " + ex.getMessage());
-            String backId = request.getParameter("bikeId");
-            response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+backId);
+        System.out.println("[ADD] raw params => bikeId=" + bikeIdStr + ", start=" + startStr + ", end=" + endStr);
+
+        if (bikeIdStr == null || bikeIdStr.isBlank()) {
+            throw new IllegalArgumentException("Thiếu mã xe.");
         }
-    }
+        bikeId = Integer.parseInt(bikeIdStr);
 
+        // Cho phép chọn 1 ngày: nếu thiếu start hay end thì dùng giá trị còn lại
+        if ((startStr == null || startStr.isBlank()) && (endStr == null || endStr.isBlank())) {
+            throw new IllegalArgumentException("Vui lòng chọn ngày nhận (và/hoặc ngày trả).");
+        }
+        if (startStr == null || startStr.isBlank()) startStr = endStr;
+        if (endStr   == null || endStr.isBlank())   endStr   = startStr;
+
+        // Parse yyyy-MM-dd an toàn
+        java.sql.Date start, end;
+        try {
+            start = java.sql.Date.valueOf(startStr); // yêu cầu định dạng yyyy-MM-dd
+            end   = java.sql.Date.valueOf(endStr);
+        } catch (IllegalArgumentException badFmt) {
+            throw new IllegalArgumentException("Định dạng ngày không hợp lệ. Vui lòng chọn lại (yyyy-MM-dd).");
+        }
+
+        // ===== 2) Validate ngày =====
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (end.before(start)) {
+            session.setAttribute("book_error", "Ngày trả phải sau hoặc bằng ngày nhận.");
+            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+            return;
+        }
+        if (start.toLocalDate().isBefore(today)) {
+            session.setAttribute("book_error", "Ngày nhận không được ở quá khứ.");
+            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+            return;
+        }
+
+        // ===== 3) Kiểm tra xe & lịch =====
+        MotorbikeListItem b = motorbikeService.getDetail(bikeId);
+        if (b == null) throw new IllegalArgumentException("Xe không tồn tại.");
+
+        if (!orderService.isBikeAvailable(bikeId, start, end)) {
+            // Lấy các khoảng bị trùng để hiển thị
+            java.util.List<service.IOrderService.OverlappedRange> overlaps =
+                    orderService.getOverlappingRanges(bikeId, start, end);
+
+            java.util.List<String> conflictStrings = new java.util.ArrayList<>();
+            java.time.format.DateTimeFormatter DF = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            if (overlaps != null && !overlaps.isEmpty()) {
+                for (service.IOrderService.OverlappedRange o : overlaps) {
+                    String s = o.start.toLocalDate().format(DF);
+                    String e = o.end.toLocalDate().format(DF);
+                    conflictStrings.add("#" + o.orderId + ": " + s + " → " + e);
+                }
+            }
+
+            session.setAttribute("book_error",
+                    "Xe đã được xác nhận cho một khoảng ngày đè lên khung bạn chọn. Vui lòng chọn thời gian khác.");
+            if (!conflictStrings.isEmpty()) {
+                session.setAttribute("book_conflicts", conflictStrings); // detail.jsp sẽ render danh sách này
+            }
+            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+            return;
+        }
+
+        // ===== 4) Add vào giỏ =====
+        CartItem item = new CartItem(
+                b.getBikeId(), b.getBikeName(), b.getPricePerDay(), b.getTypeName(), start, end
+        );
+        getCart(session).add(item);
+        response.sendRedirect(request.getContextPath() + "/cart");
+
+    } catch (IllegalArgumentException iae) {
+        session.setAttribute("book_error", iae.getMessage());
+        response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" +
+                (bikeId == -1 ? request.getParameter("bikeId") : bikeId));
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        session.setAttribute("book_error", "Không thể thêm vào giỏ: " + ex.getMessage());
+        String backId = request.getParameter("bikeId");
+        response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + backId);
+    }
+}
+
+
+    
     private void handleRemoveFromCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
             throws IOException {
         int index = Integer.parseInt(request.getParameter("index"));
