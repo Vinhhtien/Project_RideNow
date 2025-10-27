@@ -7,4 +7,8 @@ public interface IOrderManageService {
     List<Object[]> getActiveOrders();
     boolean confirmOrderPickup(int orderId, int adminId);
     boolean confirmOrderReturn(int orderId, int adminId);
+     boolean canPickupOrder(int orderId);
+     boolean markOrderAsNotGiven(int orderId, int adminId, String notes); // NEW
+
+    
 }

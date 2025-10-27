@@ -379,17 +379,30 @@ public class CartServlet extends HttpServlet {
                 }
             }
 
+//            if (createdOrderIds.isEmpty()) {
+//                String msg;
+//                if (!unavailableBikes.isEmpty()) {
+//                    msg = "Các xe sau không khả dụng: " +
+//                            unavailableBikes.stream().map(s -> "'" + s + "'").collect(Collectors.joining(", "))
+//                            + ". Vui lòng chọn thời gian khác.";
+//                } else msg = "Không thể tạo đơn hàng. Vui lòng thử lại sau.";
+//                session.setAttribute("error", msg);
+//                response.sendRedirect(request.getContextPath() + "/cart");
+//                return;
+//            }
+
             if (createdOrderIds.isEmpty()) {
-                String msg;
-                if (!unavailableBikes.isEmpty()) {
-                    msg = "Các xe sau không khả dụng: " +
-                            unavailableBikes.stream().map(s -> "'" + s + "'").collect(Collectors.joining(", "))
-                            + ". Vui lòng chọn thời gian khác.";
-                } else msg = "Không thể tạo đơn hàng. Vui lòng thử lại sau.";
+                String msg = "Các xe sau không khả dụng: "
+                        + unavailableBikes.stream()
+                        .map(s -> "'" + s + "'")
+                        .collect(Collectors.joining(", "))
+                        + ". Vui lòng chọn thời gian khác.";
                 session.setAttribute("error", msg);
                 response.sendRedirect(request.getContextPath() + "/cart");
                 return;
             }
+
+
 
             if (failCount > 0) {
                 String warn = "Đã tạo thành công " + successCount + " đơn hàng. "

@@ -128,7 +128,7 @@ String transactionSql = """
         req.setAttribute("totalTransactions", totalTransactions);
         req.setAttribute("pendingRefunds", pendingWithdrawCount);
 
-        req.getRequestDispatcher("/cus/tomer/wallet.jsp").forward(req, resp);
+        req.getRequestDispatcher("/customer/wallet.jsp").forward(req, resp);
     }
 
     @Override

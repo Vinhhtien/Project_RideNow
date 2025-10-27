@@ -10,7 +10,55 @@
     <title>Giao Nhận Xe - RideNow Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="${ctx}/css/admin.css">
+    <style>
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-overdue {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .btn-overdue:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        .text-muted {
+            color: #6c757d !important;
+        }
+        .small {
+            font-size: 0.875em;
+        }
+        .mt-1 {
+            margin-top: 0.25rem;
+        }
+        .pickup-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .overdue-info {
+            font-size: 0.8rem;
+            color: #dc3545;
+            margin-top: 0.25rem;
+            font-weight: bold;
+        }
+        .modal-overdue .modal-header {
+            background-color: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+        }
+        .modal-overdue .modal-title {
+            color: #856404;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body class="admin">
     <!-- Sidebar Navigation -->
@@ -224,14 +272,101 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <!-- GIỮ NGUYÊN FORM - KHÔNG THAY ĐỔI CHỨC NĂNG -->
-                                                <form method="post" action="${ctx}/adminpickup" 
-                                                      onsubmit="return confirm('Xác nhận khách đã nhận xe?');">
-                                                    <input type="hidden" name="orderId" value="${o[0]}">
-                                                    <button type="submit" class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-check"></i> Đã Nhận Xe
-                                                    </button>
-                                                </form>
+                                                <!-- KIỂM TRA NGÀY NHẬN XE - ĐÃ SỬA LỖI -->
+                                                <jsp:useBean id="now" class="java.util.Date"/>
+                                                <fmt:formatDate value="${now}" pattern="yyyyMMdd" var="todayNumber"/>
+                                                <fmt:formatDate value="${o[4]}" pattern="yyyyMMdd" var="rentalDateNumber"/>
+                                                
+                                                <c:set var="canPickup" value="${todayNumber >= rentalDateNumber}" />
+                                                <c:set var="isOverdue" value="${todayNumber > rentalDateNumber}" />
+                                                
+                                                <c:choose>
+                                                    <c:when test="${!canPickup}">
+                                                        <!-- CHƯA ĐẾN NGÀY -->
+                                                        <button type="button" class="btn btn-secondary btn-sm" disabled 
+                                                                title="Không thể nhận xe trước ngày thuê: <fmt:formatDate value='${o[4]}' pattern='dd/MM/yyyy'/>">
+                                                            <i class="fas fa-clock"></i> Chưa đến ngày
+                                                        </button>
+                                                        <div class="pickup-info">
+                                                            Có thể nhận từ: <strong><fmt:formatDate value="${o[4]}" pattern="dd/MM/yyyy"/></strong>
+                                                        </div>
+                                                    </c:when>
+                                                    <c:when test="${canPickup && !isOverdue}">
+                                                        <!-- ĐÚNG NGÀY - NÚT XANH -->
+                                                        <form method="post" action="${ctx}/adminpickup" 
+                                                              onsubmit="return confirm('Xác nhận khách đã nhận xe?');">
+                                                            <input type="hidden" name="orderId" value="${o[0]}">
+                                                            <input type="hidden" name="actionType" value="normal_pickup">
+                                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                                <i class="fas fa-check"></i> Đã Nhận Xe
+                                                            </button>
+                                                        </form>
+                                                        <div class="pickup-info">
+                                                            Có thể nhận xe
+                                                        </div>
+                                                    </c:when>
+                                                    <c:when test="${isOverdue}">
+                                                        <!-- QUÁ HẠN - NÚT ĐỎ VÀ MODAL -->
+                                                        <button type="button" class="btn btn-overdue btn-sm" 
+                                                                data-bs-toggle="modal" data-bs-target="#overdueModal${o[0]}">
+                                                            <i class="fas fa-exclamation-triangle"></i> Quá Hạn
+                                                        </button>
+                                                        <div class="overdue-info">
+                                                            Quá hạn từ: <strong><fmt:formatDate value="${o[4]}" pattern="dd/MM/yyyy"/></strong>
+                                                        </div>
+
+                                                        <!-- Modal cho đơn quá hạn -->
+                                                        <div class="modal fade" id="overdueModal${o[0]}" tabindex="-1" aria-hidden="true">
+                                                            <div class="modal-dialog modal-dialog-centered">
+                                                                <div class="modal-content modal-overdue">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">
+                                                                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                                                            Xác Nhận Đơn Quá Hạn #${o[0]}
+                                                                        </h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <p><strong>Đơn hàng này đã quá ngày thuê!</strong></p>
+                                                                        <p>Ngày thuê: <fmt:formatDate value="${o[4]}" pattern="dd/MM/yyyy"/></p>
+                                                                        <p>Vui lòng xác nhận tình trạng:</p>
+                                                                        
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label">Ghi chú (tùy chọn):</label>
+                                                                            <textarea class="form-control" name="notes" rows="2" 
+                                                                                      placeholder="Nhập ghi chú về tình trạng giao xe..."></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                                        
+                                                                        <!-- Option 1: Đã giao xe nhưng quên xác nhận -->
+                                                                        <form method="post" action="${ctx}/adminpickup" class="d-inline">
+                                                                            <input type="hidden" name="orderId" value="${o[0]}">
+                                                                            <input type="hidden" name="actionType" value="overdue_pickup">
+                                                                            <input type="hidden" name="notes" value="">
+                                                                            <button type="submit" class="btn btn-success" 
+                                                                                    onclick="this.form.notes.value = this.form.parentElement.parentElement.querySelector('textarea').value;">
+                                                                                <i class="fas fa-check"></i> Đã Giao Xe
+                                                                            </button>
+                                                                        </form>
+                                                                        
+                                                                        <!-- Option 2: Chưa giao xe -->
+                                                                        <form method="post" action="${ctx}/adminpickup" class="d-inline">
+                                                                            <input type="hidden" name="orderId" value="${o[0]}">
+                                                                            <input type="hidden" name="actionType" value="mark_not_given">
+                                                                            <input type="hidden" name="notes" value="">
+                                                                            <button type="submit" class="btn btn-warning" 
+                                                                                    onclick="this.form.notes.value = this.form.parentElement.parentElement.querySelector('textarea').value;">
+                                                                                <i class="fas fa-times"></i> Chưa Giao Xe
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </c:when>
+                                                </c:choose>
                                             </td>
                                         </tr>
                                     </c:forEach>
@@ -243,5 +378,28 @@
             </div>
         </section>
     </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // JavaScript để xử lý ghi chú trong modal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cập nhật ghi chú khi submit form trong modal
+            var modals = document.querySelectorAll('.modal');
+            modals.forEach(function(modal) {
+                modal.addEventListener('show.bs.modal', function() {
+                    var textarea = this.querySelector('textarea');
+                    var forms = this.querySelectorAll('form');
+                    
+                    forms.forEach(function(form) {
+                        var hiddenNotes = form.querySelector('input[name="notes"]');
+                        form.addEventListener('submit', function() {
+                            hiddenNotes.value = textarea.value;
+                        });
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

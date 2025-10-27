@@ -7,6 +7,8 @@ import service.IOrderManageService;
 import service.OrderManageService;
 import model.Account;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @WebServlet("/adminpickup")
 public class AdminPickupServlet extends HttpServlet {
@@ -23,6 +25,8 @@ public class AdminPickupServlet extends HttpServlet {
         }
         
         req.setAttribute("orders", orderService.getOrdersForPickup());
+        req.setAttribute("today", LocalDate.now());
+        req.setAttribute("todayStr", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         req.getRequestDispatcher("/admin/admin-pickup.jsp").forward(req, resp);
     }
     
@@ -37,19 +41,57 @@ public class AdminPickupServlet extends HttpServlet {
         }
 
         String orderIdStr = req.getParameter("orderId");
+        String actionType = req.getParameter("actionType"); // NEW: Loại hành động
+        String notes = req.getParameter("notes"); // NEW: Ghi chú
 
         if (orderIdStr != null) {
             try {
                 int orderId = Integer.parseInt(orderIdStr);
-                // SỬA: Dùng admin_id = 1 từ bảng Admins
                 int adminId = 1;
 
-                boolean success = orderService.confirmOrderPickup(orderId, adminId);
+                // Xử lý theo loại hành động
+                if ("normal_pickup".equals(actionType)) {
+                    // Xác nhận nhận xe bình thường
+                    boolean canPickup = orderService.canPickupOrder(orderId);
+                    
+                    if (!canPickup) {
+                        req.getSession().setAttribute("flash", "❌ Không thể cho nhận xe trước ngày thuê!");
+                        resp.sendRedirect(req.getContextPath() + "/adminpickup");
+                        return;
+                    }
 
-                if (success) {
-                    req.getSession().setAttribute("flash", "✅ Đã xác nhận khách nhận xe thành công!");
-                } else {
-                    req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
+                    boolean success = orderService.confirmOrderPickup(orderId, adminId);
+                    if (success) {
+                        req.getSession().setAttribute("flash", "✅ Đã xác nhận khách nhận xe thành công!");
+                    } else {
+                        req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
+                    }
+                    
+                } else if ("overdue_pickup".equals(actionType)) {
+                    // Xác nhận nhận xe quá hạn - đã giao xe thực tế
+                    boolean success = orderService.confirmOrderPickup(orderId, adminId);
+                    if (success) {
+                        String message = "✅ Đã xác nhận khách nhận xe (quá hạn)";
+                        if (notes != null && !notes.trim().isEmpty()) {
+                            message += " - " + notes;
+                        }
+                        req.getSession().setAttribute("flash", message);
+                    } else {
+                        req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
+                    }
+                    
+                } else if ("mark_not_given".equals(actionType)) {
+                    // Đánh dấu là chưa giao xe
+                    boolean success = orderService.markOrderAsNotGiven(orderId, adminId, notes);
+                    if (success) {
+                        String message = "⚠️ Đã đánh dấu đơn hàng chưa giao xe";
+                        if (notes != null && !notes.trim().isEmpty()) {
+                            message += " - " + notes;
+                        }
+                        req.getSession().setAttribute("flash", message);
+                    } else {
+                        req.getSession().setAttribute("flash", "❌ Cập nhật thất bại!");
+                    }
                 }
 
             } catch (NumberFormatException e) {
