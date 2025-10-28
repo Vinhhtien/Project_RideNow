@@ -79,7 +79,7 @@ public class AdminReturnServlet extends HttpServlet {
                     
                 } else if ("overdue_return".equals(actionType)) {
                     // Trả xe quá hạn - có phí trễ
-                    boolean success = orderService.confirmOverdueReturn(orderId, adminId, lateFee, notes);
+                    boolean success = orderService.confirmOverdueReturn(orderId, adminId, "0", notes);
                     if (success) {
                         String message = "⚠️ Đã xác nhận trả xe quá hạn";
                         if (lateFee != null && !lateFee.trim().isEmpty()) {

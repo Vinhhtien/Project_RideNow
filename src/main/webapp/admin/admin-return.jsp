@@ -358,15 +358,6 @@
                                                                         <p><strong>Đơn hàng này đã quá hạn trả xe!</strong></p>
                                                                         <p>Ngày trả dự kiến: <strong><fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/></strong></p>
                                                                         
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label">Phí trễ (nếu có):</label>
-                                                                            <div class="input-group">
-                                                                                <input type="text" class="form-control fee-input" name="lateFee" 
-                                                                                       placeholder="VD: 100,000 VND">
-                                                                                <span class="input-group-text">VND</span>
-                                                                            </div>
-                                                                            <div class="form-text">Nhập số tiền phí trễ nếu khách hàng phải trả thêm.</div>
-                                                                        </div>
                                                                         
                                                                         <div class="mb-3">
                                                                             <label class="form-label">Ghi chú về tình trạng xe:</label>
@@ -385,7 +376,7 @@
                                                                             <input type="hidden" name="notes" value="">
                                                                             <button type="submit" class="btn btn-warning" 
                                                                                     onclick="setFormValues(this, 'overdue_return')">
-                                                                                <i class="fas fa-check-circle"></i> Đã Trả Xe (Có Phí Trễ)
+                                                                                <i class="fas fa-check-circle"></i> Đã Trả Xe
                                                                             </button>
                                                                         </form>
                                                                         
@@ -437,7 +428,7 @@
             
             // Hiển thị confirm dialog
             const message = actionType === 'overdue_return' 
-                ? 'Xác nhận khách đã trả xe quá hạn? Phí trễ sẽ được ghi nhận.'
+                ? 'Xác nhận khách đã trả xe quá hạn?'
                 : 'Xác nhận đánh dấu đơn hàng chưa trả xe?';
             
             if (!confirm(message)) {
