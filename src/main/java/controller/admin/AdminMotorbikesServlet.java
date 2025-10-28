@@ -7,17 +7,15 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import model.Motorbike;
 import model.BikeType;
@@ -27,8 +25,8 @@ import service.MotorbikeAdminService;
 
 @WebServlet("/admin/bikes")
 @MultipartConfig(
-    maxFileSize = 1024 * 1024 * 5, // 5MB
-    maxRequestSize = 1024 * 1024 * 10 // 10MB
+        maxFileSize = 1024 * 1024 * 5,     // 5MB / file
+        maxRequestSize = 1024 * 1024 * 10  // 10MB / request
 )
 public class AdminMotorbikesServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -39,40 +37,79 @@ public class AdminMotorbikesServlet extends HttpServlet {
         motorbikeAdminService = new MotorbikeAdminService();
     }
 
+    /* ------------------------ Helpers ------------------------ */
+
+    private String str(HttpServletRequest req, String name) {
+        String v = req.getParameter(name);
+        return v == null ? null : v.trim();
+    }
+
+    private Integer intOrNull(HttpServletRequest req, String name) {
+        try {
+            String v = str(req, name);
+            if (v == null || v.isBlank()) return null;
+            return Integer.valueOf(v);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private int intRequired(HttpServletRequest req, String name) {
+        Integer v = intOrNull(req, name);
+        if (v == null) throw new IllegalArgumentException("Missing/invalid int param: " + name);
+        return v;
+    }
+
+    private BigDecimal bigDecimalRequired(HttpServletRequest req, String name) {
+        try {
+            String v = str(req, name);
+            if (v == null || v.isBlank()) throw new IllegalArgumentException();
+            return new BigDecimal(v);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Missing/invalid decimal param: " + name);
+        }
+    }
+
+    private boolean licensePlateExists(String plate) {
+        if (plate == null || plate.isBlank()) return false;
+        List<Motorbike> all = motorbikeAdminService.getAllMotorbikes();
+        return all.stream().anyMatch(b -> plate.equalsIgnoreCase(b.getLicensePlate()));
+    }
+
+    /* ------------------------ GET/POST ------------------------ */
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+            
+        request.setCharacterEncoding("UTF-8");
+    response.setCharacterEncoding("UTF-8");
+    response.setContentType("text/html; charset=UTF-8");
+
         System.out.println("=== DEBUG doGet START ===");
         System.out.println("Request URL: " + request.getRequestURL());
         System.out.println("Query String: " + request.getQueryString());
-        
+            
         String action = request.getParameter("action");
         System.out.println("Action parameter: " + action);
-        
+
         if (action == null) {
-            System.out.println("Calling listMotorbikes");
             listMotorbikes(request, response);
         } else {
             switch (action) {
                 case "new":
-                    System.out.println("Calling showNewForm");
                     showNewForm(request, response);
                     break;
                 case "edit":
-                    System.out.println("Calling showEditForm");
                     showEditForm(request, response);
                     break;
                 case "delete":
-                    System.out.println("Calling deleteMotorbike");
                     deleteMotorbike(request, response);
                     break;
                 case "filter":
-                    System.out.println("Calling filterMotorbikes");
                     filterMotorbikes(request, response);
                     break;
                 default:
-                    System.out.println("Calling listMotorbikes (default)");
                     listMotorbikes(request, response);
                     break;
             }
@@ -83,784 +120,461 @@ public class AdminMotorbikesServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
+
         System.out.println("=== DEBUG doPost START ===");
         System.out.println("Content-Type: " + request.getContentType());
         System.out.println("Request URL: " + request.getRequestURL());
         System.out.println("Query String: " + request.getQueryString());
-        
-        // Debug tất cả parameters
-        System.out.println("All parameters:");
-        request.getParameterMap().forEach((key, values) -> {
-            System.out.println("  " + key + ": " + String.join(", ", values));
-        });
-        
+
+        // log params
+        request.getParameterMap().forEach((k, v) -> System.out.println("  " + k + ": " + String.join(", ", v)));
+
         String action = request.getParameter("action");
         System.out.println("Action parameter: " + action);
-        
-        if ("create".equals(action)) {
-            System.out.println("Calling createMotorbike");
-            createMotorbike(request, response);
-        } else if ("update".equals(action)) {
-            System.out.println("Calling updateMotorbike");
-            updateMotorbike(request, response);
-        } else {
-            System.out.println("Calling listMotorbikes");
-            listMotorbikes(request, response);
+
+        try {
+            if ("create".equals(action)) {
+                createMotorbike(request, response);
+            } else if ("update".equals(action)) {
+                updateMotorbike(request, response);
+            } else {
+                listMotorbikes(request, response);
+            }
+        } finally {
+            System.out.println("=== DEBUG doPost END ===");
         }
-        System.out.println("=== DEBUG doPost END ===");
     }
+
+    /* ------------------------ Pages ------------------------ */
 
     private void listMotorbikes(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         System.out.println("=== DEBUG listMotorbikes START ===");
-        try {
-            List<Motorbike> motorbikes = motorbikeAdminService.getAllMotorbikes();
-            System.out.println("Retrieved " + motorbikes.size() + " motorbikes");
-            
-            request.setAttribute("motorbikes", motorbikes);
-            request.getRequestDispatcher("/admin/admin-motorbikes-management.jsp").forward(request, response);
-        } catch (Exception e) {
-            System.err.println("Error in listMotorbikes: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        List<Motorbike> motorbikes = motorbikeAdminService.getAllMotorbikes();
+        System.out.println("Retrieved " + motorbikes.size() + " motorbikes");
+        request.setAttribute("motorbikes", motorbikes);
+        request.getRequestDispatcher("/admin/admin-motorbikes-management.jsp").forward(request, response);
         System.out.println("=== DEBUG listMotorbikes END ===");
     }
 
     private void filterMotorbikes(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         System.out.println("=== DEBUG filterMotorbikes START ===");
-        try {
-            String ownerType = request.getParameter("ownerType");
-            String status = request.getParameter("status");
-            System.out.println("Filter params - ownerType: " + ownerType + ", status: " + status);
-            
-            List<Motorbike> motorbikes;
 
-            if (ownerType != null && !ownerType.equals("all")) {
-                System.out.println("Filtering by owner: " + ownerType);
-                motorbikes = motorbikeAdminService.getMotorbikesByOwner(ownerType);
-            } else if (status != null && !status.equals("all")) {
-                System.out.println("Filtering by status: " + status);
-                motorbikes = motorbikeAdminService.getMotorbikesByStatus(status);
-            } else {
-                System.out.println("No filter applied, getting all motorbikes");
-                motorbikes = motorbikeAdminService.getAllMotorbikes();
-            }
+        String ownerType = str(request, "ownerType"); // all | partner | admin | null
+        String status = str(request, "status");       // all | available | rented | maintenance | null
+        System.out.println("Filter params - ownerType: " + ownerType + ", status: " + status);
 
-            System.out.println("Filtered result: " + motorbikes.size() + " motorbikes");
-            request.setAttribute("motorbikes", motorbikes);
-            request.getRequestDispatcher("/admin/admin-motorbikes-management.jsp").forward(request, response);
-        } catch (Exception e) {
-            System.err.println("Error in filterMotorbikes: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+        List<Motorbike> list = motorbikeAdminService.getAllMotorbikes();
+
+        if (ownerType != null && !"all".equalsIgnoreCase(ownerType)) {
+            list = list.stream()
+                    .filter(b -> ownerType.equalsIgnoreCase(
+                            b.getPartnerId() != null ? "partner" : "admin"))
+                    .collect(Collectors.toList());
         }
+        if (status != null && !"all".equalsIgnoreCase(status)) {
+            list = list.stream()
+                    .filter(b -> status.equalsIgnoreCase(b.getStatus()))
+                    .collect(Collectors.toList());
+        }
+
+        System.out.println("Filtered result: " + list.size() + " motorbikes");
+        request.setAttribute("motorbikes", list);
+        request.getRequestDispatcher("/admin/admin-motorbikes-management.jsp").forward(request, response);
         System.out.println("=== DEBUG filterMotorbikes END ===");
     }
 
     private void showNewForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         System.out.println("=== DEBUG showNewForm START ===");
-        try {
-            List<BikeType> bikeTypes = motorbikeAdminService.getAllBikeTypes();
-            List<Partner> partners = motorbikeAdminService.getAllPartners();
-
-            System.out.println("Retrieved " + bikeTypes.size() + " bike types");
-            System.out.println("Retrieved " + partners.size() + " partners");
-
-            request.setAttribute("bikeTypes", bikeTypes);
-            request.setAttribute("partners", partners);
-            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-        } catch (Exception e) {
-            System.err.println("Error in showNewForm: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        List<BikeType> bikeTypes = motorbikeAdminService.getAllBikeTypes();
+        List<Partner> partners = motorbikeAdminService.getAllPartners();
+        System.out.println("Retrieved " + bikeTypes.size() + " bike types");
+        System.out.println("Retrieved " + partners.size() + " partners");
+        request.setAttribute("bikeTypes", bikeTypes);
+        request.setAttribute("partners", partners);
+        request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
         System.out.println("=== DEBUG showNewForm END ===");
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         System.out.println("=== DEBUG showEditForm START ===");
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            System.out.println("Editing motorbike ID: " + id);
-            
-            Motorbike motorbike = motorbikeAdminService.getMotorbikeById(id);
-            
-            if (motorbike == null) {
-                System.err.println("Motorbike not found with ID: " + id);
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-
-            System.out.println("Found motorbike: " + motorbike.getBikeName());
-            
-            List<BikeType> bikeTypes = motorbikeAdminService.getAllBikeTypes();
-            List<Partner> partners = motorbikeAdminService.getAllPartners();
-
-            System.out.println("Retrieved " + bikeTypes.size() + " bike types");
-            System.out.println("Retrieved " + partners.size() + " partners");
-
-            request.setAttribute("motorbike", motorbike);
-            request.setAttribute("bikeTypes", bikeTypes);
-            request.setAttribute("partners", partners);
-            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-        } catch (Exception e) {
-            System.err.println("Error in showEditForm: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+        int id = intRequired(request, "id");
+        Motorbike motorbike = motorbikeAdminService.getMotorbikeById(id);
+        if (motorbike == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
         }
+        System.out.println("Editing motorbike ID: " + id + " (" + motorbike.getBikeName() + ")");
+        request.setAttribute("motorbike", motorbike);
+        request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+        request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+        request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
         System.out.println("=== DEBUG showEditForm END ===");
     }
 
+    /* ------------------------ Create/Update/Delete ------------------------ */
+
     private void createMotorbike(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws IOException, ServletException {
+    System.out.println("=== DEBUG createMotorbike START ===");
+    
+    try {
+        // DEBUG: In tất cả parameters
+        System.out.println("=== ALL PARAMETERS ===");
+        request.getParameterMap().forEach((k, v) -> 
+            System.out.println("  " + k + ": " + String.join(", ", v)));
         
-        System.out.println("=== DEBUG createMotorbike START ===");
-        try {
-            // DEBUG: Log tất cả parameters
-            System.out.println("All form parameters:");
-            request.getParameterMap().forEach((key, value) -> {
-                System.out.println("  " + key + ": " + String.join(", ", value));
-            });
+        String bikeName = str(request, "bikeName");
+        String licensePlate = str(request, "licensePlate");
+        BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
+        String status = Optional.ofNullable(str(request, "status")).orElse("available");
+        String description = str(request, "description");
+        int typeId = intRequired(request, "typeId");
 
-            // Lấy các tham số từ form
-            String bikeName = request.getParameter("bikeName");
-            String licensePlate = request.getParameter("licensePlate");
-            String pricePerDay = request.getParameter("pricePerDay");
-            String status = request.getParameter("status");
-            String description = request.getParameter("description");
-            int typeId = Integer.parseInt(request.getParameter("typeId"));
-            
-            System.out.println("Form data:");
-            System.out.println("  bikeName: " + bikeName);
-            System.out.println("  licensePlate: " + licensePlate);
-            System.out.println("  pricePerDay: " + pricePerDay);
-            System.out.println("  status: " + status);
-            System.out.println("  description: " + description);
-            System.out.println("  typeId: " + typeId);
-            
-            // Xác định chủ sở hữu
-            Integer partnerId = null;
-            Integer storeId = null;
-            String ownerType = request.getParameter("ownerType");
-            System.out.println("ownerType: " + ownerType);
-            
-            if (ownerType != null && "partner".equals(ownerType)) {
-                String partnerIdParam = request.getParameter("partnerId");
-                System.out.println("partnerId parameter: " + partnerIdParam);
-                if (partnerIdParam != null && !partnerIdParam.isEmpty()) {
-                    partnerId = Integer.parseInt(partnerIdParam);
-                }
-            } else {
-                storeId = 1; // Cửa hàng mặc định của admin
-            }
-            
-            System.out.println("Final owner - partnerId: " + partnerId + ", storeId: " + storeId);
+        System.out.println("=== PARSED VALUES ===");
+        System.out.println("  bikeName: " + bikeName);
+        System.out.println("  licensePlate: " + licensePlate);
+        System.out.println("  pricePerDay: " + pricePerDay);
+        System.out.println("  status: " + status);
+        System.out.println("  description: " + description);
+        System.out.println("  typeId: " + typeId);
 
-            Motorbike newMotorbike = new Motorbike();
-            newMotorbike.setBikeName(bikeName);
-            newMotorbike.setLicensePlate(licensePlate);
-            newMotorbike.setPricePerDay(new BigDecimal(pricePerDay));
-            newMotorbike.setStatus(status);
-            newMotorbike.setDescription(description);
-            newMotorbike.setTypeId(typeId);
-            newMotorbike.setPartnerId(partnerId);
-            newMotorbike.setStoreId(storeId);
-
-            System.out.println("Calling service to add motorbike...");
-            boolean success = motorbikeAdminService.addMotorbike(newMotorbike);
-            System.out.println("Service result: " + success);
-            
-            if (success) {
-                // Lấy ID vừa tạo
-                int bikeId = newMotorbike.getBikeId();
-                System.out.println("New bike created with ID: " + bikeId);
-                
-                // Xử lý upload ảnh sau khi tạo xe thành công
-                if (bikeId > 0) {
-                    System.out.println("Calling handleImageUpload for new bike...");
-                    handleImageUpload(request, bikeId, typeId, false);
-                } else {
-                    System.out.println("WARNING: bikeId is not set after creation!");
-                }
-                
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?success=created");
-            } else {
-                System.err.println("Failed to create motorbike in service");
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
-            }
-        } catch (Exception e) {
-            System.err.println("Exception in createMotorbike: " + e.getMessage());
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_exception");
-        }
-        System.out.println("=== DEBUG createMotorbike END ===");
-    }
-
-    private void updateMotorbike(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        String ownerType = Optional.ofNullable(str(request, "ownerType")).orElse("admin");
+        Integer partnerId = null, storeId = null;
         
-        System.out.println("=== DEBUG updateMotorbike START ===");
-        try {
-            int bikeId = Integer.parseInt(request.getParameter("bikeId"));
-            String bikeName = request.getParameter("bikeName");
-            String licensePlate = request.getParameter("licensePlate");
-            String pricePerDay = request.getParameter("pricePerDay");
-            String status = request.getParameter("status");
-            String description = request.getParameter("description");
-            int typeId = Integer.parseInt(request.getParameter("typeId"));
-
-            System.out.println("Update data for bikeId: " + bikeId);
-            System.out.println("  bikeName: " + bikeName);
-            System.out.println("  licensePlate: " + licensePlate);
-            System.out.println("  pricePerDay: " + pricePerDay);
-            System.out.println("  status: " + status);
-            System.out.println("  description: " + description);
-            System.out.println("  typeId: " + typeId);
-
-            Motorbike existingMotorbike = motorbikeAdminService.getMotorbikeById(bikeId);
-            if (existingMotorbike == null) {
-                System.err.println("Motorbike not found with ID: " + bikeId);
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?error=not_found");
+        System.out.println("=== OWNER TYPE: " + ownerType + " ===");
+        
+        if ("partner".equalsIgnoreCase(ownerType)) {
+            partnerId = intOrNull(request, "partnerId");
+            System.out.println("  partnerId: " + partnerId);
+            
+            if (partnerId == null) {
+                System.err.println("ERROR: partnerId is null for partner ownerType");
+                request.setAttribute("formError", "Vui lòng chọn Đối tác cho chủ sở hữu = Đối tác.");
+                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
                 return;
             }
-
-            System.out.println("Found existing motorbike: " + existingMotorbike.getBikeName());
-            
-            existingMotorbike.setBikeName(bikeName);
-            existingMotorbike.setLicensePlate(licensePlate);
-            existingMotorbike.setPricePerDay(new BigDecimal(pricePerDay));
-            existingMotorbike.setStatus(status);
-            existingMotorbike.setDescription(description);
-            existingMotorbike.setTypeId(typeId);
-
-            System.out.println("Calling service to update motorbike...");
-            boolean success = motorbikeAdminService.updateMotorbike(existingMotorbike);
-            System.out.println("Service result: " + success);
-            
-            if (success) {
-                // Xử lý upload ảnh và xóa ảnh
-                System.out.println("Calling handleImageUpdate...");
-                handleImageUpdate(request, bikeId, typeId);
-                
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?success=updated");
-            } else {
-                System.err.println("Failed to update motorbike in service");
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?error=update_failed");
-            }
-        } catch (Exception e) {
-            System.err.println("Exception in updateMotorbike: " + e.getMessage());
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=update_exception");
+        } else {
+            storeId = 1; // default store
+            System.out.println("  storeId: " + storeId);
         }
+
+        // Kiểm tra biển số trùng
+        System.out.println("=== CHECKING LICENSE PLATE: " + licensePlate + " ===");
+        if (licensePlateExists(licensePlate)) {
+            System.err.println("ERROR: Duplicate license plate: " + licensePlate);
+            request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
+            request.setAttribute("prefill_ownerType", ownerType);
+            request.setAttribute("prefill_partnerId", partnerId);
+            request.setAttribute("prefill_storeId", storeId);
+            request.setAttribute("prefill", Map.of(
+                    "bikeName", bikeName,
+                    "licensePlate", licensePlate,
+                    "pricePerDay", pricePerDay.toPlainString(),
+                    "status", status,
+                    "description", description,
+                    "typeId", String.valueOf(typeId)
+            ));
+            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+            return;
+        }
+
+        // Tạo motorbike object
+        Motorbike nb = new Motorbike();
+        nb.setBikeName(bikeName);
+        nb.setLicensePlate(licensePlate);
+        nb.setPricePerDay(pricePerDay);
+        nb.setStatus(status);
+        nb.setDescription(description);
+        nb.setTypeId(typeId);
+        nb.setPartnerId(partnerId);
+        nb.setStoreId(storeId);
+
+        System.out.println("=== BEFORE SERVICE CALL ===");
+        System.out.println("  Motorbike: " + nb.getBikeName() + ", License: " + nb.getLicensePlate());
+        System.out.println("  PartnerId: " + nb.getPartnerId() + ", StoreId: " + nb.getStoreId());
+
+        boolean ok = motorbikeAdminService.addMotorbike(nb);
+        System.out.println("=== SERVICE RESULT: " + ok + " ===");
+        System.out.println("  New Bike ID: " + nb.getBikeId());
+
+        if (!ok) {
+            System.err.println("ERROR: Service returned false");
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
+            return;
+        }
+
+        // Xử lý ảnh
+        if (nb.getBikeId() > 0) {
+            try {
+                handleImageUpload(request, nb.getBikeId(), typeId, false);
+            } catch (Exception e) {
+                System.err.println("Image upload error: " + e.getMessage());
+            }
+        }
+
+        System.out.println("=== SUCCESS - REDIRECTING ===");
+        response.sendRedirect(request.getContextPath() + "/admin/bikes?success=created");
+        
+    } catch (Exception e) {
+        System.err.println("ERROR in createMotorbike: " + e.getMessage());
+        e.printStackTrace();
+        response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
+    }
+}
+
+    private void updateMotorbike(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        System.out.println("=== DEBUG updateMotorbike START ===");
+
+        int bikeId = intRequired(request, "bikeId");
+        String bikeName = str(request, "bikeName");
+        String licensePlate = str(request, "licensePlate");
+        BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
+        String status = Optional.ofNullable(str(request, "status")).orElse("available");
+        String description = str(request, "description");
+        int typeId = intRequired(request, "typeId");
+
+        Motorbike existing = motorbikeAdminService.getMotorbikeById(bikeId);
+        if (existing == null) {
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=not_found");
+            System.out.println("=== DEBUG updateMotorbike END (not found) ===");
+            return;
+        }
+
+        // nếu đổi biển số, kiểm tra trùng với xe khác
+        if (licensePlate != null && !licensePlate.equalsIgnoreCase(existing.getLicensePlate())
+                && licensePlateExists(licensePlate)) {
+            request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
+            request.setAttribute("motorbike", existing);
+            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+            System.out.println("=== DEBUG updateMotorbike END (duplicate) ===");
+            return;
+        }
+
+        existing.setBikeName(bikeName);
+        existing.setLicensePlate(licensePlate);
+        existing.setPricePerDay(pricePerDay);
+        existing.setStatus(status);
+        existing.setDescription(description);
+        existing.setTypeId(typeId);
+
+        boolean ok = motorbikeAdminService.updateMotorbike(existing);
+        System.out.println("Service result: " + ok);
+
+        if (!ok) {
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=update_failed");
+            System.out.println("=== DEBUG updateMotorbike END (service failed) ===");
+            return;
+        }
+
+        // ảnh
+        try {
+            handleImageUpdate(request, bikeId, typeId);
+        } catch (Exception e) {
+            System.err.println("Image update error: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        response.sendRedirect(request.getContextPath() + "/admin/bikes?success=updated");
         System.out.println("=== DEBUG updateMotorbike END ===");
     }
 
     private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        
         System.out.println("=== DEBUG deleteMotorbike START ===");
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            System.out.println("Deleting motorbike ID: " + id);
-            
-            // Xóa thư mục ảnh trước khi xóa xe
-            Motorbike motorbike = motorbikeAdminService.getMotorbikeById(id);
-            if (motorbike != null) {
-                System.out.println("Found motorbike, deleting image folder...");
-                deleteImageFolder(motorbike.getBikeId(), motorbike.getTypeId());
-            } else {
-                System.out.println("Motorbike not found, skipping image deletion");
+        int id = intRequired(request, "id");
+        Motorbike mb = motorbikeAdminService.getMotorbikeById(id);
+        if (mb != null) {
+            try {
+                deleteImageFolder(mb.getBikeId(), mb.getTypeId());
+            } catch (Exception e) {
+                System.err.println("Delete image folder error: " + e.getMessage());
             }
-            
-            System.out.println("Calling service to delete motorbike...");
-            boolean success = motorbikeAdminService.deleteMotorbike(id);
-            System.out.println("Service result: " + success);
-            
-            if (success) {
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?success=deleted");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/admin/bikes?error=delete_failed");
-            }
-        } catch (Exception e) {
-            System.err.println("Exception in deleteMotorbike: " + e.getMessage());
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=delete_exception");
         }
+        boolean ok = motorbikeAdminService.deleteMotorbike(id);
+        response.sendRedirect(request.getContextPath() + "/admin/bikes?" + (ok ? "success=deleted" : "error=delete_failed"));
         System.out.println("=== DEBUG deleteMotorbike END ===");
     }
 
-    // ===== PHƯƠNG THỨC MỚI: Lấy đường dẫn source code =====
+    /* ------------------------ Image Handling ------------------------ */
+
     private String getSourceImageBasePath() {
-        // Lấy đường dẫn hiện tại từ servlet context
         String currentPath = getServletContext().getRealPath("/");
-        System.out.println("Current real path: " + currentPath);
-        
         File currentDir = new File(currentPath);
-        
-        // Nếu đang chạy từ thư mục target, điều chỉnh về src/main/webapp
-        if (currentPath.contains("target")) {
-            // Đi từ target về thư mục gốc project, rồi vào src/main/webapp
-            File projectRoot = currentDir.getParentFile().getParentFile(); // target -> project root
+        if (currentPath != null && currentPath.contains("target")) {
+            File projectRoot = currentDir.getParentFile() != null ? currentDir.getParentFile().getParentFile() : null;
             if (projectRoot != null) {
-                String sourcePath = projectRoot.getAbsolutePath() + File.separator + "src" + 
-                                  File.separator + "main" + File.separator + "webapp";
-                File sourceDir = new File(sourcePath);
-                if (sourceDir.exists()) {
-                    System.out.println("Using source directory: " + sourcePath);
-                    return sourcePath;
-                } else {
-                    System.out.println("Source directory not found: " + sourcePath);
-                }
+                File srcWebapp = new File(projectRoot, "src" + File.separator + "main" + File.separator + "webapp");
+                if (srcWebapp.exists()) return srcWebapp.getAbsolutePath();
             }
         }
-        
-        // Nếu không tìm thấy source directory, dùng đường dẫn hiện tại
-        System.out.println("Using current directory: " + currentPath);
         return currentPath;
     }
 
-    // ===== Xử lý ảnh - VỚI DEBUG CHI TIẾT =====
-    
-    private void handleImageUpload(HttpServletRequest request, int bikeId, int typeId, boolean isUpdate) 
-            throws ServletException, IOException {
-        
+    private void handleImageUpload(HttpServletRequest request, int bikeId, int typeId, boolean isUpdate)
+            throws Exception {
         System.out.println("=== DEBUG handleImageUpload START ===");
-        System.out.println("Parameters - bikeId: " + bikeId + ", typeId: " + typeId + ", isUpdate: " + isUpdate);
-        
-        try {
-            // DEBUG: Kiểm tra các đường dẫn
-            String servletPath = getServletContext().getRealPath("/");
-            String sourcePath = getSourceImageBasePath();
-            
-            System.out.println("Servlet context path: " + servletPath);
-            System.out.println("Source image base path: " + sourcePath);
-            
-            // Lấy tất cả các parts
-            Collection<Part> parts = request.getParts();
-            System.out.println("Total parts in request: " + parts.size());
-            
-            List<Part> imageParts = new ArrayList<>();
-            
-            for (Part part : parts) {
-                System.out.println("Part: name=" + part.getName() + 
-                                 ", size=" + part.getSize() + 
-                                 ", contentType=" + part.getContentType() +
-                                 ", submittedFileName=" + part.getSubmittedFileName());
-                
-                if ("images".equals(part.getName()) && part.getSize() > 0 && part.getContentType() != null 
-                    && part.getContentType().startsWith("image/")) {
-                    imageParts.add(part);
-                    System.out.println("✓ Added to imageParts: " + part.getSubmittedFileName());
-                }
+        Collection<Part> parts = request.getParts();
+        List<Part> imageParts = parts.stream()
+                .filter(p -> "images".equals(p.getName()) && p.getSize() > 0 && p.getContentType() != null && p.getContentType().startsWith("image/"))
+                .collect(Collectors.toList());
+        System.out.println("Total image parts: " + imageParts.size());
+        if (imageParts.isEmpty()) {
+            System.out.println("No image parts found");
+            System.out.println("=== DEBUG handleImageUpload END ===");
+            return;
+        }
+
+        String typeFolder = getTypeFolder(typeId);
+        String base = getSourceImageBasePath();
+        String uploadPath = base + File.separator + "images" + File.separator + "bike"
+                + File.separator + typeFolder + File.separator + bikeId;
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) uploadDir.mkdirs();
+
+        // tìm số tiếp theo
+        File[] existing = uploadDir.listFiles((dir, name) -> name.matches("\\d+\\.jpg"));
+        int next = (existing == null) ? 1 : (int) Arrays.stream(existing).count() + 1;
+
+        for (Part part : imageParts) {
+            if (next > 6) break; // tối đa 6 ảnh
+            String filePath = uploadPath + File.separator + (next++) + ".jpg";
+            try (InputStream in = part.getInputStream(); OutputStream out = new FileOutputStream(filePath)) {
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) != -1) out.write(buf, 0, len);
             }
-            
-            System.out.println("Total image parts found: " + imageParts.size());
-            
-            if (!imageParts.isEmpty()) {
-                String typeFolder = getTypeFolder(typeId);
-                System.out.println("Type folder: " + typeFolder);
-                
-                // Tạo đường dẫn đến thư mục images trong SOURCE CODE
-                String uploadPath = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike" 
-                                  + File.separator + typeFolder + File.separator + bikeId;
-                
-                System.out.println("Full upload path: " + uploadPath);
-                
-                File uploadDir = new File(uploadPath);
-                System.out.println("Upload directory exists: " + uploadDir.exists());
-                
-                if (!uploadDir.exists()) {
-                    boolean created = uploadDir.mkdirs();
-                    System.out.println("Directory created: " + created + " at " + uploadDir.getAbsolutePath());
-                }
-                
-                // Lấy danh sách ảnh hiện tại (nếu có)
-                File[] existingFiles = uploadDir.listFiles((dir, name) -> name.matches("\\d+\\.jpg"));
-                int nextImageNumber = 1;
-                
-                if (existingFiles != null) {
-                    System.out.println("Existing image files: " + existingFiles.length);
-                    
-                    // Sắp xếp files theo số thứ tự
-                    Arrays.sort(existingFiles, Comparator.comparing(file -> {
-                        String name = file.getName();
-                        return Integer.parseInt(name.substring(0, name.lastIndexOf('.')));
-                    }));
-                    
-                    // Tìm số tiếp theo để thêm ảnh mới
-                    nextImageNumber = existingFiles.length + 1;
-                    System.out.println("Next available image number: " + nextImageNumber);
-                    
-                    // Debug existing files
-                    for (File file : existingFiles) {
-                        System.out.println("  Existing: " + file.getName() + " (" + file.length() + " bytes)");
-                    }
-                } else {
-                    System.out.println("No existing image files found");
-                }
-                
-                // Lưu ảnh mới - đánh số tiếp theo
-                int imageCount = nextImageNumber;
-                for (Part filePart : imageParts) {
-                    if (imageCount > 6) {
-                        System.out.println("⚠ Reached maximum 6 images, stopping");
-                        break; // Tối đa 6 ảnh
-                    }
-                    
-                    String fileName = imageCount + ".jpg";
-                    String filePath = uploadPath + File.separator + fileName;
-                    
-                    System.out.println("Saving image " + imageCount + ": " + filePath);
-                    System.out.println("  File size: " + filePart.getSize() + " bytes");
-                    System.out.println("  Content type: " + filePart.getContentType());
-                    System.out.println("  Submitted name: " + filePart.getSubmittedFileName());
-                    
-                    // Ghi file với stream
-                    try (InputStream input = filePart.getInputStream();
-                         OutputStream output = new FileOutputStream(filePath)) {
-                        
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        long totalBytes = 0;
-                        while ((bytesRead = input.read(buffer)) != -1) {
-                            output.write(buffer, 0, bytesRead);
-                            totalBytes += bytesRead;
-                        }
-                        System.out.println("  ✓ Written " + totalBytes + " bytes");
-                    } catch (Exception e) {
-                        System.err.println("  ✗ Error writing file: " + e.getMessage());
-                        throw e;
-                    }
-                    
-                    System.out.println("  ✓ Image saved successfully: " + fileName);
-                    imageCount++;
-                }
-                
-                // Debug: kiểm tra file sau khi lưu
-                File[] newFiles = uploadDir.listFiles();
-                if (newFiles != null) {
-                    System.out.println("Total files after upload: " + newFiles.length);
-                    for (File file : newFiles) {
-                        System.out.println("  - " + file.getName() + " (" + file.length() + " bytes)");
-                    }
-                } else {
-                    System.out.println("No files found after upload (directory might be empty)");
-                }
-            } else {
-                System.out.println("No image parts found to upload");
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Error in handleImageUpload: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
         }
         System.out.println("=== DEBUG handleImageUpload END ===");
     }
-    
-    // PHƯƠNG THỨC MỚI: Xử lý toàn bộ cập nhật ảnh (xóa + thêm mới + sắp xếp lại)
+
     private void handleImageUpdate(HttpServletRequest request, int bikeId, int typeId) {
         System.out.println("=== DEBUG handleImageUpdate START ===");
-        System.out.println("Parameters - bikeId: " + bikeId + ", typeId: " + typeId);
-        
+        handleImageDeletion(request, bikeId, typeId);
+        reorganizeImages(bikeId, typeId);
         try {
-            // 1. Xử lý xóa ảnh trước
-            System.out.println("Step 1: Handling image deletion...");
-            handleImageDeletion(request, bikeId, typeId);
-            
-            // 2. Sắp xếp lại ảnh hiện tại
-            System.out.println("Step 2: Reorganizing images...");
-            reorganizeImages(bikeId, typeId);
-            
-            // 3. Xử lý thêm ảnh mới
-            System.out.println("Step 3: Handling new image upload...");
             handleImageUpload(request, bikeId, typeId, true);
-            
-            System.out.println("✓ Image update completed successfully");
         } catch (Exception e) {
-            System.err.println("❌ Error in handleImageUpdate: " + e.getMessage());
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
         System.out.println("=== DEBUG handleImageUpdate END ===");
     }
-    
-    // PHƯƠNG THỨC MỚI: Sắp xếp lại ảnh thành thứ tự liên tục (1.jpg, 2.jpg, 3.jpg...)
-    private void reorganizeImages(int bikeId, int typeId) {
-        System.out.println("=== DEBUG reorganizeImages START ===");
-        System.out.println("Parameters - bikeId: " + bikeId + ", typeId: " + typeId);
-        
-        try {
-            String typeFolder = getTypeFolder(typeId);
-            
-            // Sử dụng đường dẫn SOURCE CODE
-            String imagePath = getSourceImageBasePath() + File.separator + "images" 
-                             + File.separator + "bike" + File.separator + typeFolder 
-                             + File.separator + bikeId;
-            
-            System.out.println("Image path: " + imagePath);
-            
-            File imageDir = new File(imagePath);
-            if (!imageDir.exists()) {
-                System.out.println("⚠ Image directory does not exist: " + imagePath);
-                System.out.println("=== DEBUG reorganizeImages END (no directory) ===");
-                return;
-            }
-            
-            // Lấy tất cả file ảnh .jpg
-            File[] imageFiles = imageDir.listFiles((dir, name) -> name.matches("\\d+\\.jpg"));
-            
-            if (imageFiles == null || imageFiles.length == 0) {
-                System.out.println("⚠ No image files found to reorganize");
-                System.out.println("=== DEBUG reorganizeImages END (no files) ===");
-                return;
-            }
-            
-            System.out.println("Found " + imageFiles.length + " image files to reorganize");
-            
-            // Debug hiển thị files trước khi sắp xếp
-            System.out.println("Files before reorganization:");
-            for (File file : imageFiles) {
-                System.out.println("  - " + file.getName() + " (" + file.length() + " bytes)");
-            }
-            
-            // Sắp xếp files theo số thứ tự
-            Arrays.sort(imageFiles, Comparator.comparing(file -> {
-                String name = file.getName();
-                return Integer.parseInt(name.substring(0, name.lastIndexOf('.')));
-            }));
-            
-            System.out.println("Files after sorting:");
-            for (File file : imageFiles) {
-                System.out.println("  - " + file.getName());
-            }
-            
-            // Tạo thư mục tạm thời
-            String tempPath = imagePath + "_temp";
-            File tempDir = new File(tempPath);
-            System.out.println("Temp directory: " + tempPath);
-            
-            if (tempDir.exists()) {
-                System.out.println("Temp directory exists, deleting...");
-                deleteFolder(tempDir);
-            }
-            
-            boolean tempCreated = tempDir.mkdirs();
-            System.out.println("Temp directory created: " + tempCreated);
-            
-            // Copy ảnh sang thư mục tạm với tên mới (sắp xếp lại từ 1)
-            System.out.println("Copying files to temp directory...");
-            for (int i = 0; i < imageFiles.length; i++) {
-                File oldFile = imageFiles[i];
-                String newFileName = (i + 1) + ".jpg";
-                File newFile = new File(tempPath + File.separator + newFileName);
-                
-                System.out.println("  Copying: " + oldFile.getName() + " -> " + newFileName);
-                
-                // Copy file
-                try (InputStream in = new java.io.FileInputStream(oldFile);
-                     OutputStream out = new FileOutputStream(newFile)) {
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    long totalBytes = 0;
-                    while ((length = in.read(buffer)) > 0) {
-                        out.write(buffer, 0, length);
-                        totalBytes += length;
-                    }
-                    System.out.println("    ✓ Copied " + totalBytes + " bytes");
-                } catch (Exception e) {
-                    System.err.println("    ✗ Error copying file: " + e.getMessage());
-                    throw e;
-                }
-            }
-            
-            // Xóa thư mục cũ và đổi tên thư mục tạm
-            System.out.println("Deleting original directory...");
-            deleteFolder(imageDir);
-            
-            System.out.println("Renaming temp directory...");
-            boolean renamed = tempDir.renameTo(imageDir);
-            System.out.println("Rename successful: " + renamed);
-            
-            // Kiểm tra kết quả
-            File[] finalFiles = imageDir.listFiles((dir, name) -> name.matches("\\d+\\.jpg"));
-            if (finalFiles != null) {
-                System.out.println("Final files after reorganization (" + finalFiles.length + " files):");
-                for (File file : finalFiles) {
-                    System.out.println("  - " + file.getName() + " (" + file.length() + " bytes)");
-                }
-            }
-            
-            System.out.println("✓ Image reorganization completed successfully");
-        } catch (Exception e) {
-            System.err.println("❌ Error in reorganizeImages: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-        System.out.println("=== DEBUG reorganizeImages END ===");
-    }
-    
+
     private void handleImageDeletion(HttpServletRequest request, int bikeId, int typeId) {
         System.out.println("=== DEBUG handleImageDeletion START ===");
-        System.out.println("Parameters - bikeId: " + bikeId + ", typeId: " + typeId);
-        
-        try {
-            // Sử dụng getParameterValues để lấy tất cả giá trị
-            String[] deletedImagesArray = request.getParameterValues("deletedImages");
-            
-            if (deletedImagesArray != null) {
-                System.out.println("deletedImages parameter values: " + Arrays.toString(deletedImagesArray));
-                
-                List<String> indexesToDelete = new ArrayList<>();
-                for (String deletedImagesStr : deletedImagesArray) {
-                    if (deletedImagesStr != null && !deletedImagesStr.trim().isEmpty()) {
-                        // Split mỗi string bằng dấu phẩy và thêm vào list
-                        String[] parts = deletedImagesStr.split(",");
-                        for (String part : parts) {
-                            String trimmed = part.trim();
-                            if (!trimmed.isEmpty()) {
-                                indexesToDelete.add(trimmed);
-                            }
-                        }
-                    }
+        String[] arr = request.getParameterValues("deletedImages");
+        if (arr == null || arr.length == 0) {
+            System.out.println("No deletedImages parameter");
+            System.out.println("=== DEBUG handleImageDeletion END ===");
+            return;
+        }
+        List<String> indexes = new ArrayList<>();
+        for (String s : arr) {
+            if (s != null && !s.isBlank()) {
+                for (String p : s.split(",")) {
+                    String t = p.trim();
+                    if (!t.isEmpty()) indexes.add(t);
                 }
-                
-                System.out.println("All indexes to delete: " + indexesToDelete);
-                
-                if (!indexesToDelete.isEmpty()) {
-                    String typeFolder = getTypeFolder(typeId);
-                    
-                    // Sử dụng đường dẫn SOURCE CODE
-                    String imagePath = getSourceImageBasePath() + File.separator + "images" 
-                                     + File.separator + "bike" + File.separator + typeFolder 
-                                     + File.separator + bikeId;
-                    
-                    System.out.println("Deleting images from: " + imagePath);
-                    
-                    File imageDir = new File(imagePath);
-                    if (!imageDir.exists()) {
-                        System.out.println("⚠ Image directory does not exist");
-                        System.out.println("=== DEBUG handleImageDeletion END (no directory) ===");
-                        return;
-                    }
-                    
-                    for (String index : indexesToDelete) {
-                        String fileName = index + ".jpg";
-                        File fileToDelete = new File(imagePath + File.separator + fileName);
-                        System.out.println("Attempting to delete: " + fileName);
-                        System.out.println("  File exists: " + fileToDelete.exists());
-                        System.out.println("  File path: " + fileToDelete.getAbsolutePath());
-                        
-                        if (fileToDelete.exists()) {
-                            boolean deleted = fileToDelete.delete();
-                            System.out.println("  Delete result: " + deleted);
-                            if (!deleted) {
-                                System.err.println("  ✗ Failed to delete: " + fileName);
-                            } else {
-                                System.out.println("  ✓ Successfully deleted: " + fileName);
-                            }
-                        } else {
-                            System.out.println("  ⚠ File not found: " + fileName);
-                        }
-                    }
-                    
-                    // Debug: kiểm tra files còn lại sau khi xóa
-                    File[] remainingFiles = imageDir.listFiles((dir, name) -> name.matches("\\d+\\.jpg"));
-                    if (remainingFiles != null) {
-                        System.out.println("Remaining files after deletion (" + remainingFiles.length + " files):");
-                        for (File file : remainingFiles) {
-                            System.out.println("  - " + file.getName());
-                        }
-                    }
-                } else {
-                    System.out.println("No images to delete after processing");
-                }
-            } else {
-                System.out.println("No deletedImages parameter found");
             }
-        } catch (Exception e) {
-            System.err.println("❌ Error in handleImageDeletion: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException(e);
+        }
+        if (indexes.isEmpty()) {
+            System.out.println("No indexes to delete");
+            System.out.println("=== DEBUG handleImageDeletion END ===");
+            return;
+        }
+
+        String typeFolder = getTypeFolder(typeId);
+        String path = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike"
+                + File.separator + typeFolder + File.separator + bikeId;
+        for (String idx : indexes) {
+            File f = new File(path, idx + ".jpg");
+            if (f.exists()) {
+                boolean ok = f.delete();
+                System.out.println("Delete " + f.getName() + ": " + ok);
+            }
         }
         System.out.println("=== DEBUG handleImageDeletion END ===");
     }
-    
+
+    private void reorganizeImages(int bikeId, int typeId) {
+        System.out.println("=== DEBUG reorganizeImages START ===");
+        String typeFolder = getTypeFolder(typeId);
+        String dirPath = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike"
+                + File.separator + typeFolder + File.separator + bikeId;
+        File dir = new File(dirPath);
+        if (!dir.exists()) {
+            System.out.println("No image dir to reorganize");
+            System.out.println("=== DEBUG reorganizeImages END ===");
+            return;
+        }
+        File[] files = dir.listFiles((d, name) -> name.matches("\\d+\\.jpg"));
+        if (files == null || files.length == 0) {
+            System.out.println("No files to reorganize");
+            System.out.println("=== DEBUG reorganizeImages END ===");
+            return;
+        }
+        Arrays.sort(files, Comparator.comparingInt(f -> Integer.parseInt(f.getName().replace(".jpg", ""))));
+
+        // copy qua temp để rename an toàn
+        File temp = new File(dirPath + "_temp");
+        if (temp.exists()) deleteFolder(temp);
+        temp.mkdirs();
+
+        for (int i = 0; i < files.length; i++) {
+            File oldF = files[i];
+            File newF = new File(temp, (i + 1) + ".jpg");
+            try (InputStream in = new java.io.FileInputStream(oldF);
+                 OutputStream out = new FileOutputStream(newF)) {
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) != -1) out.write(buf, 0, len);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        deleteFolder(dir);
+        boolean renamed = temp.renameTo(dir);
+        System.out.println("Rename temp -> original: " + renamed);
+        System.out.println("=== DEBUG reorganizeImages END ===");
+    }
+
     private void deleteImageFolder(int bikeId, int typeId) {
-        System.out.println("=== DEBUG deleteImageFolder START ===");
-        System.out.println("Parameters - bikeId: " + bikeId + ", typeId: " + typeId);
-        
-        try {
-            String typeFolder = getTypeFolder(typeId);
-            
-            // Sử dụng đường dẫn SOURCE CODE
-            String imagePath = getSourceImageBasePath() + File.separator + "images" 
-                             + File.separator + "bike" + File.separator + typeFolder 
-                             + File.separator + bikeId;
-            
-            System.out.println("Deleting image folder: " + imagePath);
-            
-            File folder = new File(imagePath);
-            if (folder.exists() && folder.isDirectory()) {
-                System.out.println("Folder exists, deleting...");
-                deleteFolder(folder);
-                System.out.println("✓ Image folder deleted: " + imagePath);
-            } else {
-                System.out.println("⚠ Image folder does not exist: " + imagePath);
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Error in deleteImageFolder: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-        System.out.println("=== DEBUG deleteImageFolder END ===");
+        String typeFolder = getTypeFolder(typeId);
+        String path = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike"
+                + File.separator + typeFolder + File.separator + bikeId;
+        deleteFolder(new File(path));
     }
-    
-    // Phương thức hỗ trợ: xóa folder và tất cả contents
+
     private void deleteFolder(File folder) {
-        System.out.println("=== DEBUG deleteFolder START ===");
-        System.out.println("Deleting folder: " + folder.getAbsolutePath());
-        
-        if (folder.exists() && folder.isDirectory()) {
+        if (folder != null && folder.exists()) {
             File[] files = folder.listFiles();
-            System.out.println("Folder contains " + (files != null ? files.length : 0) + " items");
-            
-            if (files != null) {
-                for (File file : files) {
-                    System.out.println("  Deleting: " + file.getName());
-                    if (file.isDirectory()) {
-                        deleteFolder(file);
-                    } else {
-                        boolean deleted = file.delete();
-                        System.out.println("    Delete result: " + deleted);
-                    }
-                }
+            if (files != null) for (File f : files) {
+                if (f.isDirectory()) deleteFolder(f);
+                else f.delete();
             }
-            boolean folderDeleted = folder.delete();
-            System.out.println("Folder deleted: " + folderDeleted);
-        } else {
-            System.out.println("Folder does not exist or is not a directory");
+            folder.delete();
         }
-        System.out.println("=== DEBUG deleteFolder END ===");
     }
-    
+
     private String getTypeFolder(int typeId) {
-        String folder;
         switch (typeId) {
-            case 1: folder = "xe-so"; break;
-            case 2: folder = "xe-ga"; break;
-            case 3: folder = "xe-pkl"; break;
-            default: folder = "khac"; break;
+            case 1: return "xe-so";
+            case 2: return "xe-ga";
+            case 3: return "xe-pkl";
+            default: return "khac";
         }
-        System.out.println("getTypeFolder: typeId=" + typeId + " -> " + folder);
-        return folder;
     }
 }

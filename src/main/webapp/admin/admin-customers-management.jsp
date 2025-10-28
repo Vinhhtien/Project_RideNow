@@ -375,7 +375,7 @@
         </div>
         
         <nav class="sidebar-nav">
-      <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item active">
+      <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item">
         <i class="fas fa-tachometer-alt"></i>
         <span>Dashboard</span>
       </a>
@@ -383,7 +383,7 @@
         <i class="fas fa-handshake"></i>
         <span>Partners</span>
       </a>
-      <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item">
+      <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item active">
         <i class="fas fa-users"></i>
         <span>Customers</span>
       </a>

@@ -10,6 +10,7 @@ public interface IMotorbikeAdminService {
     List<Motorbike> getAllMotorbikes();
     Motorbike getMotorbikeById(int bikeId);
     boolean addMotorbike(Motorbike motorbike);
+    
     boolean updateMotorbike(Motorbike motorbike);
     boolean deleteMotorbike(int bikeId);
     
