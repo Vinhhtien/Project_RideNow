@@ -19,6 +19,7 @@ service\AdminService.class
 service\PaymentService.class
 dao\OrderDetailDao.class
 controller\MotorbikeSearchServlet.class
+controller\partner\MarkAllNotificationServlet.class
 dao\ICustomerDao.class
 controller\Authetication\LoginServlet.class
 controller\Authetication\GoogleLoginServlet.class
@@ -51,6 +52,7 @@ model\AdminCustomerDTO$OrderMini.class
 dao\OrderQueryDao.class
 service\IPartnerAdminService.class
 dao\PaymentDao.class
+controller\partner\DeleteReadNotificationsServlet.class
 controller\admin\AdminReturnServlet.class
 controller\admin\AdminPartnerCreateServlet.class
 dao\IAdminDAO.class
@@ -99,6 +101,7 @@ model\CartItem.class
 dao\IOrderDao.class
 model\OrderDetail.class
 service\OrderDetailService.class
+controller\admin\AdminBroadcastNotificationServlet.class
 com\mycompany\project_ridenow\JakartaRestConfiguration.class
 service\IAdminService.class
 filter\AdminOnlyFilter.class

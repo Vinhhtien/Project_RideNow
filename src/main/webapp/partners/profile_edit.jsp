@@ -183,7 +183,7 @@
     <div class="topbar">
       <div>
         <div class="crumbs">
-          <a href="${pageContext.request.contextPath}/partner?action=profile">← Quay lại Dashboard</a>
+          <a href="${pageContext.request.contextPath}/dashboard">← Quay lại Dashboard</a>
         </div>
         <h1 class="title">Cập nhật thông tin tài khoản</h1>
       </div>
@@ -271,7 +271,7 @@
 
           <div class="row-actions">
             <button id="saveBtn" type="submit" class="btn btn-primary">Lưu thay đổi</button>
-            <a class="btn btn-ghost" href="${pageContext.request.contextPath}/partner?action=profile">Hủy</a>
+            <a class="btn btn-ghost" href="${pageContext.request.contextPath}/dashboard">Hủy</a>
           </div>
         </form>
       </div>

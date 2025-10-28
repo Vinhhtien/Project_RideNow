@@ -1,3 +1,4 @@
+// an
 
 package controller;
 
@@ -6,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import model.Account;
 import model.Notification;
@@ -20,6 +22,10 @@ public class DashboardServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
+        resp.setContentType("text/html; charset=UTF-8");
+
         HttpSession session = req.getSession(false);
         Account acc = (session != null) ? (Account) session.getAttribute("account") : null;
         if (acc == null) {
@@ -29,27 +35,29 @@ public class DashboardServlet extends HttpServlet {
 
         String role = acc.getRole();
         if ("partner".equalsIgnoreCase(role)) {
-            // Pop-up: lấy tối đa 5 thông báo chưa đọc
-            List<Notification> toasts =
-                    notificationService.getUnreadToasts(acc.getAccountId(), 5);
-            req.setAttribute("toastNotifications", toasts);
+            final int accountId = acc.getAccountId();
 
-            // Drawer: lấy toàn bộ thông báo (mới -> cũ) để hiển thị trong panel
-            // page=1, size=100, q=null, onlyUnread=null (tức là tất cả)
-            List<Notification> all =
-                    notificationService.findByAccount(acc.getAccountId(), 1, 100, null, null);
+            // Lấy danh sách mới nhất (mới -> cũ), size=100 (thay cho findByAccount)
+            List<Notification> all = notificationService.latestForAccount(accountId, 100, 0);
             req.setAttribute("allNotifications", all);
 
-            // Badge chuông (tổng số chưa đọc)
-            int unread = notificationService.countUnread(acc.getAccountId());
+            // Lấy 5 thông báo chưa đọc để show toast (thay cho getUnreadToasts)
+            List<Notification> toasts = all.stream()
+                    .filter(n -> n != null && !n.isRead())
+                    .limit(5)
+                    .collect(Collectors.toList());
+            req.setAttribute("toastNotifications", toasts);
+
+            // Badge chuông (số chưa đọc)
+            int unread = notificationService.countUnread(accountId);
             req.setAttribute("unreadCount", unread);
 
             req.setAttribute("role", role);
-            req.getRequestDispatcher("partners/dashboard.jsp").forward(req, resp);
+            req.getRequestDispatcher("/partners/dashboard.jsp").forward(req, resp);
 
         } else if ("admin".equalsIgnoreCase(role)) {
             req.setAttribute("role", role);
-            req.getRequestDispatcher("admin/dashboard.jsp").forward(req, resp);
+            req.getRequestDispatcher("/admin/dashboard.jsp").forward(req, resp);
 
         } else {
             resp.sendRedirect(req.getContextPath() + "/home.jsp");
