@@ -11,6 +11,7 @@
     <title>Trả Xe - RideNow Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="${ctx}/css/admin.css">
     <style>
         .empty-state { 
@@ -32,10 +33,62 @@
             color: #64748b;
             font-size: 1rem;
         }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-overdue {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .btn-overdue:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        .text-muted {
+            color: #6c757d !important;
+        }
+        .small {
+            font-size: 0.875em;
+        }
+        .mt-1 {
+            margin-top: 0.25rem;
+        }
+        .return-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .overdue-info {
+            font-size: 0.8rem;
+            color: #dc3545;
+            margin-top: 0.25rem;
+            font-weight: bold;
+        }
+        .modal-overdue .modal-header {
+            background-color: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+        }
+        .modal-overdue .modal-title {
+            color: #856404;
+            font-weight: bold;
+        }
+        .fee-input {
+            max-width: 200px;
+        }
     </style>
 </head>
 <body class="admin">
     <fmt:setLocale value="vi_VN" scope="session"/>
+    
+    <!-- Sử dụng useBean DUY NHẤT một lần ở đây -->
+    <jsp:useBean id="now" class="java.util.Date"/>
+    <fmt:formatDate value="${now}" pattern="yyyyMMdd" var="todayNumber"/>
     
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
@@ -145,8 +198,8 @@
                     <div class="kpi-value">
                         <c:set var="todayReturns" value="0" />
                         <c:forEach var="o" items="${activeOrders}">
-                            <fmt:parseDate value="${o[5]}" pattern="yyyy-MM-dd" var="endDate"/>
-                            <c:if test="${endDate eq today}">
+                            <fmt:formatDate value="${o[5]}" pattern="yyyyMMdd" var="endDateNumber"/>
+                            <c:if test="${todayNumber == endDateNumber}">
                                 <c:set var="todayReturns" value="${todayReturns + 1}" />
                             </c:if>
                         </c:forEach>
@@ -196,7 +249,6 @@
                             <h3>Không có đơn hàng nào đang thuê</h3>
                             <p>Tất cả các đơn hàng đã được xử lý</p>
                             <a href="${ctx}/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem;">
-                                <i></i>
                                 Quay lại Dashboard
                             </a>
                         </div>
@@ -250,14 +302,109 @@
                                                 </strong>
                                             </td>
                                             <td>
-                                                <!-- GIỮ NGUYÊN FORM - KHÔNG THAY ĐỔI CHỨC NĂNG -->
-                                                <form method="post" action="${ctx}/adminreturn" 
-                                                      onsubmit="return confirm('Xác nhận khách đã trả xe? Đơn hàng sẽ chuyển sang trạng thái chờ kiểm tra để hoàn cọc.');">
-                                                    <input type="hidden" name="orderId" value="${o[0]}">
-                                                    <button type="submit" class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-check"></i> Đã Trả Xe
-                                                    </button>
-                                                </form>
+                                                <!-- KIỂM TRA NGÀY TRẢ XE - SỬ DỤNG BIẾN todayNumber ĐÃ KHAI BÁO Ở TRÊN -->
+                                                <fmt:formatDate value="${o[5]}" pattern="yyyyMMdd" var="endDateNumber"/>
+                                                
+                                                <c:set var="canReturn" value="${todayNumber >= endDateNumber}" />
+                                                <c:set var="isOverdue" value="${todayNumber > endDateNumber}" />
+                                                
+                                                <c:choose>
+                                                    <c:when test="${!canReturn}">
+                                                        <!-- CHƯA ĐẾN NGÀY TRẢ -->
+                                                        <button type="button" class="btn btn-secondary btn-sm" disabled 
+                                                                title="Không thể trả xe trước ngày kết thúc: <fmt:formatDate value='${o[5]}' pattern='dd/MM/yyyy'/>">
+                                                            <i class="fas fa-clock"></i> Chưa đến hạn
+                                                        </button>
+                                                        <div class="return-info">
+                                                            Có thể trả từ: <strong><fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/></strong>
+                                                        </div>
+                                                    </c:when>
+                                                    <c:when test="${canReturn && !isOverdue}">
+                                                        <!-- ĐÚNG NGÀY TRẢ - NÚT XANH -->
+                                                        <form method="post" action="${ctx}/adminreturn" 
+                                                              onsubmit="return confirm('Xác nhận khách đã trả xe? Đơn hàng sẽ chuyển sang trạng thái chờ kiểm tra để hoàn cọc.');">
+                                                            <input type="hidden" name="orderId" value="${o[0]}">
+                                                            <input type="hidden" name="actionType" value="normal_return">
+                                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                                <i class="fas fa-check"></i> Đã Trả Xe
+                                                            </button>
+                                                        </form>
+                                                        <div class="return-info">
+                                                            Đến hạn trả xe
+                                                        </div>
+                                                    </c:when>
+                                                    <c:when test="${isOverdue}">
+                                                        <!-- QUÁ HẠN TRẢ - NÚT ĐỎ VÀ MODAL -->
+                                                        <button type="button" class="btn btn-overdue btn-sm" 
+                                                                data-bs-toggle="modal" data-bs-target="#overdueReturnModal${o[0]}">
+                                                            <i class="fas fa-exclamation-triangle"></i> Trả Xe Trễ
+                                                        </button>
+                                                        <div class="overdue-info">
+                                                            Quá hạn từ: <strong><fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/></strong>
+                                                        </div>
+
+                                                        <!-- Modal cho đơn trả xe quá hạn -->
+                                                        <div class="modal fade" id="overdueReturnModal${o[0]}" tabindex="-1" aria-hidden="true">
+                                                            <div class="modal-dialog modal-dialog-centered">
+                                                                <div class="modal-content modal-overdue">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">
+                                                                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                                                            Xác Nhận Trả Xe Quá Hạn #${o[0]}
+                                                                        </h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <p><strong>Đơn hàng này đã quá hạn trả xe!</strong></p>
+                                                                        <p>Ngày trả dự kiến: <strong><fmt:formatDate value="${o[5]}" pattern="dd/MM/yyyy"/></strong></p>
+                                                                        
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label">Phí trễ (nếu có):</label>
+                                                                            <div class="input-group">
+                                                                                <input type="text" class="form-control fee-input" name="lateFee" 
+                                                                                       placeholder="VD: 100,000 VND">
+                                                                                <span class="input-group-text">VND</span>
+                                                                            </div>
+                                                                            <div class="form-text">Nhập số tiền phí trễ nếu khách hàng phải trả thêm.</div>
+                                                                        </div>
+                                                                        
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label">Ghi chú về tình trạng xe:</label>
+                                                                            <textarea class="form-control" name="notes" rows="3" 
+                                                                                      placeholder="Ghi chú về tình trạng xe, lý do trễ, thiệt hại (nếu có)..."></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                                        
+                                                                        <!-- Option 1: Đã trả xe nhưng quá hạn -->
+                                                                        <form method="post" action="${ctx}/adminreturn" class="d-inline">
+                                                                            <input type="hidden" name="orderId" value="${o[0]}">
+                                                                            <input type="hidden" name="actionType" value="overdue_return">
+                                                                            <input type="hidden" name="lateFee" value="">
+                                                                            <input type="hidden" name="notes" value="">
+                                                                            <button type="submit" class="btn btn-warning" 
+                                                                                    onclick="setFormValues(this, 'overdue_return')">
+                                                                                <i class="fas fa-check-circle"></i> Đã Trả Xe (Có Phí Trễ)
+                                                                            </button>
+                                                                        </form>
+                                                                        
+                                                                        <!-- Option 2: Chưa trả xe -->
+                                                                        <form method="post" action="${ctx}/adminreturn" class="d-inline">
+                                                                            <input type="hidden" name="orderId" value="${o[0]}">
+                                                                            <input type="hidden" name="actionType" value="mark_not_returned">
+                                                                            <input type="hidden" name="notes" value="">
+                                                                            <button type="submit" class="btn btn-danger" 
+                                                                                    onclick="setFormValues(this, 'mark_not_returned')">
+                                                                                <i class="fas fa-times-circle"></i> Chưa Trả Xe
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </c:when>
+                                                </c:choose>
                                             </td>
                                         </tr>
                                     </c:forEach>
@@ -270,7 +417,34 @@
         </section>
     </main>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
+        // JavaScript để xử lý giá trị trong modal
+        function setFormValues(button, actionType) {
+            const modal = button.closest('.modal');
+            const form = button.closest('form');
+            
+            if (actionType === 'overdue_return') {
+                const lateFeeInput = modal.querySelector('input[name="lateFee"]');
+                const notesInput = modal.querySelector('textarea[name="notes"]');
+                form.querySelector('input[name="lateFee"]').value = lateFeeInput.value;
+                form.querySelector('input[name="notes"]').value = notesInput.value;
+            } else if (actionType === 'mark_not_returned') {
+                const notesInput = modal.querySelector('textarea[name="notes"]');
+                form.querySelector('input[name="notes"]').value = notesInput.value;
+            }
+            
+            // Hiển thị confirm dialog
+            const message = actionType === 'overdue_return' 
+                ? 'Xác nhận khách đã trả xe quá hạn? Phí trễ sẽ được ghi nhận.'
+                : 'Xác nhận đánh dấu đơn hàng chưa trả xe?';
+            
+            if (!confirm(message)) {
+                return false;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const notice = document.querySelector('.notice');
             if (notice) {

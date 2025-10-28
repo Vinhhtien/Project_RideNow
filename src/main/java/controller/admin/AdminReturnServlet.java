@@ -1,4 +1,3 @@
-//an
 package controller.admin;
 
 import jakarta.servlet.ServletException;
@@ -7,13 +6,15 @@ import jakarta.servlet.http.*;
 import service.IOrderManageService;
 import service.OrderManageService;
 import model.Account;
-
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-// thêm import dùng DBConnection như các servlet admin khác
 import utils.DBConnection;
-import java.sql.*;
 
 @WebServlet("/adminreturn")
 public class AdminReturnServlet extends HttpServlet {
@@ -31,6 +32,8 @@ public class AdminReturnServlet extends HttpServlet {
 
         List<Object[]> activeOrders = orderService.getActiveOrders();
         req.setAttribute("activeOrders", activeOrders);
+        req.setAttribute("today", LocalDate.now());
+        req.setAttribute("todayStr", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         req.getRequestDispatcher("/admin/admin-return.jsp").forward(req, resp);
     }
 
@@ -45,24 +48,64 @@ public class AdminReturnServlet extends HttpServlet {
         }
 
         String orderIdStr = req.getParameter("orderId");
+        String actionType = req.getParameter("actionType"); // NEW: Loại hành động
+        String notes = req.getParameter("notes"); // NEW: Ghi chú
+        String lateFee = req.getParameter("lateFee"); // NEW: Phí trễ
 
         if (orderIdStr != null && !orderIdStr.trim().isEmpty()) {
             try {
                 int orderId = Integer.parseInt(orderIdStr);
-                int adminId = 1; // theo dự án hiện tại
+                int adminId = 1;
 
-                boolean success = orderService.confirmOrderReturn(orderId, adminId);
+                // Xử lý theo loại hành động
+                if ("normal_return".equals(actionType)) {
+                    // Trả xe bình thường
+                    boolean canReturn = orderService.canReturnOrder(orderId);
+                    
+                    if (!canReturn) {
+                        req.getSession().setAttribute("flash", "❌ Không thể trả xe trước ngày kết thúc thuê!");
+                        resp.sendRedirect(req.getContextPath() + "/adminreturn");
+                        return;
+                    }
 
-                if (success) {
-                    // 1) flash cho admin
-                    req.getSession().setAttribute("flash", "✅ Đơn hàng đã hoàn tất.");
-
-                    // 2) gửi thông báo cho Partner sở hữu xe của đơn này
-                    notifyPartnerOrderCompleted(orderId);
-
-                } else {
-                    req.getSession().setAttribute("flash",
-                            "❌ Xác nhận thất bại! Đơn không tồn tại hoặc đã trả.");
+                    boolean success = orderService.confirmOrderReturn(orderId, adminId);
+                    if (success) {
+                        String message = "✅ Đã xác nhận khách trả xe thành công!";
+                        req.getSession().setAttribute("flash", message);
+                        notifyPartnerOrderCompleted(orderId);
+                    } else {
+                        req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
+                    }
+                    
+                } else if ("overdue_return".equals(actionType)) {
+                    // Trả xe quá hạn - có phí trễ
+                    boolean success = orderService.confirmOverdueReturn(orderId, adminId, lateFee, notes);
+                    if (success) {
+                        String message = "⚠️ Đã xác nhận trả xe quá hạn";
+                        if (lateFee != null && !lateFee.trim().isEmpty()) {
+                            message += " - Phí trễ: " + lateFee;
+                        }
+                        if (notes != null && !notes.trim().isEmpty()) {
+                            message += " - " + notes;
+                        }
+                        req.getSession().setAttribute("flash", message);
+                        notifyPartnerOrderCompleted(orderId);
+                    } else {
+                        req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
+                    }
+                    
+                } else if ("mark_not_returned".equals(actionType)) {
+                    // Đánh dấu là chưa trả xe
+                    boolean success = orderService.markOrderAsNotReturned(orderId, adminId, notes);
+                    if (success) {
+                        String message = "🔴 Đã đánh dấu đơn hàng chưa trả xe";
+                        if (notes != null && !notes.trim().isEmpty()) {
+                            message += " - " + notes;
+                        }
+                        req.getSession().setAttribute("flash", message);
+                    } else {
+                        req.getSession().setAttribute("flash", "❌ Cập nhật thất bại!");
+                    }
                 }
 
             } catch (NumberFormatException e) {
@@ -80,9 +123,7 @@ public class AdminReturnServlet extends HttpServlet {
     }
 
     /**
-     * Gửi thông báo cho Partner của đơn hàng: “Khách đã trả xe. Đơn hàng đã hoàn tất.”
-     * Không thay đổi cấu trúc, dùng trực tiếp DBConnection và bảng Notifications sẵn có.
-     * Message kèm token [ORDER:{id}] để trang chi tiết của Partner tự dẫn tới lịch sử.
+     * Gửi thông báo cho Partner của đơn hàng: "Khách đã trả xe. Đơn hàng đã hoàn tất."
      */
     private void notifyPartnerOrderCompleted(int orderId) {
         final String findPartnerAccountSql = """
@@ -110,7 +151,7 @@ public class AdminReturnServlet extends HttpServlet {
                     }
                 }
             }
-            if (partnerAccountId == null) return; // không tìm thấy chủ xe -> bỏ qua yên lặng
+            if (partnerAccountId == null) return;
 
             String title = "Đơn hàng đã hoàn tất";
             String message = "Khách đã trả xe. Đơn hàng đã hoàn tất. [ORDER:" + orderId + "]";
@@ -122,7 +163,6 @@ public class AdminReturnServlet extends HttpServlet {
                 ps2.executeUpdate();
             }
         } catch (SQLException ex) {
-            // ghi log, không chặn luồng admin
             ex.printStackTrace();
         }
     }
