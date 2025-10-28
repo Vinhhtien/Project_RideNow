@@ -75,7 +75,7 @@
     <div class="topbar">
       <div>
         <div class="crumbs">
-          <a href="${pageContext.request.contextPath}/partner?action=profile">← Quay lại Dashboard</a>
+          <a href="${pageContext.request.contextPath}/dashboard">← Quay lại Dashboard</a>
         </div>
         <h1 class="title">Đánh giá xe</h1>
       </div>

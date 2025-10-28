@@ -8,7 +8,7 @@ import utils.DBConnection;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.Date;          // ✅ dùng java.sql.Date
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,6 +18,7 @@ import java.util.List;
 public class OrderService implements IOrderService {
     private final IOrderDao orderDao = new OrderDao();
     private final NotificationDao notificationDAO = new NotificationDao();
+    private final INotificationService notificationService = new NotificationService();
 
     @Override
     public int bookOneBike(int customerId, int bikeId, Date start, Date end) throws Exception {
@@ -32,7 +33,7 @@ public class OrderService implements IOrderService {
             throw new IllegalArgumentException("Ngày nhận xe phải trước hoặc bằng ngày trả xe");
         }
 
-        // 1) Kiểm tra xe còn “bookable” (status != maintenance, tồn tại, lấy được price)
+        // 1) Kiểm tra xe còn "bookable" (status != maintenance, tồn tại, lấy được price)
         BigDecimal pricePerDay = orderDao.getBikePriceIfBookable(bikeId);
         if (pricePerDay == null) {
             throw new IllegalStateException("Xe không khả dụng để thuê hoặc đang trong quá trình bảo dưỡng");
@@ -50,22 +51,53 @@ public class OrderService implements IOrderService {
         }
 
         // 3) Tạo đơn PENDING (Order + OrderDetails). Triển khai trên OrderDao chạy trong 1 transaction
-        return orderDao.createPendingOrder(customerId, bikeId, start, end, pricePerDay);
+        int orderId = orderDao.createPendingOrder(customerId, bikeId, start, end, pricePerDay);
+        System.out.println("[OrderService] Created order #" + orderId);
+
+        // 4) Gửi notification cho customer (từ service cũ)
+        try {
+            int accountId = notificationDAO.getAccountIdByOrderId(orderId);
+            if (accountId > 0) {
+                notificationDAO.createNotification(
+                        accountId,
+                        "Đặt xe thành công",
+                        "Đơn hàng #" + orderId + " của bạn đã được tạo thành công và đang chờ xác nhận."
+                );
+            }
+        } catch (Exception ex) {
+            System.err.println("[OrderService] notify customer failed: " + ex.getMessage());
+        }
+
+        // 5) Gửi notification cho partners (từ service mới)
+        try {
+            notificationService.sendToPartnersByOrder(orderId,
+                    "Đơn mới #" + orderId,
+                    "Khách vừa tạo đơn thuê chứa xe của bạn. Vui lòng kiểm tra chi tiết đơn.");
+        } catch (Exception ex) {
+            System.err.println("[OrderService] notify partners (bookOneBike) failed: " + ex.getMessage());
+        }
+
+        return orderId;
     }
 
-    /** Hiển thị chi tiết các đơn đang chồng lịch (đã confirmed & đang hiệu lực theo rule bạn đặt). */
+    /** Hiển thị chi tiết các đơn đang chồng lịch - Kết hợp logic từ cả hai phiên bản */
     private String getOverlapDetails(int bikeId, Date start, Date end) throws SQLException {
+        // Sử dụng phiên bản cải tiến từ service mới nhưng giữ thông tin chi tiết từ service cũ
         String sql = """
             SELECT 
-                ro.order_id, c.full_name, ro.start_date, ro.end_date
+                ro.order_id, 
+                c.full_name, 
+                ro.start_date, 
+                ro.end_date,
+                ro.status
             FROM RentalOrders ro
             JOIN OrderDetails od ON ro.order_id = od.order_id
             JOIN Customers c ON ro.customer_id = c.customer_id
             WHERE od.bike_id = ?
-              AND ro.status = 'confirmed'
-              AND ro.pickup_status = 'picked_up'
-              AND ro.return_status IN ('not_returned', 'none')
+              AND ro.status IN ('pending','confirmed')
+              AND ro.pickup_status <> 'returned'
               AND NOT (ro.end_date < ? OR ro.start_date > ?)
+            ORDER BY ro.start_date
         """;
 
         try (Connection con = DBConnection.getConnection();
@@ -81,7 +113,8 @@ public class OrderService implements IOrderService {
                     if (!first) details.append("; ");
                     details.append("Đơn hàng #").append(rs.getInt("order_id"))
                            .append(" (Khách hàng: ").append(rs.getString("full_name")).append(") từ ")
-                           .append(rs.getDate("start_date")).append(" đến ").append(rs.getDate("end_date"));
+                           .append(rs.getDate("start_date")).append(" đến ").append(rs.getDate("end_date"))
+                           .append(" [").append(rs.getString("status")).append("]");
                     first = false;
                 }
                 if (details.length() == 0) details.append("Không tìm thấy thông tin chi tiết");
@@ -90,20 +123,20 @@ public class OrderService implements IOrderService {
         }
     }
 
-    /** Admin xác nhận đã giao xe cho khách. */
+    /** Admin xác nhận đã giao xe cho khách - Kết hợp cả transaction và partner notification */
     public boolean confirmOrderPickup(int orderId, int adminId) {
         Connection con = null;
         try {
             con = DBConnection.getConnection();
             con.setAutoCommit(false);
 
-            // 1) Cập nhật trạng thái đơn
+            // 1) Cập nhật trạng thái đơn (từ service cũ)
             orderDao.updateOrderStatus(orderId, "confirmed");
 
-            // 2) Đánh dấu đã giao xe
+            // 2) Đánh dấu đã giao xe (từ cả hai service)
             orderDao.markOrderPickedUp(orderId, adminId);
 
-            // 3) Ghi lịch sử
+            // 3) Ghi lịch sử (từ cả hai service)
             OrderStatusHistory history = new OrderStatusHistory();
             history.setOrderId(orderId);
             history.setStatus("picked_up");
@@ -111,7 +144,7 @@ public class OrderService implements IOrderService {
             history.setNotes("Khách hàng đã nhận xe");
             orderDao.addStatusHistory(history);
 
-            // 4) Thông báo cho customer
+            // 4) Thông báo cho customer (từ service cũ)
             int accountId = notificationDAO.getAccountIdByOrderId(orderId);
             if (accountId > 0) {
                 notificationDAO.createNotification(
@@ -121,23 +154,43 @@ public class OrderService implements IOrderService {
                 );
             }
 
+            // 5) Thông báo cho partners (từ service mới)
+            try {
+                notificationService.sendToPartnersByOrder(orderId,
+                        "Đơn #" + orderId + " đã nhận xe",
+                        "Khách đã nhận xe trong đơn có xe của bạn.");
+            } catch (Exception ex) {
+                System.err.println("[OrderService] notify partners (confirmOrderPickup) failed: " + ex.getMessage());
+            }
+
             con.commit();
             return true;
         } catch (SQLException e) {
             if (con != null) try { con.rollback(); } catch (SQLException ignored) {}
-            e.printStackTrace();
+            System.err.println("[OrderService] confirmOrderPickup failed: " + e.getMessage());
             return false;
         } finally {
-            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (SQLException ignored) {}
+            if (con != null) {
+                try { 
+                    con.setAutoCommit(true); 
+                    con.close(); 
+                } catch (SQLException ignored) {}
+            }
         }
     }
 
-    /** Lấy danh sách đơn chờ giao xe (phục vụ UI). */
+    /** Lấy danh sách đơn chờ giao xe (phục vụ UI) - Kết hợp xử lý lỗi từ cả hai */
     public List<Object[]> getOrdersForPickup() {
         try {
-            return ((OrderDao) orderDao).getOrdersForPickup();
+            if (orderDao instanceof OrderDao) {
+                return ((OrderDao) orderDao).getOrdersForPickup();
+            }
+            return new ArrayList<>();
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[OrderService] getOrdersForPickup failed: " + e.getMessage());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("[OrderService] getOrdersForPickup unexpected: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -165,10 +218,7 @@ public class OrderService implements IOrderService {
         }
     }
     
-    
-    
-    
-     @Override
+    @Override
     public List<OverlappedRange> getOverlappingRanges(int bikeId, Date start, Date end) throws SQLException {
         String sql = """
             SELECT r.order_id, r.start_date, r.end_date
@@ -197,5 +247,4 @@ public class OrderService implements IOrderService {
             return list;
         }
     }
-    
 }

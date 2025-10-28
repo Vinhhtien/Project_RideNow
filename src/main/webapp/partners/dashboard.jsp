@@ -3,9 +3,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%
-    // Không logic phức tạp ở scriptlet — chỉ đảm bảo contextPath đã có
-%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -49,7 +46,6 @@
     .hello b{color:#fff}
     .header-actions{display:flex;gap:12px;align-items:center}
 
-    /* Icons */
     .logout-btn{background:transparent;border:1px dashed #3a4477;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
     .logout-btn:hover{filter:brightness(1.08)}
 
@@ -82,8 +78,8 @@
     .card h3{margin:0 0 6px}
     .muted{color:var(--muted);font-size:14px}
 
-    /* DRAWER (Notifications) */
-    .drawer{position:fixed;inset:0;display:none}
+    /* DRAWER */
+    .drawer{position:fixed;inset:0;display:none;z-index:60}
     .drawer.open{display:block}
     .drawer .backdrop{
       position:absolute;inset:0;background:rgba(0,0,0,.45);
@@ -117,29 +113,30 @@
     .n-title{font-weight:700;margin:0}
     .n-time{font-size:12px;color:var(--muted)}
     .n-msg{grid-column:2/4;color:#cfd7ff;font-size:14px;white-space:pre-wrap;margin:.2rem 0 0}
-    .n-actions{display:flex;gap:8px}
+
     .btn{appearance:none;border:1px solid #3a4477;background:transparent;color:var(--text);padding:6px 10px;border-radius:10px;cursor:pointer;font-size:13px}
     .btn.primary{background:#22d3ee;color:#0f172a;border-color:#24cde0}
     .btn.warn{border-color:#7a2c2c;color:#ffd7d7}
+
+    .tag{display:inline-flex; align-items:center; gap:6px;padding:6px 10px;border-radius:10px;font-size:13px;border:1px solid #3a4477;background:transparent;color:var(--text);margin-left:6px}
+    .tag.unread{ border-color:#22d3ee; color:#22d3ee; }
+    .tag.done  { border-color:#24cde0; background:#22d3ee; color:#0f172a; }
+
     .empty{color:var(--muted);text-align:center;padding:24px}
 
-    /* MODAL (detail) & LOGOUT */
-    .modal{position:fixed;inset:0;display:none}
+    .confirm{position: fixed;top: 8vh;left: 50%;transform: translateX(-50%);z-index: 120;width: min(720px, 92vw);background:#0f172a;border:1px solid #233161;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.4);color:#e8eaf6;padding:16px;display:none}
+    .confirm.open{ display:block; }
+
+    .modal{position:fixed; inset:0; display:none; z-index:70}
     .modal.open{display:block}
-    .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5)}
-    .modal .dialog{
-      position:absolute;left:50%;top:10%;transform:translateX(-50%);
-      width:min(560px, 94%);background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);
-      padding:16px;
-    }
-    .dialog h3{margin:4px 0 8px}
-    .dialog .meta{color:var(--muted);font-size:13px;margin-bottom:10px}
-    .dialog .content{white-space:pre-wrap;color:#e8eaf6;margin-bottom:12px}
-    .dialog .foot{display:flex;gap:10px;justify-content:flex-end}
-    a.link{color:#22d3ee;text-decoration:none}
-    a.link:hover{text-decoration:underline}
-    .row{display:flex;gap:10px;align-items:center}
-    .note{color:var(--muted);font-size:13px}
+    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
+    .modal .dialog{position:absolute; left:50%; transform:translateX(-50%);top:8vh; width:min(720px,92%);background:var(--card2); border:1px solid var(--border); border-radius:16px;box-shadow:var(--shadow); padding:16px}
+    .modal .dialog h3{margin:0 0 6px}
+    .modal .dialog .foot{display:flex; justify-content:flex-end; gap:8px; margin-top:12px}
+    #modal .meta{color:var(--muted); font-size:13px; margin-top:4px}
+    #modal .content{white-space:pre-wrap; color:#cfd7ff; margin-top:8px}
+    .modal .note{color:var(--muted); margin:8px 0 0}
+    .modal .row{display:flex; align-items:center; gap:8px}
   </style>
 </head>
 <body>
@@ -158,10 +155,9 @@
         </div>
       </div>
       <div class="header-actions">
-        <!-- Bell -->
         <button id="bell" class="notification-bell" type="button" title="Thông báo" onclick="openDrawer()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M6 8a6 6 0 1 1 12 0v4l1.5 3H4.5L6 12V8Z"/><path d="M10 18a2 2 0 1 0 4 0"/>
+            <path d="M6 8a 6 6 0 1 1 12 0v4l1.5 3H4.5L6 12V8Z"/><path d="M10 18a2 2 0 1 0 4 0"/>
           </svg>
           <span id="badge" class="notification-badge">
             <c:choose>
@@ -192,7 +188,6 @@
         <h3>Hồ sơ cửa hàng</h3><div class="muted">Cập nhật tên, SĐT, địa chỉ</div>
       </div>
 
-      <!-- ICON MOTORBIKE mới, nét đẹp -->
       <div class="card" onclick="location.href='${pageContext.request.contextPath}/viewmotorbike'">
         <div class="icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -236,10 +231,8 @@
         <div class="panel-tools">
           <button id="chipAll" class="chip active" type="button">Tất cả</button>
           <button id="chipUnread" class="chip" type="button">Chưa đọc</button>
-          <form method="post" action="${pageContext.request.contextPath}/dashboard" onsubmit="setTimeout(closeDrawer,60)">
-            <input type="hidden" name="action" value="readAll"/>
-            <button class="chip" type="submit" title="Đánh dấu đọc tất cả">Đọc tất cả</button>
-          </form>
+          <button id="markAllBtn" class="chip" type="button" title="Đánh dấu đọc tất cả">Đọc tất cả</button>
+          <button id="deleteReadBtn" class="chip" type="button" title="Xoá tất cả thông báo đã đọc">Xoá đã đọc</button>
         </div>
       </div>
       <div class="search">
@@ -265,24 +258,46 @@
                 <div>
                   <p class="n-title"><c:out value="${n.title}"/></p>
                   <div class="n-time">
-                    <fmt:formatDate value="${n.createdAt}" pattern="HH:mm dd/MM/yyyy"/>
-                    <c:if test="${!n.read}"> · <span style="color:#22d3ee">MỚI</span></c:if>
+                      <c:choose>
+                          <c:when test="${not empty n.createdAt}">
+                              <fmt:formatDate value="${n.createdAt}" pattern="HH:mm dd/MM/yyyy"/>
+                          </c:when>
+                          <c:otherwise>—</c:otherwise>
+                      </c:choose>
+                      <c:if test="${!n.read}"> · <span style="color:#22d3ee">MỚI</span></c:if>
                   </div>
                 </div>
-                <div class="n-actions">
-                  <button class="btn" type="button" onclick="openDetail(this)">Xem</button>
-                  <button class="btn primary" type="button" onclick="markReadAndFade(this)">Đã đọc</button>
-                </div>
+
+                <div class="n-actions" data-role="actions"></div>
+
                 <div class="n-msg"><c:out value="${n.message}"/></div>
               </div>
             </c:forEach>
           </c:otherwise>
         </c:choose>
       </div>
+
+      <div id="confirmAll" class="confirm" role="alertdialog" aria-modal="true" aria-labelledby="c-h">
+        <p id="c-h" class="h">Đọc tất cả thông báo?</p>
+        <p class="t">Tất cả thông báo chưa đọc sẽ được đánh dấu là <b>ĐÃ ĐỌC</b>. Thao tác này không thể hoàn tác.</p>
+        <div class="act">
+          <button id="c-cancel" class="btn">Huỷ</button>
+          <button id="c-ok" class="btn primary">Đọc tất cả</button>
+        </div>
+      </div>
+
+      <div id="confirmDelete" class="confirm" role="alertdialog" aria-modal="true" aria-labelledby="d-h">
+        <p id="d-h" class="h">Xoá tất cả thông báo đã đọc?</p>
+        <p class="t">Các thông báo đã đọc sẽ bị xoá khỏi danh sách. Thao tác không thể hoàn tác.</p>
+        <div class="act">
+          <button id="d-cancel" class="btn">Huỷ</button>
+          <button id="d-ok" class="btn warn">Xoá đã đọc</button>
+        </div>
+      </div>
     </aside>
   </div>
 
-  <!-- ============ MODAL DETAIL ============ -->
+  <!-- ============ MODAL DETAIL (không dùng mở trang mới) ============ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" onclick="closeModal()"></div>
     <div class="dialog" role="dialog" aria-label="Chi tiết thông báo">
@@ -291,13 +306,12 @@
       <div class="content" id="mdMsg"></div>
       <div class="foot">
         <a id="mdLink" class="btn" href="#" style="display:none">Mở chi tiết →</a>
-        <button class="btn primary" type="button" onclick="markCurrentAsRead()">Đánh dấu đã đọc</button>
         <button class="btn" type="button" onclick="closeModal()">Đóng</button>
       </div>
     </div>
   </div>
 
-  <!-- ============ LOGOUT MODAL (form UI, không dùng confirm) ============ -->
+  <!-- ============ LOGOUT MODAL ============ -->
   <div id="logoutModal" class="modal" aria-hidden="true">
     <div class="backdrop" onclick="closeLogout()"></div>
     <div class="dialog" role="dialog" aria-label="Đăng xuất">
@@ -323,7 +337,16 @@
     const chipUnread = document.getElementById('chipUnread');
     const badge = document.getElementById('badge');
 
-    // Modal state
+    const markAllBtn = document.getElementById('markAllBtn');
+    const confirmAll = document.getElementById('confirmAll');
+    const cCancel = document.getElementById('c-cancel');
+    const cOk     = document.getElementById('c-ok');
+
+    const deleteReadBtn = document.getElementById('deleteReadBtn');
+    const confirmDelete = document.getElementById('confirmDelete');
+    const dCancel = document.getElementById('d-cancel');
+    const dOk     = document.getElementById('d-ok');
+
     let currentId = null;
     const modal = document.getElementById('modal');
     const mdTitle = document.getElementById('mdTitle');
@@ -331,7 +354,6 @@
     const mdMsg   = document.getElementById('mdMsg');
     const mdLink  = document.getElementById('mdLink');
 
-    // Logout modal
     const logoutModal = document.getElementById('logoutModal');
     function openLogout(){ logoutModal.classList.add('open'); logoutModal.setAttribute('aria-hidden','false'); }
     function closeLogout(){ logoutModal.classList.remove('open'); logoutModal.setAttribute('aria-hidden','true'); }
@@ -346,6 +368,29 @@
 
     function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
     function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); currentId=null; }
+
+    // ====== RENDER ACTIONS THEO TRẠNG THÁI ======
+    function renderActionsFor(item){
+      const actions = item.querySelector('[data-role="actions"]');
+      if(!actions) return;
+      const isUnread = item.dataset.read === '0';
+
+      // MỞ TRANG CHI TIẾT MỚI + AUTO MARK READ
+      const url = ctx + '/partners/notification-detail.jsp?nid='
+                  + encodeURIComponent(item.dataset.id) + '&markRead=1';
+      let html = '<a class="btn primary" href="'+url+'">Xem</a>';
+
+      if(isUnread){
+        html += '<span class="tag unread">Chưa đọc</span>' +
+                '<button class="btn" type="button" onclick="markReadAndFade(this)">Đánh dấu đã đọc</button>';
+      }else{
+        html += '<span class="tag done">Đã đọc</span>';
+      }
+      actions.innerHTML = html;
+    }
+    function hydrateAllActions(){
+      list.querySelectorAll('.nitem').forEach(renderActionsFor);
+    }
 
     // Filter (search + unread)
     function applyFilter(){
@@ -372,7 +417,7 @@
     chipAll?.addEventListener('click', ()=>{chipAll.classList.add('active');chipUnread.classList.remove('active');applyFilter();});
     chipUnread?.addEventListener('click', ()=>{chipUnread.classList.add('active');chipAll.classList.remove('active');applyFilter();});
 
-    // Detail modal
+    // DETAIL MODAL: giữ nguyên nhưng không dùng cho nút Xem
     function openDetail(btn){
       const item = btn.closest('.nitem');
       if(!item) return;
@@ -380,10 +425,8 @@
       mdTitle.textContent = item.dataset.title || 'Thông báo';
       mdTime.textContent = item.querySelector('.n-time')?.textContent || '';
       mdMsg.textContent  = item.dataset.message || '';
-      // derive link từ token [URL:], [ORDER:], [BIKE:]
       let link = deriveLink(mdMsg.textContent);
       if(link){
-        // Nếu là trang maintenance thì tự gắn ?nid=<id> để hiển thị động
         if(link.startsWith('/status/maintenance') && !/[?&]nid=\d+/.test(link)){
           const sep = link.includes('?') ? '&' : '?';
           link = link + sep + 'nid=' + currentId;
@@ -403,10 +446,7 @@
         body:new URLSearchParams({action:'read', id: currentId})
       }).catch(()=>{});
       const item = list.querySelector(`.nitem[data-id="${currentId}"]`);
-      if(item){
-        item.classList.remove('unread'); item.dataset.read='1';
-        decBadge();
-      }
+      if(item){ setItemRead(item); }
       closeModal();
     }
 
@@ -417,12 +457,19 @@
         method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
         body:new URLSearchParams({action:'read', id})
       }).catch(()=>{});
-      item.style.opacity='.5'; item.classList.remove('unread'); item.dataset.read='1';
+      setItemRead(item);
+      applyFilter();
+    }
+
+    function setItemRead(item){
+      item.classList.remove('unread');
+      item.dataset.read = '1';
+      const newTag = item.querySelector('.n-time span'); if(newTag) newTag.remove();
       decBadge();
+      renderActionsFor(item);
     }
 
     function deriveLink(text){
-      // Ưu tiên [URL:/path]
       const mUrl = text.match(/\[URL:([^\]]+)]/i);
       if(mUrl) return mUrl[1].trim();
       const mOrder = text.match(/\[ORDER:(\d+)]/i);
@@ -438,14 +485,89 @@
       badge.textContent = n;
     }
 
-    // Close with ESC
+    // ====== BULK ACTIONS: khôi phục gọi endpoint cũ ======
+    function ensureInBody(el){
+      if (el && el.parentElement !== document.body) document.body.appendChild(el);
+    }
+    // Đọc tất cả
+    markAllBtn?.addEventListener('click', () => {
+      ensureInBody(confirmAll);
+      confirmAll.classList.add('open');
+    });
+    cCancel?.addEventListener('click', () => {
+      confirmAll.classList.remove('open');
+    });
+    cOk?.addEventListener('click', async () => {
+      try{
+        const r = await fetch(ctx + '/partner/notifications/mark-all', {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        let ok = false;
+        try{
+          const data = await r.json();
+          ok = !!(data && (data.ok === true || data.success === true || data.updated >= 0));
+        }catch(_){ ok = r.ok; }
+        if (ok) {
+          list.querySelectorAll('.nitem').forEach(setItemRead);
+          if (badge) badge.textContent = '0';
+          applyFilter();
+        } else {
+          alert('Không thể cập nhật. Vui lòng thử lại.');
+        }
+      }catch(e){
+        alert('Lỗi kết nối. Vui lòng thử lại.');
+      }finally{
+        confirmAll.classList.remove('open');
+      }
+    });
+
+    // Xoá tất cả đã đọc
+    deleteReadBtn?.addEventListener('click', () => {
+      ensureInBody(confirmDelete);
+      confirmDelete.classList.add('open');
+    });
+    dCancel?.addEventListener('click', () => {
+      confirmDelete.classList.remove('open');
+    });
+    dOk?.addEventListener('click', async () => {
+      try{
+        const r = await fetch(ctx + '/partner/notifications/delete-read', {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        let ok = false;
+        try{
+          const data = await r.json();
+          ok = !!(data && (data.ok === true || data.success === true || data.deleted >= 0));
+        }catch(_){ ok = r.ok; }
+        if (ok) {
+          list.querySelectorAll('.nitem[data-read="1"]').forEach(el => el.remove());
+          applyFilter();
+        } else {
+          alert('Không thể xoá. Vui lòng thử lại.');
+        }
+      }catch(e){
+        alert('Lỗi kết nối. Vui lòng thử lại.');
+      }finally{
+        confirmDelete.classList.remove('open');
+      }
+    });
+
+    // ESC close
     document.addEventListener('keydown', (e)=>{
       if(e.key==='Escape'){
+        if(confirmDelete?.classList.contains('open')) { confirmDelete.classList.remove('open'); return; }
+        if(confirmAll.classList.contains('open')) { confirmAll.classList.remove('open'); return; }
         if(document.getElementById('logoutModal').classList.contains('open')) { closeLogout(); return; }
         if(modal.classList.contains('open')) closeModal();
         else if(drawer.classList.contains('open')) closeDrawer();
       }
     });
+
+    // init
+    hydrateAllActions();
+    applyFilter();
   </script>
 </body>
 </html>

@@ -19,6 +19,7 @@ service\AdminService.class
 service\PaymentService.class
 dao\OrderDetailDao.class
 controller\MotorbikeSearchServlet.class
+controller\partner\MarkAllNotificationServlet.class
 dao\ICustomerDao.class
 controller\Authetication\LoginServlet.class
 controller\Authetication\GoogleLoginServlet.class
@@ -52,6 +53,8 @@ model\AdminCustomerDTO$OrderMini.class
 dao\OrderQueryDao.class
 service\IPartnerAdminService.class
 dao\PaymentDao.class
+controller\admin\AdminMotorbikesServlet.class
+controller\partner\DeleteReadNotificationsServlet.class
 controller\admin\AdminReturnServlet.class
 controller\admin\AdminPartnerCreateServlet.class
 dao\IAdminDAO.class
@@ -67,6 +70,7 @@ controller\admin\AdminCustomerDetailServlet.class
 controller\DashboardServlet.class
 service\PaymentVerifyService.class
 service\ReviewService.class
+test\Calculator.class
 model\OrderListItem.class
 service\IOrderService$OverlappedRange.class
 controller\partner\ViewReviewServlet.class
@@ -103,12 +107,15 @@ model\CartItem.class
 dao\IOrderDao.class
 model\OrderDetail.class
 service\OrderDetailService.class
+controller\admin\AdminBroadcastNotificationServlet.class
 com\mycompany\project_ridenow\JakartaRestConfiguration.class
+service\MotorbikeAdminService.class
 service\IAdminService.class
 filter\AdminOnlyFilter.class
 controller\admin\AdminReturnsServlet.class
 controller\WalletServlet$Tx.class
 dao\IPaymentVerifyDao.class
+service\IMotorbikeAdminService.class
 service\IPartnerService.class
 model\RentalOrder.class
 service\AccountService.class

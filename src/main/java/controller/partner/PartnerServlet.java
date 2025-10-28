@@ -61,6 +61,7 @@ public class PartnerServlet extends HttpServlet {
                     Partner p = partnerService.getByAccountId(acc.getAccountId());
                     req.setAttribute("partner", p);
                     req.getRequestDispatcher("/partners/dashboard.jsp").forward(req, resp);
+                    resp.sendRedirect(req.getContextPath() + "/dashboard");
                     break;
                 }
                 case "editProfile": {
@@ -78,6 +79,7 @@ public class PartnerServlet extends HttpServlet {
                     Partner p = partnerService.getByAccountId(acc.getAccountId());
                     req.setAttribute("partner", p);
                     req.getRequestDispatcher("/partners/dashboard.jsp").forward(req, resp);
+                    resp.sendRedirect(req.getContextPath() + "/dashboard");
                     break;
                 }
             }

@@ -24,6 +24,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
     private final IPaymentVerifyDao paymentDao = new PaymentVerifyDao();
     private final IOrderManageDao orderDao = new OrderManageDao();
     private final INotificationDao notificationDao = new NotificationDao();
+    private final INotificationService notificationService = new NotificationService();
     
     @Override
     public List<Object[]> getPendingPayments() {
@@ -79,7 +80,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             orderDao.addStatusHistory(history);
             System.out.println("DEBUG: History added successfully");
 
-            // 4. Gửi thông báo cho customer
+            // 4. Gửi thông báo cho customer (từ service cũ)
             int accountId = notificationDao.getAccountIdByOrderId(orderId);
             System.out.println("DEBUG: Customer account ID: " + accountId);
 
@@ -92,6 +93,26 @@ public class PaymentVerifyService implements IPaymentVerifyService {
 
             con.commit();
             System.out.println("=== PAYMENT VERIFICATION SUCCESS ===");
+
+            // 5. Gửi thông báo cho partners (từ service mới) - SAU KHI COMMIT
+            try {
+                int sent = notificationService.sendToPartnersByOrder(
+                        orderId,
+                        "Đơn #" + orderId + " đã được xác nhận",
+                        "Khách đã thanh toán. Đơn có chứa xe của bạn đã được xác nhận."
+                );
+                System.out.println("DEBUG: Notification to partners created: " + sent);
+            } catch (Exception ex) {
+                System.err.println("WARN: notify partners failed: " + ex.getMessage());
+            }
+
+            // 6. Gửi email xác nhận (từ service cũ) - SAU KHI COMMIT
+            try {
+                sendPaymentConfirmationEmail(paymentId, "https://your-domain.com");
+            } catch (Exception ex) {
+                System.err.println("WARN: Email sending failed: " + ex.getMessage());
+            }
+
             return true;
 
         } catch (SQLException e) {
@@ -227,6 +248,13 @@ public class PaymentVerifyService implements IPaymentVerifyService {
                             <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
                         </tr>
                     </table>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Xem chi tiết đơn hàng
+                        </a>
+                    </div>
+                    
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
                         <p style="margin: 0; color: #6b7280;">
                             Trân trọng,<br>
@@ -244,7 +272,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             dto.amount, dto.method,
             dto.orderTotal,
             dto.paymentDate != null ? dto.paymentDate.format(dateTimeFormatter) : "N/A",
-            link, link
+            link
         );
 
         System.out.println("📧 Sending email to: " + dto.customerEmail);
