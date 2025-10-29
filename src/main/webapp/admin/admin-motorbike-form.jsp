@@ -45,6 +45,9 @@
     .mb-static-field{display:flex;align-items:center;gap:10px}
     .mb-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--mb-primary-50);color:#1e3a8a;font-weight:600;font-size:13px;border:1px solid #c7d2fe}
     .mb-hint{font-size:12px;color:#64748b;margin-top:6px}
+    .rental-dates { display: none; background: #fff8e1; border: 1px solid #ffd54f; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    .rental-dates.active { display: block; }
+    .rental-dates .mb-form-grid { grid-template-columns: 1fr 1fr; }
     .gallery { display:grid; gap:12px; }
     .gallery-main{ position:relative; border-radius:12px; overflow:hidden; background:#0b1224; border:1px solid #334155; }
     .gallery-main img{ width:100%; height:300px; object-fit:cover; display:block; }
@@ -88,6 +91,7 @@
       .mb-btn-group{flex-direction:column}
       .thumbs{ grid-template-columns:repeat(4,1fr); }
       .gallery-main img{ height:250px; }
+      .rental-dates .mb-form-grid { grid-template-columns: 1fr; }
     }
     @media (max-width:1100px){
       .sidebar-nav a span,.brand h1 { display: none; }
@@ -287,20 +291,47 @@
             <div class="mb-form-group">
                 <label for="status" class="mb-label required">Trạng thái</label>
                 <select id="status" name="status" class="mb-select" required>
-                    <option value="available" 
-                        <c:if test="${not empty motorbike && motorbike.status == 'available'}">selected</c:if>>
-                        Có sẵn
-                    </option>
-                    <option value="rented" 
-                        <c:if test="${not empty motorbike && motorbike.status == 'rented'}">selected</c:if>>
-                        Đã thuê
-                    </option>
-                    <option value="maintenance" 
-                        <c:if test="${not empty motorbike && motorbike.status == 'maintenance'}">selected</c:if>>
-                        Bảo trì
-                    </option>
+                    <c:choose>
+                        <c:when test="${empty motorbike}">
+                            <!-- Thêm mới: chỉ cho phép available -->
+                            <option value="available" selected>Có sẵn</option>
+                        </c:when>
+                        <c:otherwise>
+                            <!-- Chỉnh sửa: cho phép tất cả trạng thái -->
+                            <option value="available" <c:if test="${motorbike.status == 'available'}">selected</c:if>>Có sẵn</option>
+                            <option value="rented" <c:if test="${motorbike.status == 'rented'}">selected</c:if>>Đã thuê</option>
+                            <option value="maintenance" <c:if test="${motorbike.status == 'maintenance'}">selected</c:if>>Bảo trì</option>
+                        </c:otherwise>
+                    </c:choose>
                 </select>
+                <c:if test="${empty motorbike}">
+                    <div class="mb-hint">Xe mới luôn ở trạng thái "Có sẵn"</div>
+                </c:if>
             </div>
+
+            <!-- Section ngày thuê (chỉ hiện khi chọn trạng thái "rented" và chỉ trong chỉnh sửa) -->
+            <c:if test="${not empty motorbike}">
+                <div class="mb-form-group full">
+                    <div id="rentalDatesSection" class="rental-dates">
+                        <h4 style="margin:0 0 16px 0; color: #b45309;"><i class="fas fa-calendar-alt"></i> Thông tin thuê xe</h4>
+                        <div class="mb-form-grid">
+                            <div class="mb-form-group">
+                                <label for="rentalStartDate" class="mb-label required">Ngày bắt đầu thuê</label>
+                                <input type="date" id="rentalStartDate" name="rentalStartDate" class="mb-input">
+                                <div class="mb-hint">Ngày bắt đầu thuê xe</div>
+                            </div>
+                            <div class="mb-form-group">
+                                <label for="rentalEndDate" class="mb-label required">Ngày kết thúc thuê</label>
+                                <input type="date" id="rentalEndDate" name="rentalEndDate" class="mb-input">
+                                <div class="mb-hint">Ngày trả xe dự kiến</div>
+                            </div>
+                        </div>
+                        <div class="mb-hint" style="color: #b45309;">
+                            <i class="fas fa-info-circle"></i> Khi đặt trạng thái "Đã thuê", vui lòng chọn ngày thuê để hệ thống có thể quản lý lịch trình xe.
+                        </div>
+                    </div>
+                </div>
+            </c:if>
 
             <!-- Chủ sở hữu: chỉ khi thêm mới -->
             <c:if test="${empty motorbike}">
@@ -400,6 +431,54 @@
       priceInput.addEventListener('blur', function() {
         const value = parseInt(this.value);
         if (!isNaN(value) && value >= 0) this.value = Math.round(value / 1000) * 1000;
+      });
+    }
+
+    // Toggle section ngày thuê khi trạng thái thay đổi (chỉ trong chỉnh sửa)
+    const statusSelect = document.getElementById('status');
+    const rentalDatesSection = document.getElementById('rentalDatesSection');
+    
+    if (statusSelect && rentalDatesSection) {
+      function toggleRentalDates() {
+        if (statusSelect.value === 'rented') {
+          rentalDatesSection.classList.add('active');
+          // Set min date cho ngày bắt đầu là hôm nay
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('rentalStartDate').min = today;
+          document.getElementById('rentalEndDate').min = today;
+        } else {
+          rentalDatesSection.classList.remove('active');
+        }
+      }
+      
+      statusSelect.addEventListener('change', toggleRentalDates);
+      // Khởi tạo trạng thái ban đầu
+      toggleRentalDates();
+    }
+
+    // Validate form trước khi submit
+    const mainForm = document.getElementById('mainForm');
+    if (mainForm) {
+      mainForm.addEventListener('submit', function(e) {
+        const status = document.getElementById('status')?.value;
+        const rentalStartDate = document.getElementById('rentalStartDate')?.value;
+        const rentalEndDate = document.getElementById('rentalEndDate')?.value;
+        
+        // Nếu trạng thái là "rented" thì phải có ngày thuê
+        if (status === 'rented' && rentalDatesSection) {
+          if (!rentalStartDate || !rentalEndDate) {
+            e.preventDefault();
+            alert('Vui lòng chọn ngày bắt đầu và kết thúc thuê xe khi đặt trạng thái "Đã thuê".');
+            return;
+          }
+          
+          // Kiểm tra ngày kết thúc phải sau ngày bắt đầu
+          if (new Date(rentalEndDate) <= new Date(rentalStartDate)) {
+            e.preventDefault();
+            alert('Ngày kết thúc thuê phải sau ngày bắt đầu thuê.');
+            return;
+          }
+        }
       });
     }
 

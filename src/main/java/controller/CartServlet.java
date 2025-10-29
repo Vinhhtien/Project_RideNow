@@ -86,46 +86,6 @@ public class CartServlet extends HttpServlet {
         }
     }
 
-//    private void handleAddToCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-//            throws IOException {
-//        try {
-//            int bikeId = Integer.parseInt(request.getParameter("bikeId"));
-//            Date start = Date.valueOf(request.getParameter("start"));
-//            Date end   = Date.valueOf(request.getParameter("end"));
-//            if (end.before(start)) {
-//                session.setAttribute("book_error", "Ngày trả phải sau hoặc bằng ngày nhận.");
-//                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
-//                return;
-//            }
-//            if (start.toLocalDate().isBefore(LocalDate.now())) {
-//                session.setAttribute("book_error", "Ngày nhận không được ở quá khứ.");
-//                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
-//                return;
-//            }
-//
-//            MotorbikeListItem b = motorbikeService.getDetail(bikeId);
-//            if (b == null) throw new IllegalArgumentException("Xe không tồn tại");
-//            
-//            if (!orderService.isBikeAvailable(bikeId, start, end)) {
-//                session.setAttribute("book_error",
-//                    "Xe đã được xác nhận cho khoảng ngày này. Vui lòng chọn ngày khác.");
-//                response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+bikeId);
-//                return;
-//            }
-//            
-//            
-//            CartItem item = new CartItem(
-//                    b.getBikeId(), b.getBikeName(), b.getPricePerDay(), b.getTypeName(), start, end
-//            );
-//            getCart(session).add(item);
-//            response.sendRedirect(request.getContextPath()+"/cart");
-//        } catch (Exception ex) {
-//            session.setAttribute("book_error", "Không thể thêm vào giỏ: " + ex.getMessage());
-//            String backId = request.getParameter("bikeId");
-//            response.sendRedirect(request.getContextPath()+"/motorbikedetail?id="+backId);
-//        }
-//    }
-
     private void handleAddToCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
         throws IOException {
     int bikeId = -1;
@@ -179,6 +139,13 @@ public class CartServlet extends HttpServlet {
         MotorbikeListItem b = motorbikeService.getDetail(bikeId);
         if (b == null) throw new IllegalArgumentException("Xe không tồn tại.");
 
+        // ===== KIỂM TRA TRẠNG THÁI XE =====
+        if ("maintenance".equals(b.getStatus())) {
+            session.setAttribute("book_error", "Xe đang trong chế độ bảo dưỡng, không thể thêm vào giỏ hàng.");
+            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+            return;
+        }
+
         if (!orderService.isBikeAvailable(bikeId, start, end)) {
             // Lấy các khoảng bị trùng để hiển thị
             java.util.List<service.IOrderService.OverlappedRange> overlaps =
@@ -221,8 +188,6 @@ public class CartServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + backId);
     }
 }
-
-
     
     private void handleRemoveFromCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
             throws IOException {
@@ -285,6 +250,16 @@ public class CartServlet extends HttpServlet {
                 session.setAttribute("error", "Giỏ hàng trống");
                 response.sendRedirect(request.getContextPath() + "/cart");
                 return;
+            }
+
+            // ===== KIỂM TRA TRẠNG THÁI XE TRƯỚC KHI THANH TOÁN =====
+            for (CartItem item : cart) {
+                MotorbikeListItem bike = motorbikeService.getDetail(item.getBikeId());
+                if (bike != null && "maintenance".equals(bike.getStatus())) {
+                    session.setAttribute("error", "Xe '" + item.getBikeName() + "' đang trong chế độ bảo dưỡng, không thể đặt thuê.");
+                    response.sendRedirect(request.getContextPath() + "/cart");
+                    return;
+                }
             }
 
             // Lấy đúng danh sách index có trong request (start_0, start_3, ...)
@@ -355,6 +330,14 @@ public class CartServlet extends HttpServlet {
 
             for (CartItem item : cart) {
                 try {
+                    // Kiểm tra lại trạng thái xe trước khi tạo đơn
+                    MotorbikeListItem bike = motorbikeService.getDetail(item.getBikeId());
+                    if (bike != null && "maintenance".equals(bike.getStatus())) {
+                        failCount++;
+                        unavailableBikes.add(item.getBikeName() + " (Đang bảo dưỡng)");
+                        continue;
+                    }
+
                     int orderId = orderService.bookOneBike(
                             customer.getCustomerId(),
                             item.getBikeId(),
@@ -379,18 +362,6 @@ public class CartServlet extends HttpServlet {
                 }
             }
 
-//            if (createdOrderIds.isEmpty()) {
-//                String msg;
-//                if (!unavailableBikes.isEmpty()) {
-//                    msg = "Các xe sau không khả dụng: " +
-//                            unavailableBikes.stream().map(s -> "'" + s + "'").collect(Collectors.joining(", "))
-//                            + ". Vui lòng chọn thời gian khác.";
-//                } else msg = "Không thể tạo đơn hàng. Vui lòng thử lại sau.";
-//                session.setAttribute("error", msg);
-//                response.sendRedirect(request.getContextPath() + "/cart");
-//                return;
-//            }
-
             if (createdOrderIds.isEmpty()) {
                 String msg = "Các xe sau không khả dụng: "
                         + unavailableBikes.stream()
@@ -401,8 +372,6 @@ public class CartServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/cart");
                 return;
             }
-
-
 
             if (failCount > 0) {
                 String warn = "Đã tạo thành công " + successCount + " đơn hàng. "

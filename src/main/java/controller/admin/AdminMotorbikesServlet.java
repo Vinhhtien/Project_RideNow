@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,8 @@ import model.BikeType;
 import model.Partner;
 import service.IMotorbikeAdminService;
 import service.MotorbikeAdminService;
+import service.IOrderService;
+import service.OrderService;
 
 @WebServlet("/admin/bikes")
 @MultipartConfig(
@@ -31,10 +35,12 @@ import service.MotorbikeAdminService;
 public class AdminMotorbikesServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private IMotorbikeAdminService motorbikeAdminService;
+    private IOrderService orderService;
 
     @Override
     public void init() {
         motorbikeAdminService = new MotorbikeAdminService();
+        orderService = new OrderService();
     }
 
     /* ------------------------ Helpers ------------------------ */
@@ -74,6 +80,15 @@ public class AdminMotorbikesServlet extends HttpServlet {
         if (plate == null || plate.isBlank()) return false;
         List<Motorbike> all = motorbikeAdminService.getAllMotorbikes();
         return all.stream().anyMatch(b -> plate.equalsIgnoreCase(b.getLicensePlate()));
+    }
+
+    private Date parseDateOrNull(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+        try {
+            return Date.valueOf(dateStr);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /* ------------------------ GET/POST ------------------------ */
@@ -233,7 +248,9 @@ public class AdminMotorbikesServlet extends HttpServlet {
         String bikeName = str(request, "bikeName");
         String licensePlate = str(request, "licensePlate");
         BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
-        String status = Optional.ofNullable(str(request, "status")).orElse("available");
+        
+        // 🔒 YÊU CẦU 1: Xe mới LUÔN ở trạng thái available
+        String status = "available"; // Luôn set thành available cho xe mới
         String description = str(request, "description");
         int typeId = intRequired(request, "typeId");
 
@@ -241,7 +258,7 @@ public class AdminMotorbikesServlet extends HttpServlet {
         System.out.println("  bikeName: " + bikeName);
         System.out.println("  licensePlate: " + licensePlate);
         System.out.println("  pricePerDay: " + pricePerDay);
-        System.out.println("  status: " + status);
+        System.out.println("  status: " + status + " (LUÔN là available cho xe mới)");
         System.out.println("  description: " + description);
         System.out.println("  typeId: " + typeId);
 
@@ -294,7 +311,7 @@ public class AdminMotorbikesServlet extends HttpServlet {
         nb.setBikeName(bikeName);
         nb.setLicensePlate(licensePlate);
         nb.setPricePerDay(pricePerDay);
-        nb.setStatus(status);
+        nb.setStatus(status); // 🔒 LUÔN là available
         nb.setDescription(description);
         nb.setTypeId(typeId);
         nb.setPartnerId(partnerId);
@@ -341,15 +358,70 @@ public class AdminMotorbikesServlet extends HttpServlet {
         String bikeName = str(request, "bikeName");
         String licensePlate = str(request, "licensePlate");
         BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
-        String status = Optional.ofNullable(str(request, "status")).orElse("available");
+        String status = str(request, "status");
         String description = str(request, "description");
         int typeId = intRequired(request, "typeId");
+
+        // 🔒 YÊU CẦU 2: Nếu status là "rented", phải có ngày thuê
+        Date rentalStartDate = parseDateOrNull(str(request, "rentalStartDate"));
+        Date rentalEndDate = parseDateOrNull(str(request, "rentalEndDate"));
+
+        System.out.println("=== RENTAL DATES ===");
+        System.out.println("  Status: " + status);
+        System.out.println("  Rental Start: " + rentalStartDate);
+        System.out.println("  Rental End: " + rentalEndDate);
 
         Motorbike existing = motorbikeAdminService.getMotorbikeById(bikeId);
         if (existing == null) {
             response.sendRedirect(request.getContextPath() + "/admin/bikes?error=not_found");
             System.out.println("=== DEBUG updateMotorbike END (not found) ===");
             return;
+        }
+
+        // Kiểm tra nếu status là "rented" thì phải có ngày thuê
+        if ("rented".equals(status)) {
+            if (rentalStartDate == null || rentalEndDate == null) {
+                request.setAttribute("formError", "Khi đặt trạng thái 'Đã thuê', vui lòng chọn ngày bắt đầu và kết thúc thuê.");
+                request.setAttribute("motorbike", existing);
+                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+                System.out.println("=== DEBUG updateMotorbike END (missing dates) ===");
+                return;
+            }
+
+            // Kiểm tra ngày kết thúc phải sau ngày bắt đầu
+            if (!rentalEndDate.after(rentalStartDate)) {
+                request.setAttribute("formError", "Ngày kết thúc thuê phải sau ngày bắt đầu thuê.");
+                request.setAttribute("motorbike", existing);
+                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+                System.out.println("=== DEBUG updateMotorbike END (invalid dates) ===");
+                return;
+            }
+
+            // 🔥 QUAN TRỌNG: Kiểm tra xe có khả dụng trong khoảng thời gian này không (loại trừ booking admin)
+            try {
+                boolean isAvailable = orderService.isBikeAvailableForAdmin(bikeId, rentalStartDate, rentalEndDate);
+                if (!isAvailable) {
+                    request.setAttribute("formError", "Xe không khả dụng trong khoảng thời gian đã chọn. Có thể đã có đơn hàng khác trong khoảng thời gian này.");
+                    request.setAttribute("motorbike", existing);
+                    request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                    request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+                    request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+                    System.out.println("=== DEBUG updateMotorbike END (not available) ===");
+                    return;
+                }
+            } catch (SQLException e) {
+                System.err.println("Error checking bike availability: " + e.getMessage());
+                request.setAttribute("formError", "Lỗi hệ thống khi kiểm tra tính khả dụng của xe.");
+                request.setAttribute("motorbike", existing);
+                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+                return;
+            }
         }
 
         // nếu đổi biển số, kiểm tra trùng với xe khác
@@ -378,6 +450,26 @@ public class AdminMotorbikesServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/bikes?error=update_failed");
             System.out.println("=== DEBUG updateMotorbike END (service failed) ===");
             return;
+        }
+
+        // 🔒 Nếu status là "rented", tạo đơn hàng admin để block thời gian
+        if ("rented".equals(status) && rentalStartDate != null && rentalEndDate != null) {
+            try {
+                // Tạo một đơn hàng admin để đánh dấu xe đã được thuê trong khoảng thời gian này
+                boolean bookingCreated = orderService.createAdminBooking(
+                    bikeId, rentalStartDate, rentalEndDate, "Admin set status to rented"
+                );
+                System.out.println("Admin booking created: " + bookingCreated);
+                
+                if (!bookingCreated) {
+                    // Nếu không tạo được booking, vẫn thành công update status nhưng log lỗi
+                    System.err.println("⚠️ Failed to create admin booking for bike " + bikeId);
+                }
+            } catch (SQLException e) {
+                System.err.println("❌ Error creating admin booking: " + e.getMessage());
+                // Không rollback việc update motorbike vì trạng thái đã được set
+                // Chỉ log lỗi và tiếp tục
+            }
         }
 
         // ảnh
