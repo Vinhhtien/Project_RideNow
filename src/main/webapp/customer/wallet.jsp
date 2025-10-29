@@ -91,9 +91,6 @@
     .badge.withdraw { background:rgba(168,85,247,.15); color:#a855f7; border:1px solid rgba(168,85,247,.3); }
     .amount.positive { color:#22c55e; font-weight:600; }
     .amount.negative { color:#ef4444; font-weight:600; }
-    .deposit-actions {
-      display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;
-    }
     .info-box {
       background:var(--secondary); padding:20px; border-radius:var(--radius);
       border-left:4px solid var(--accent); margin-bottom:24px;
@@ -108,218 +105,146 @@
       .stats-grid{grid-template-columns:1fr}
       .table-container{overflow-x:auto}
       table{min-width:700px}
-      .deposit-actions{flex-direction:column}
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-wallet"></i> Ví của tôi
-      </h1>
-      <div class="toolbar">
-        <a class="btn" href="${ctx}/motorbikesearch"><i class="fas fa-motorcycle"></i> Tìm xe</a>
-        <a class="btn" href="${ctx}/cart"><i class="fas fa-cart-shopping"></i> Giỏ hàng</a>
-        <a href="${ctx}/customerorders" class="btn btn--ghost"><i class="fas fa-clipboard-list"></i> Đơn của tôi</a>
-        <a href="${ctx}/" class="btn btn--ghost"><i class="fas fa-house"></i> Trang chủ</a>
-      </div>
+<div class="wrap">
+  <div class="page-header">
+    <h1 class="page-title">
+      <i class="fas fa-wallet"></i> Ví của tôi
+    </h1>
+    <div class="toolbar">
+      <a class="btn" href="${ctx}/motorbikesearch"><i class="fas fa-motorcycle"></i> Tìm xe</a>
+      <a class="btn" href="${ctx}/cart"><i class="fas fa-cart-shopping"></i> Giỏ hàng</a>
+      <a href="${ctx}/customerorders" class="btn"><i class="fas fa-clipboard-list"></i> Đơn của tôi</a>
+      <a href="${ctx}/" class="btn"><i class="fas fa-house"></i> Trang chủ</a>
     </div>
+  </div>
 
-    <!-- Flash message -->
-    <c:if test="${not empty sessionScope.flash}">
-      <div class="info-box" style="border-left-color:#22c55e;">
-        <i class="fas fa-info-circle"></i> ${sessionScope.flash}
-      </div>
-      <c:remove var="flash" scope="session"/>
-    </c:if>
-
-    <!-- Balance Section -->
-    <div class="balance-section">
-      <div class="balance-label">Số dư khả dụng</div>
-      <div class="balance-amount">
-        <fmt:formatNumber value="${balance}" type="number"/> đ
-      </div>
-      <div class="balance-subtitle">
-        <c:choose>
-          <c:when test="${balance > 0}">
-            <i class="fas fa-coins"></i> Bạn có tiền cọc có thể rút hoặc sử dụng cho lần thuê tiếp theo
-          </c:when>
-          <c:otherwise>
-            <i class="fas fa-info-circle"></i> Số dư sẽ được cập nhật sau khi trả xe
-          </c:otherwise>
-        </c:choose>
-      </div>
+  <!-- Flash message -->
+  <c:if test="${not empty sessionScope.flash}">
+    <div class="info-box" style="border-left-color:#22c55e;">
+      <i class="fas fa-info-circle"></i> ${sessionScope.flash}
     </div>
+    <c:remove var="flash" scope="session"/>
+  </c:if>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value"><fmt:formatNumber value="${availableBalance}" type="number"/> đ</div>
-        <div class="stat-label">Có thể rút</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value"><fmt:formatNumber value="${lockedBalance}" type="number"/> đ</div>
-        <div class="stat-label">Đang tạm giữ</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">${totalTransactions}</div>
-        <div class="stat-label">Giao dịch</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">${pendingRefunds}</div>
-        <div class="stat-label">Đang chờ rút</div>
-      </div>
+  <!-- Balance Section -->
+  <div class="balance-section">
+    <div class="balance-label">Số dư hiện tại</div>
+    <div class="balance-amount">
+      <fmt:formatNumber value="${balance}" type="number"/> đ
     </div>
-
-    <!-- Deposit Management -->
-    <c:if test="${availableBalance > 0}">
-      <div class="card">
-        <h3 style="margin:0 0 16px;color:var(--accent);">
-          <i class="fas fa-money-bill-wave"></i> Quản lý tiền cọc
-        </h3>
-        <div class="info-box">
-          <h4><i class="fas fa-lightbulb"></i> Lựa chọn của bạn</h4>
-          <p>
-            Bạn có <strong><fmt:formatNumber value="${availableBalance}" type="number"/> đ</strong> tiền cọc có thể sử dụng.
-            Chọn một trong các phương án dưới đây:
-          </p>
-        </div>
-        
-        <div class="deposit-actions">
-          <form method="post" action="${ctx}/wallet" style="flex:1;">
-            <input type="hidden" name="action" value="keep_deposit"/>
-            <button type="submit" class="btn btn-primary" style="width:100%;">
-              <i class="fas fa-piggy-bank"></i> Giữ lại cho lần thuê sau
-            </button>
-            <div style="font-size:0.8rem; color:var(--gray-light); margin-top:8px; text-align:center;">
-              Tiền cọc sẽ được giữ trong ví để sử dụng cho các đơn thuê tiếp theo
-            </div>
-          </form>
-          
-          <form method="post" action="${ctx}/wallet" style="flex:1;">
-            <input type="hidden" name="action" value="request_refund"/>
-            <button type="submit" class="btn" style="width:100%; background:var(--secondary);">
-              <i class="fas fa-hand-holding-usd"></i> Yêu cầu rút tiền mặt
-            </button>
-            <div style="font-size:0.8rem; color:var(--gray-light); margin-top:8px; text-align:center;">
-              Admin sẽ liên hệ để xác nhận và chuyển khoản cho bạn
-            </div>
-          </form>
-        </div>
-      </div>
-    </c:if>
-
-    <!-- Return Process Info -->
-    <div class="card">
-      <h3 style="margin:0 0 16px;color:var(--accent);">
-        <i class="fas fa-sync-alt"></i> Quy trình trả xe & hoàn cọc
-      </h3>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-        <div style="padding:16px; background:var(--secondary); border-radius:var(--radius);">
-          <div style="font-size:1.5rem; color:var(--accent); margin-bottom:8px;">1</div>
-          <h4 style="margin:0 0 8px; color:var(--light);">Trả xe</h4>
-          <p style="margin:0; color:var(--gray-light); font-size:0.9rem;">
-            Mang xe đến điểm trả theo đúng hẹn
-          </p>
-        </div>
-        <div style="padding:16px; background:var(--secondary); border-radius:var(--radius);">
-          <div style="font-size:1.5rem; color:var(--accent); margin-bottom:8px;">2</div>
-          <h4 style="margin:0 0 8px; color:var(--light);">Kiểm tra xe</h4>
-          <p style="margin:0; color:var(--gray-light); font-size:0.9rem;">
-            Admin kiểm tra tình trạng xe, nhiên liệu, phụ kiện
-          </p>
-        </div>
-        <div style="padding:16px; background:var(--secondary); border-radius:var(--radius);">
-          <div style="font-size:1.5rem; color:var(--accent); margin-bottom:8px;">3</div>
-          <h4 style="margin:0 0 8px; color:var(--light);">Xác nhận</h4>
-          <p style="margin:0; color:var(--gray-light); font-size:0.9rem;">
-            Xác nhận trả xe thành công, tiền cọc được mở khóa
-          </p>
-        </div>
-        <div style="padding:16px; background:var(--secondary); border-radius:var(--radius);">
-          <div style="font-size:1.5rem; color:var(--accent); margin-bottom:8px;">4</div>
-          <h4 style="margin:0 0 8px; color:var(--light);">Nhận cọc</h4>
-          <p style="margin:0; color:var(--gray-light); font-size:0.9rem;">
-            Chọn giữ lại hoặc rút tiền cọc về tài khoản
-          </p>
-        </div>
-      </div>
-    </div>
-<!-- Transaction History -->
-<div class="card">
-    <h3 style="margin:0 0 20px;color:var(--accent);">
-        <i class="fas fa-history"></i> Lịch sử giao dịch
-    </h3>
-    <c:choose>
-        <c:when test="${empty txs}">
-            <div style="text-align:center; padding:40px 20px; color:var(--gray-light);">
-                <i class="fas fa-receipt" style="font-size:3rem; margin-bottom:16px; opacity:0.5;"></i>
-                <p>Chưa có giao dịch nào</p>
-            </div>
+    <div class="balance-subtitle">
+      <c:choose>
+        <c:when test="${balance > 0}">
+          <i class="fas fa-coins"></i> Số dư khả dụng trong ví
         </c:when>
         <c:otherwise>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Mã GD</th>
-                            <th>Thời gian</th>
-                            <th>Loại giao dịch</th>
-                            <th>Mô tả</th>
-                            <th>Đơn hàng</th>
-                            <th>Số tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <c:forEach var="t" items="${txs}">
-                            <tr>
-                                <td><strong>#${t.id}</strong></td>
-                                <td><fmt:formatDate value="${t.date}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                <td>
-                                    <c:choose>
-                                        <c:when test="${t.type == 'topup'}">
-                                            <span class="badge refund"><i class="fas fa-coins"></i> Nạp tiền</span>
-                                        </c:when>
-                                        <c:when test="${t.type == 'withdraw'}">
-                                            <span class="badge withdraw"><i class="fas fa-hand-holding-usd"></i> Rút tiền</span>
-                                        </c:when>
-                                        <c:when test="${t.type == 'refund'}">
-                                            <span class="badge success"><i class="fas fa-undo"></i> Hoàn cọc</span>
-                                        </c:when>
-                                        <c:when test="${t.type == 'payment'}">
-                                            <span class="badge pending"><i class="fas fa-credit-card"></i> Thanh toán</span>
-                                        </c:when>
-                                        <c:when test="${t.type == 'adjust'}">
-                                            <span class="badge"><i class="fas fa-adjust"></i> Điều chỉnh</span>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="badge">${t.type}</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </td>
-                                <td>${t.description}</td>
-                                <td>
-                                    <c:if test="${t.orderId != null && t.orderId > 0}">
-                                        <a href="${ctx}/customerorders" style="color:var(--accent); text-decoration:none;">
-                                            #${t.orderId}
-                                        </a>
-                                    </c:if>
-                                </td>
-                                <td>
-                                    <span class="amount ${t.amount.compareTo(BigDecimal.ZERO) >= 0 ? 'positive' : 'negative'}">
-                                        <c:if test="${t.amount.compareTo(BigDecimal.ZERO) >= 0}">+</c:if>
-                                        <fmt:formatNumber value="${t.amount}" type="number"/> đ
-                                    </span>
-                                </td>
-                            </tr>
-                        </c:forEach>
-                    </tbody>
-                </table>
-            </div>
+          <i class="fas fa-info-circle"></i> Bạn chưa có số dư trong ví
         </c:otherwise>
-    </c:choose>
-</div>
+      </c:choose>
+    </div>
   </div>
+
+  <!-- Simple Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value"><fmt:formatNumber value="${balance}" type="number"/> đ</div>
+      <div class="stat-label">Tổng số dư</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${txs.size()}</div>
+      <div class="stat-label">Tổng giao dịch</div>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="card">
+    <h3 style="margin:0 0 20px;color:var(--accent);">
+      <i class="fas fa-history"></i> Lịch sử giao dịch
+    </h3>
+    <c:choose>
+      <c:when test="${empty txs}">
+        <div style="text-align:center; padding:40px 20px; color:var(--gray-light);">
+          <i class="fas fa-receipt" style="font-size:3rem; margin-bottom:16px; opacity:0.5;"></i>
+          <p>Chưa có giao dịch nào</p>
+        </div>
+      </c:when>
+      <c:otherwise>
+        <div class="table-container">
+          <table>
+            <thead>
+            <tr>
+              <th>Mã GD</th>
+              <th>Thời gian</th>
+              <th>Loại giao dịch</th>
+              <th>Mô tả</th>
+              <th>Đơn hàng</th>
+              <th>Số tiền</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach var="t" items="${txs}">
+              <tr>
+                <td><strong>#${t.id}</strong></td>
+                <td>
+                  <c:choose>
+                    <c:when test="${t.date != null}">
+                      <fmt:formatDate value="${t.date}" pattern="dd/MM/yyyy HH:mm"/>
+                    </c:when>
+                    <c:otherwise>N/A</c:otherwise>
+                  </c:choose>
+                </td>
+                <td>
+                  <c:choose>
+                    <c:when test="${t.type == 'topup'}">
+                      <span class="badge refund"><i class="fas fa-coins"></i> Nạp tiền</span>
+                    </c:when>
+                    <c:when test="${t.type == 'withdraw'}">
+                      <span class="badge withdraw"><i class="fas fa-hand-holding-usd"></i> Rút tiền</span>
+                    </c:when>
+                    <c:when test="${t.type == 'refund'}">
+                      <span class="badge success"><i class="fas fa-undo"></i> Hoàn cọc</span>
+                    </c:when>
+                    <c:when test="${t.type == 'payment'}">
+                      <span class="badge pending"><i class="fas fa-credit-card"></i> Thanh toán</span>
+                    </c:when>
+                    <c:when test="${t.type == 'adjust'}">
+                      <span class="badge"><i class="fas fa-adjust"></i> Điều chỉnh</span>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="badge">${t.type != null ? t.type : 'unknown'}</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>${t.description != null ? t.description : 'Không có mô tả'}</td>
+                <td>
+                  <c:if test="${t.orderId != null and t.orderId > 0}">
+                    <a href="${ctx}/customerorders" style="color:var(--accent); text-decoration:none;">
+                      #${t.orderId}
+                    </a>
+                  </c:if>
+                </td>
+                <td>
+                  <c:choose>
+                    <c:when test="${t.amount >= 0}">
+                      <span class="amount positive">+<fmt:formatNumber value="${t.amount}" type="number"/> đ</span>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="amount negative"><fmt:formatNumber value="${t.amount}" type="number"/> đ</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+              </tr>
+            </c:forEach>
+            </tbody>
+          </table>
+        </div>
+      </c:otherwise>
+    </c:choose>
+  </div>
+</div>
 </body>
 </html>
