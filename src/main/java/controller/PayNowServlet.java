@@ -144,7 +144,17 @@ public class PayNowServlet extends HttpServlet {
             req.setAttribute("rows", rows);
             req.setAttribute("grandTotal", grandTotal);
             req.setAttribute("ordersCsv", ordersCsv);
-            req.setAttribute("walletBalance", BigDecimal.ZERO); // hiện chưa dùng ví
+            // Lấy customerId để query số dư ví
+            Integer customerId = getCustomerIdByAccount(acc.getAccountId());
+            if (customerId == null) {
+                flash(req, "Không tìm thấy thông tin khách hàng.");
+                resp.sendRedirect(req.getContextPath() + "/customerorders");
+                return;
+            }
+
+            // Lấy số dư ví thực tế
+            BigDecimal walletBalance = getWalletBalance(customerId);
+            req.setAttribute("walletBalance", walletBalance);
             req.setAttribute("qrAccountNo", "0916134642");
             req.setAttribute("qrAccountName", "Cua Hang RideNow");
             req.setAttribute("qrAddInfo", "RN" + ordersCsv + " " + System.currentTimeMillis());
@@ -504,4 +514,31 @@ public class PayNowServlet extends HttpServlet {
     private static void flash(HttpServletRequest req, String msg){
         req.getSession().setAttribute("flash", msg);
     }
+    
+    private BigDecimal getWalletBalance(int customerId) throws ServletException {
+        String sql = "SELECT balance FROM Wallets WHERE customer_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getBigDecimal("balance") : BigDecimal.ZERO;
+        } catch (Exception e) {
+            // Nếu chưa có ví, trả về 0
+            return BigDecimal.ZERO;
+        }
+    }
+    
+    
+    private Integer getCustomerIdByAccount(int accountId) throws ServletException {
+        String sql = "SELECT customer_id FROM Customers WHERE account_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt("customer_id") : null;
+        } catch (Exception e) {
+            throw new ServletException("Không lấy được customer_id", e);
+        }
+    }
+    
 }
