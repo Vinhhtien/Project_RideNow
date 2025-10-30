@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import utils.DBConnection;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;
@@ -18,8 +19,6 @@ public class AdminReturnInspectServlet extends HttpServlet {
         private String bikeName;
         private BigDecimal depositAmount;
         private Timestamp returnedAt;
-        
-        // Getters/Setters
         public int getOrderId() { return orderId; }
         public void setOrderId(int orderId) { this.orderId = orderId; }
         public String getCustomerName() { return customerName; }
@@ -35,9 +34,9 @@ public class AdminReturnInspectServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
+
         String orderIdStr = req.getParameter("orderId");
         if (orderIdStr == null) {
             resp.sendRedirect(req.getContextPath() + "/adminreturns");
@@ -47,7 +46,7 @@ public class AdminReturnInspectServlet extends HttpServlet {
         try {
             int orderId = Integer.parseInt(orderIdStr);
             InspectionOrderVM order = getOrderForInspection(orderId);
-            
+
             if (order == null) {
                 req.getSession().setAttribute("flash", "❌ Không tìm thấy đơn hàng");
                 resp.sendRedirect(req.getContextPath() + "/adminreturns");
@@ -78,15 +77,14 @@ public class AdminReturnInspectServlet extends HttpServlet {
         String refundMethod  = req.getParameter("refundMethod");
 
         try {
-            // Validate
             if (orderIdStr == null || orderIdStr.isBlank()) {
                 throw new IllegalArgumentException("Thiếu orderId");
             }
             int orderId = Integer.parseInt(orderIdStr.trim());
 
             if (!"excellent".equals(bikeCondition) &&
-                !"good".equals(bikeCondition) &&
-                !"damaged".equals(bikeCondition)) {
+                    !"good".equals(bikeCondition) &&
+                    !"damaged".equals(bikeCondition)) {
                 throw new IllegalArgumentException("Tình trạng xe không hợp lệ");
             }
 
@@ -94,27 +92,20 @@ public class AdminReturnInspectServlet extends HttpServlet {
                 refundMethod = "cash";
             }
 
-            // Lấy tiền cọc
             BigDecimal depositAmount = getDepositAmount(orderId);
             if (depositAmount == null) depositAmount = BigDecimal.ZERO;
 
-            // Tính phí hư hỏng
             BigDecimal damageFee = BigDecimal.ZERO;
             if (damageFeeStr != null && !damageFeeStr.isBlank()) {
-                try {
-                    damageFee = new BigDecimal(damageFeeStr.trim());
-                } catch (NumberFormatException nfe) {
-                    damageFee = BigDecimal.ZERO;
-                }
+                try { damageFee = new BigDecimal(damageFeeStr.trim()); }
+                catch (NumberFormatException nfe) { damageFee = BigDecimal.ZERO; }
             }
             if (damageFee.compareTo(BigDecimal.ZERO) < 0) damageFee = BigDecimal.ZERO;
             if (damageFee.compareTo(depositAmount) > 0) damageFee = depositAmount;
 
-            // Tính tiền hoàn
             BigDecimal refundAmount = depositAmount.subtract(damageFee);
             if (refundAmount.compareTo(BigDecimal.ZERO) < 0) refundAmount = BigDecimal.ZERO;
 
-            // Xử lý kiểm tra và tạo yêu cầu hoàn cọc
             boolean success = processInspection(
                     orderId, adminId, bikeCondition,
                     damageNotes, damageFee, refundAmount, refundMethod
@@ -122,8 +113,8 @@ public class AdminReturnInspectServlet extends HttpServlet {
 
             if (success) {
                 session.setAttribute("flash",
-                        "✅ Đã kiểm tra xe và tạo yêu cầu hoàn cọc! Số tiền hoàn: " + 
-                        refundAmount + " VNĐ");
+                        "✅ Đã kiểm tra xe và tạo yêu cầu hoàn cọc! Số tiền hoàn: " +
+                                refundAmount + " VNĐ");
             } else {
                 session.setAttribute("flash", "❌ Xử lý kiểm tra thất bại!");
             }
@@ -133,27 +124,26 @@ public class AdminReturnInspectServlet extends HttpServlet {
             session.setAttribute("flash", "❌ Lỗi khi xử lý kiểm tra: " + e.getMessage());
         }
 
+        // QUAN TRỌNG: quay về /adminreturns để thấy “nhảy xuống dưới”
         resp.sendRedirect(req.getContextPath() + "/adminreturns");
     }
 
-        private InspectionOrderVM getOrderForInspection(int orderId) {
+    private InspectionOrderVM getOrderForInspection(int orderId) {
         String sql = """
-            SELECT r.order_id, c.full_name, c.phone, b.bike_name, 
+            SELECT r.order_id, c.full_name, c.phone, b.bike_name,
                    r.deposit_amount, r.returned_at
-            FROM RentalOrders r
-            JOIN Customers c ON c.customer_id = r.customer_id
-            JOIN OrderDetails d ON d.order_id = r.order_id
-            JOIN Motorbikes b ON b.bike_id = d.bike_id
-            WHERE r.order_id = ? 
-              AND r.return_status = 'returned'
-              AND r.deposit_status = 'held'  -- QUAN TRỌNG: phải khớp với giá trị đã set
-            """;
-
+              FROM RentalOrders r
+              JOIN Customers c   ON c.customer_id = r.customer_id
+              JOIN OrderDetails d ON d.order_id   = r.order_id
+              JOIN Motorbikes b  ON b.bike_id     = d.bike_id
+             WHERE r.order_id = ?
+               AND r.return_status  = 'returned'
+               AND r.deposit_status = 'held'
+        """;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             ResultSet rs = ps.executeQuery();
-
             if (rs.next()) {
                 InspectionOrderVM order = new InspectionOrderVM();
                 order.setOrderId(rs.getInt("order_id"));
@@ -181,21 +171,20 @@ public class AdminReturnInspectServlet extends HttpServlet {
     }
 
     private boolean processInspection(int orderId, int adminId, String bikeCondition,
-                                   String damageNotes, BigDecimal damageFee,
-                                   BigDecimal refundAmount, String refundMethod) {
+                                      String damageNotes, BigDecimal damageFee,
+                                      BigDecimal refundAmount, String refundMethod) {
         Connection con = null;
         try {
             con = DBConnection.getConnection();
             con.setAutoCommit(false);
 
-            // Tạo bản ghi kiểm tra với trạng thái pending
+            // 1) Tạo inspection = pending
             String inspectionSql = """
                 INSERT INTO RefundInspections
                   (order_id, admin_id, bike_condition, damage_notes, damage_fee,
                    refund_amount, refund_method, refund_status, inspected_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', GETDATE())
             """;
-            
             try (PreparedStatement ps = con.prepareStatement(inspectionSql)) {
                 ps.setInt(1, orderId);
                 ps.setInt(2, adminId);
@@ -207,14 +196,15 @@ public class AdminReturnInspectServlet extends HttpServlet {
                 ps.executeUpdate();
             }
 
-            // Cập nhật trạng thái đơn hàng thành refunding
-            String updateOrderSql = "UPDATE RentalOrders SET deposit_status='refunding' WHERE order_id=?";
-            try (PreparedStatement ps = con.prepareStatement(updateOrderSql)) {
+            // 2) Đổi trạng thái cọc -> refunding (để đơn rời Bảng 1)
+            try (PreparedStatement ps = con.prepareStatement(
+                    "UPDATE RentalOrders SET deposit_status='refunding' WHERE order_id=?")) {
                 ps.setInt(1, orderId);
                 ps.executeUpdate();
             }
 
             con.commit();
+            System.out.println("DEBUG: Inspection created & deposit_status=refunding for order " + orderId);
             return true;
 
         } catch (SQLException e) {

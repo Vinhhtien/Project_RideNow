@@ -2,12 +2,22 @@ package controller.admin;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import utils.DBConnection;
+
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 @WebServlet("/adminreturns")
 public class AdminReturnsServlet extends HttpServlet {
@@ -22,8 +32,7 @@ public class AdminReturnsServlet extends HttpServlet {
         private String returnStatus;
         private java.util.Date returnedAt;
         private String depositStatus;
-        
-        // Getters/Setters
+
         public int getOrderId() { return orderId; }
         public void setOrderId(int orderId) { this.orderId = orderId; }
         public String getCustomerName() { return customerName; }
@@ -57,8 +66,7 @@ public class AdminReturnsServlet extends HttpServlet {
         private String refundMethod;
         private String bikeCondition;
         private BigDecimal damageFee;
-        
-        // Getters/Setters
+
         public int getInspectionId() { return inspectionId; }
         public void setInspectionId(int inspectionId) { this.inspectionId = inspectionId; }
         public int getOrderId() { return orderId; }
@@ -88,45 +96,91 @@ public class AdminReturnsServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
 
         List<RefundOrderVM> refundOrders = new ArrayList<>();
         List<RefundRequestVM> refundRequests = new ArrayList<>();
 
-        System.out.println("=== DEBUG: Starting AdminReturnsServlet ===");
+        dbg("=== GET /adminreturns - START ===");
 
         try (Connection con = DBConnection.getConnection()) {
-            System.out.println("✅ Database connection successful");
+            dbg("DB connected successfully");
 
-            // 1. Lấy đơn hàng đã trả nhưng chưa kiểm tra
-            String sqlRefundOrders = """
+            // DEBUG: Kiểm tra tất cả đơn hàng đã trả
+            dbg("=== DEBUG: All returned orders with inspections ===");
+            String debugAllReturned = """
                 SELECT 
-                    ro.order_id, 
-                    c.full_name AS customer_name, 
-                    c.phone AS customer_phone,
-                    b.bike_name, 
-                    ro.end_date, 
-                    ro.deposit_amount, 
-                    ro.return_status, 
+                    ro.order_id,
+                    ro.return_status,
+                    ro.deposit_status,
+                    ro.deposit_amount,
                     ro.returned_at,
-                    ro.deposit_status
+                    ri.inspection_id,
+                    ri.inspected_at,
+                    ri.refund_status,
+                    ri.refund_amount,
+                    ri.damage_fee
                 FROM RentalOrders ro
-                JOIN Customers c ON c.customer_id = ro.customer_id
-                JOIN OrderDetails od ON od.order_id = ro.order_id
-                JOIN Motorbikes b ON b.bike_id = od.bike_id
+                LEFT JOIN RefundInspections ri ON ri.order_id = ro.order_id
                 WHERE ro.return_status = 'returned'
-                  AND ro.deposit_status = 'held'  -- QUAN TRỌNG: phải khớp
-                  AND NOT EXISTS (
-                      SELECT 1 FROM RefundInspections ri 
-                      WHERE ri.order_id = ro.order_id
-                  )
                 ORDER BY ro.returned_at DESC
-                """;
+            """;
+            
+            try (PreparedStatement ps = con.prepareStatement(debugAllReturned);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    dbg(String.format(
+                        "Order: ID=%d, ReturnStatus=%s, DepositStatus=%s, DepositAmount=%s, ReturnedAt=%s, " +
+                        "InspectionID=%s, InspectedAt=%s, RefundStatus=%s, RefundAmount=%s, DamageFee=%s",
+                        rs.getInt("order_id"),
+                        rs.getString("return_status"),
+                        rs.getString("deposit_status"),
+                        rs.getBigDecimal("deposit_amount"),
+                        rs.getTimestamp("returned_at"),
+                        rs.getObject("inspection_id"),
+                        rs.getTimestamp("inspected_at"),
+                        rs.getString("refund_status"),
+                        rs.getBigDecimal("refund_amount"),
+                        rs.getBigDecimal("damage_fee")
+                    ));
+                }
+            }
 
-            System.out.println("📊 Fetching pending inspection orders...");
+            // A) ĐƠN CHỜ KIỂM TRA - FIXED QUERY
+            final String sqlRefundOrders = """
+                SELECT 
+                    ro.order_id,
+                    c.full_name       AS customer_name,
+                    c.phone           AS customer_phone,
+                    b.bike_name,
+                    ro.end_date,
+                    ro.deposit_amount,
+                    ro.return_status,
+                    ro.returned_at,
+                    ro.deposit_status,
+                    rix.inspection_id AS last_inspection_id,
+                    rix.inspected_at  AS last_inspected_at,
+                    rix.refund_status AS last_refund_status
+                FROM RentalOrders ro
+                JOIN Customers   c  ON c.customer_id = ro.customer_id
+                JOIN OrderDetails od ON od.order_id   = ro.order_id
+                JOIN Motorbikes  b  ON b.bike_id      = od.bike_id
+                OUTER APPLY (
+                    SELECT TOP 1 ri.inspection_id, ri.inspected_at, ri.refund_status
+                    FROM RefundInspections ri
+                    WHERE ri.order_id = ro.order_id
+                    ORDER BY ri.inspected_at DESC, ri.inspection_id DESC
+                ) rix
+                WHERE ro.return_status = 'returned'
+                  AND ro.deposit_status = 'held'
+                  AND (rix.inspection_id IS NULL OR rix.inspected_at IS NULL 
+                       OR rix.refund_status IN ('pending', 'processing'))
+                ORDER BY ro.returned_at DESC
+            """;
+
+            dbg("=== Executing refundOrders query ===");
             try (PreparedStatement ps = con.prepareStatement(sqlRefundOrders);
                  ResultSet rs = ps.executeQuery()) {
-                
+                int row = 0;
                 while (rs.next()) {
                     RefundOrderVM r = new RefundOrderVM();
                     r.setOrderId(rs.getInt("order_id"));
@@ -134,32 +188,38 @@ public class AdminReturnsServlet extends HttpServlet {
                     r.setCustomerPhone(rs.getString("customer_phone"));
                     r.setBikeName(rs.getString("bike_name"));
 
-                    java.sql.Date sqlDate = rs.getDate("end_date");
-                    if (sqlDate != null)
-                        r.setEndDate(new java.util.Date(sqlDate.getTime()));
+                    Date endDate = rs.getDate("end_date");
+                    if (endDate != null) r.setEndDate(new java.util.Date(endDate.getTime()));
 
                     r.setDepositAmount(rs.getBigDecimal("deposit_amount"));
                     r.setReturnStatus(rs.getString("return_status"));
-                    
-                    Timestamp returned = rs.getTimestamp("returned_at");
-                    if (returned != null)
-                        r.setReturnedAt(new java.util.Date(returned.getTime()));
-                    
-                    r.setDepositStatus(rs.getString("deposit_status"));
-                    
-                    refundOrders.add(r);
-                    System.out.println("📝 Found pending inspection order #" + r.getOrderId());
-                }
-                System.out.println("✅ Total pending inspection orders: " + refundOrders.size());
-            }
 
-            // 2. Lấy yêu cầu hoàn cọc đang chờ xử lý
-            String sqlRefundRequests = """
+                    Timestamp returned = rs.getTimestamp("returned_at");
+                    if (returned != null) r.setReturnedAt(new java.util.Date(returned.getTime()));
+
+                    r.setDepositStatus(rs.getString("deposit_status"));
+                    refundOrders.add(r);
+
+                    row++;
+                    dbg(String.format(
+                            "[ORDERS#%d] orderId=%d, lastInspectionId=%s, lastInspectedAt=%s, refundStatus=%s",
+                            row,
+                            r.getOrderId(),
+                            rs.getObject("last_inspection_id"),
+                            rs.getObject("last_inspected_at"),
+                            rs.getString("last_refund_status")
+                    ));
+                }
+            }
+            dbg("Pending-inspection orders count = " + refundOrders.size());
+
+            // B) YÊU CẦU HOÀN CỌC - FIXED QUERY
+            final String sqlRefundRequests = """
                 SELECT 
                     ri.inspection_id,
-                    ri.order_id,
-                    c.full_name AS customer_name,
-                    c.phone AS customer_phone,
+                    ro.order_id,
+                    c.full_name     AS customer_name,
+                    c.phone         AS customer_phone,
                     b.bike_name,
                     ri.refund_amount,
                     ro.deposit_amount,
@@ -169,24 +229,25 @@ public class AdminReturnsServlet extends HttpServlet {
                     ri.bike_condition,
                     ri.damage_fee
                 FROM RefundInspections ri
-                JOIN RentalOrders ro ON ri.order_id = ro.order_id
-                JOIN Customers c ON ro.customer_id = c.customer_id
-                JOIN OrderDetails od ON od.order_id = ro.order_id
-                JOIN Motorbikes b ON b.bike_id = od.bike_id
-                WHERE ri.refund_status IN ('pending', 'processing')
+                JOIN RentalOrders ro ON ro.order_id = ri.order_id
+                JOIN Customers    c  ON ro.customer_id = c.customer_id
+                JOIN OrderDetails od ON od.order_id    = ro.order_id
+                JOIN Motorbikes   b  ON b.bike_id      = od.bike_id
+                WHERE ri.refund_status IN ('pending','processing')
+                  AND ri.inspected_at IS NOT NULL
                 ORDER BY 
                     CASE 
-                        WHEN ri.refund_status = 'pending' THEN 1
+                        WHEN ri.refund_status = 'pending'    THEN 1
                         WHEN ri.refund_status = 'processing' THEN 2
                         ELSE 3
                     END,
                     ri.inspected_at DESC
-                """;
+            """;
 
-            System.out.println("📊 Fetching refund requests...");
+            dbg("=== Executing refundRequests query ===");
             try (PreparedStatement ps = con.prepareStatement(sqlRefundRequests);
                  ResultSet rs = ps.executeQuery()) {
-                
+                int row = 0;
                 while (rs.next()) {
                     RefundRequestVM r = new RefundRequestVM();
                     r.setInspectionId(rs.getInt("inspection_id"));
@@ -201,23 +262,33 @@ public class AdminReturnsServlet extends HttpServlet {
                     r.setRefundMethod(rs.getString("refund_method"));
                     r.setBikeCondition(rs.getString("bike_condition"));
                     r.setDamageFee(rs.getBigDecimal("damage_fee"));
-                    
                     refundRequests.add(r);
-                    System.out.println("📝 Found refund request - Inspection#" + r.getInspectionId());
+
+                    row++;
+                    dbg(String.format(
+                            "[REQUESTS#%d] inspectionId=%d, orderId=%d, status=%s, refundAmount=%s, inspectedAt=%s",
+                            row, r.getInspectionId(), r.getOrderId(), r.getStatus(),
+                            r.getRefundAmount(), r.getInspectedAt()
+                    ));
                 }
-                System.out.println("✅ Total refund requests: " + refundRequests.size());
             }
+            dbg("Refund requests (pending/processing) count = " + refundRequests.size());
 
         } catch (SQLException e) {
-            System.out.println("❌ ERROR: " + e.getMessage());
             e.printStackTrace();
-            log("[AdminReturnsServlet] SQL error: " + e.getMessage());
             throw new ServletException("Không thể tải dữ liệu hoàn cọc", e);
         }
 
+        // Tổng tiền đang chờ
+        BigDecimal totalPendingAmount = refundRequests.stream()
+                .map(x -> x.getRefundAmount() == null ? BigDecimal.ZERO : x.getRefundAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         req.setAttribute("refundOrders", refundOrders);
         req.setAttribute("refundRequests", refundRequests);
-        
+        req.setAttribute("totalPendingAmount", totalPendingAmount);
+
+        dbg("=== GET /adminreturns - COMPLETE ===");
         req.getRequestDispatcher("/admin/admin-returns.jsp").forward(req, resp);
     }
 
@@ -229,195 +300,270 @@ public class AdminReturnsServlet extends HttpServlet {
         String inspectionIdRaw = req.getParameter("inspectionId");
         String refundMethod = req.getParameter("refundMethod");
 
-        System.out.println("=== DEBUG: Processing POST Request ===");
-        System.out.println("🔄 Action: " + action + ", OrderId: " + orderIdRaw + 
-                         ", InspectionId: " + inspectionIdRaw + ", Method: " + refundMethod);
+        dbg("=== POST /adminreturns === action=" + action
+                + ", orderId=" + orderIdRaw
+                + ", inspectionId=" + inspectionIdRaw
+                + ", method=" + refundMethod);
 
         HttpSession session = req.getSession();
-        
+
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
-            String message = "";
-            boolean success = false;
+            boolean ok = false;
+            String msg = "❌ Hành động không hợp lệ";
 
-            switch (action) {
-                case "mark_processing":
-                    success = markAsProcessing(con, inspectionIdRaw);
-                    message = success ? "✅ Đã duyệt yêu cầu hoàn cọc" : "❌ Không tìm thấy yêu cầu để duyệt";
-                    break;
-                    
-                case "complete_refund":
-                    if (orderIdRaw != null && refundMethod != null) {
-                        success = completeRefund(con, orderIdRaw, refundMethod);
-                        message = success ? "✅ Đã hoàn tất hoàn cọc" : "❌ Không thể hoàn tất hoàn cọc";
-                    }
-                    break;
-                    
-                case "cancel":
-                    success = cancelRefund(con, inspectionIdRaw);
-                    message = success ? "❌ Đã từ chối yêu cầu hoàn cọc" : "❌ Không tìm thấy yêu cầu để từ chối";
-                    break;
-                    
-                default:
-                    message = "❌ Hành động không hợp lệ";
-                    break;
+            if ("mark_processing".equals(action)) {
+                ok = markAsProcessing(con, inspectionIdRaw);
+                msg = ok ? "✅ Đã duyệt yêu cầu hoàn cọc" : "❌ Không tìm thấy yêu cầu để duyệt";
+
+            } else if ("complete_refund".equals(action)) {
+                if (orderIdRaw != null && refundMethod != null) {
+                    ok = completeRefund(con, orderIdRaw, refundMethod);
+                    msg = ok ? "✅ Đã hoàn tất hoàn cọc" : "❌ Không thể hoàn tất hoàn cọc";
+                }
+
+            } else if ("cancel".equals(action)) {
+                ok = cancelRefund(con, inspectionIdRaw);
+                msg = ok ? "⛔ Đã từ chối yêu cầu hoàn cọc" : "❌ Không tìm thấy yêu cầu để từ chối";
             }
 
-            if (success) {
+            if (ok) {
                 con.commit();
+                dbg("TRANSACTION COMMIT");
             } else {
                 con.rollback();
+                dbg("TRANSACTION ROLLBACK");
             }
+            session.setAttribute("flash", msg);
 
-            System.out.println("✅ Result: " + message);
-            session.setAttribute("flash", message);
-
-        } catch (SQLException | NumberFormatException e) {
-            System.out.println("❌ Error in doPost: " + e.getMessage());
+        } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("flash", "❌ Lỗi khi xử lý: " + e.getMessage());
         }
-        
+
         resp.sendRedirect(req.getContextPath() + "/adminreturns");
     }
 
     private boolean markAsProcessing(Connection con, String inspectionIdRaw) throws SQLException {
         if (inspectionIdRaw == null || inspectionIdRaw.isBlank()) return false;
-        
-        String sql = "UPDATE RefundInspections SET refund_status='processing' WHERE inspection_id=? AND refund_status='pending'";
+        final String sql = """
+            UPDATE RefundInspections
+               SET refund_status='processing', updated_at=GETDATE()
+             WHERE inspection_id=? AND refund_status='pending'
+        """;
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, Integer.parseInt(inspectionIdRaw.trim()));
-            return ps.executeUpdate() > 0;
+            int n = ps.executeUpdate();
+            dbg("markAsProcessing -> rows=" + n + " (inspectionId=" + inspectionIdRaw + ")");
+            return n > 0;
         }
     }
 
     private boolean completeRefund(Connection con, String orderIdRaw, String refundMethod) throws SQLException {
         if (orderIdRaw == null || orderIdRaw.isBlank()) return false;
-        
         int orderId = Integer.parseInt(orderIdRaw.trim());
-        
-        // 1. Cập nhật trạng thái inspection
-        String updateInspectionSql = """
-            UPDATE RefundInspections 
-            SET refund_status='completed', refund_method=?
-            WHERE order_id=? AND refund_status IN ('pending', 'processing')
-            """;
-        
-        try (PreparedStatement ps = con.prepareStatement(updateInspectionSql)) {
-            ps.setString(1, refundMethod);
+        String method = "cash".equalsIgnoreCase(refundMethod) ? "cash" : "wallet";
+
+        dbg("Starting completeRefund for order " + orderId + " with method " + method);
+
+        // 1) inspection -> completed + method
+        final String updInspection = """
+            UPDATE RefundInspections
+               SET refund_status='completed', refund_method=?, updated_at=GETDATE()
+             WHERE order_id=? AND refund_status IN ('pending','processing')
+        """;
+        try (PreparedStatement ps = con.prepareStatement(updInspection)) {
+            ps.setString(1, method);
             ps.setInt(2, orderId);
-            int inspectionUpdated = ps.executeUpdate();
-            
-            if (inspectionUpdated == 0) return false;
+            int n = ps.executeUpdate();
+            dbg("completeRefund: update inspection -> rows=" + n + ", method=" + method);
+            if (n == 0) {
+                dbg("No inspection found to update for order " + orderId);
+                return false;
+            }
         }
 
-        // 2. Cập nhật trạng thái đơn hàng
-        String updateOrderSql = "UPDATE RentalOrders SET deposit_status='refunded' WHERE order_id=?";
-        try (PreparedStatement ps = con.prepareStatement(updateOrderSql)) {
+        // 2) order.deposit_status -> refunded
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE RentalOrders SET deposit_status='refunded' WHERE order_id=?")) {
             ps.setInt(1, orderId);
-            ps.executeUpdate();
+            int n = ps.executeUpdate();
+            dbg("completeRefund: update order.deposit_status -> rows=" + n);
         }
 
-        // 3. Nếu hoàn về ví, cập nhật số dư
-        if ("wallet".equals(refundMethod)) {
-            updateWalletBalance(con, orderId);
+        // 3) nếu hoàn về ví -> cộng ví + log giao dịch
+        if ("wallet".equalsIgnoreCase(method)) {
+            boolean walletUpdated = updateWalletBalance(con, orderId);
+            dbg("completeRefund: wallet update result = " + walletUpdated);
         }
 
+        // 4) ghi log Payment (nếu schema cho phép)
+        try (PreparedStatement ps = con.prepareStatement("""
+            INSERT INTO Payments(order_id, amount, method, status, payment_date)
+            SELECT ri.order_id, ri.refund_amount,
+                   CASE WHEN ?='cash' THEN 'cash' ELSE 'bank_transfer' END,
+                   'refunded', GETDATE()
+              FROM RefundInspections ri
+             WHERE ri.order_id=? AND ri.refund_status='completed'
+        """)) {
+            ps.setString(1, method);
+            ps.setInt(2, orderId);
+            int n = ps.executeUpdate();
+            dbg("completeRefund: insert payment log -> rows=" + n);
+        } catch (SQLException ignore) {
+            dbg("WARN: skip insert refunded payment (schema may not allow).");
+        }
+
+        // 5) đóng đơn nếu có cột trạng thái
+        maybeUpdateOrderCompleted(con, orderId);
+
+        dbg("completeRefund completed successfully for order " + orderId);
         return true;
     }
 
     private boolean cancelRefund(Connection con, String inspectionIdRaw) throws SQLException {
         if (inspectionIdRaw == null || inspectionIdRaw.isBlank()) return false;
-        
-        String sql = "UPDATE RefundInspections SET refund_status='cancelled' WHERE inspection_id=? AND refund_status IN ('pending', 'processing')";
+        final String sql = """
+            UPDATE RefundInspections
+               SET refund_status='cancelled', updated_at=GETDATE()
+             WHERE inspection_id=? AND refund_status IN ('pending','processing')
+        """;
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, Integer.parseInt(inspectionIdRaw.trim()));
-            return ps.executeUpdate() > 0;
+            int n = ps.executeUpdate();
+            dbg("cancelRefund -> rows=" + n + " (inspectionId=" + inspectionIdRaw + ")");
+            return n > 0;
         }
     }
 
-private void updateWalletBalance(Connection con, int orderId) throws SQLException {
-    System.out.println("=== DEBUG WALLET UPDATE START ===");
-    
-    // Lấy thông tin refund amount và customer_id
-    String selectSql = """
-        SELECT ri.refund_amount, ro.customer_id, c.account_id
-        FROM RefundInspections ri
-        JOIN RentalOrders ro ON ri.order_id = ro.order_id
-        JOIN Customers c ON ro.customer_id = c.customer_id
-        WHERE ri.order_id = ? AND ri.refund_status = 'completed'
-        """;
-
-    try (PreparedStatement ps = con.prepareStatement(selectSql)) {
-        ps.setInt(1, orderId);
-        ResultSet rs = ps.executeQuery();
-
-        if (rs.next()) {
-            BigDecimal refundAmount = rs.getBigDecimal("refund_amount");
-            int customerId = rs.getInt("customer_id");
-            int accountId = rs.getInt("account_id");
-            
-            System.out.println("DEBUG: Customer ID: " + customerId + ", Account ID: " + accountId + ", Refund Amount: " + refundAmount);
-
-            // 1. Lấy wallet_id từ customer_id
-            String getWalletSql = "SELECT wallet_id FROM Wallets WHERE customer_id = ?";
-            Integer walletId = null;
-            try (PreparedStatement psWallet = con.prepareStatement(getWalletSql)) {
-                psWallet.setInt(1, customerId);
-                ResultSet rsWallet = psWallet.executeQuery();
-                if (rsWallet.next()) {
-                    walletId = rsWallet.getInt("wallet_id");
-                    System.out.println("DEBUG: Found existing wallet ID: " + walletId);
-                }
-            }
-
-            // 2. Nếu chưa có wallet, tạo mới
-            if (walletId == null) {
-                String createWalletSql = """
-                    INSERT INTO Wallets (customer_id, balance, created_at, updated_at)
-                    VALUES (?, ?, GETDATE(), GETDATE());
-                    SELECT SCOPE_IDENTITY();
-                    """;
-                try (PreparedStatement psCreate = con.prepareStatement(createWalletSql)) {
-                    psCreate.setInt(1, customerId);
-                    psCreate.setBigDecimal(2, refundAmount);
-                    ResultSet rsCreate = psCreate.executeQuery();
-                    if (rsCreate.next()) {
-                        walletId = rsCreate.getInt(1);
-                        System.out.println("DEBUG: Created new wallet ID: " + walletId);
-                    }
-                }
-            } else {
-                // 3. Cập nhật balance cho wallet đã tồn tại
-                String updateWalletSql = "UPDATE Wallets SET balance = balance + ?, updated_at = GETDATE() WHERE wallet_id = ?";
-                try (PreparedStatement psUpdate = con.prepareStatement(updateWalletSql)) {
-                    psUpdate.setBigDecimal(1, refundAmount);
-                    psUpdate.setInt(2, walletId);
-                    int walletUpdated = psUpdate.executeUpdate();
-                    System.out.println("DEBUG: Wallet updated rows: " + walletUpdated);
-                }
-            }
-
-            // 4. Thêm giao dịch vào Wallet_Transactions với type='refund' (giá trị hợp lệ)
-            String transactionSql = """
-                INSERT INTO Wallet_Transactions (wallet_id, amount, type, order_id, description, created_at)
-                VALUES (?, ?, 'refund', ?, ?, GETDATE())
+    private boolean updateWalletBalance(Connection con, int orderId) throws SQLException {
+        dbg("=== WALLET UPDATE START (orderId=" + orderId + ") ===");
+//        final String q = """
+//            SELECT ri.refund_amount, ro.customer_id
+//              FROM RefundInspections ri
+//              JOIN RentalOrders ro ON ro.order_id = ri.order_id
+//             WHERE ri.order_id=? AND ri.refund_status='completed'
+//        """;
+             final String q = """
+                    SELECT TOP 1 ri.refund_amount, ro.customer_id
+                    FROM RefundInspections ri
+                    JOIN RentalOrders ro ON ro.order_id = ri.order_id
+                    WHERE ri.order_id=? AND ri.refund_status='completed'
+                    ORDER BY ri.inspected_at DESC
                 """;
+        BigDecimal refundAmount = null;
+        Integer customerId = null;
 
-            try (PreparedStatement psTrans = con.prepareStatement(transactionSql)) {
-                psTrans.setInt(1, walletId);
-                psTrans.setBigDecimal(2, refundAmount);
-                psTrans.setInt(3, orderId);
-                psTrans.setString(4, "Hoàn tiền cọc đơn hàng #" + orderId);
-                int transInserted = psTrans.executeUpdate();
-                System.out.println("DEBUG: Transaction inserted rows: " + transInserted);
+        try (PreparedStatement ps = con.prepareStatement(q)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    refundAmount = rs.getBigDecimal("refund_amount");
+                    customerId   = rs.getInt("customer_id");
+                }
             }
-            
-            System.out.println("=== DEBUG WALLET UPDATE SUCCESS ===");
+        }
+        
+        dbg("Wallet data -> refundAmount=" + refundAmount + ", customerId=" + customerId);
+        if (refundAmount == null || customerId == null) {
+            dbg("ERROR: No refund amount or customerId found");
+            return false;
+        }
+
+        // Kiểm tra xem customer có ví chưa, nếu chưa thì tạo mới
+        Integer walletId = null;
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT wallet_id FROM Wallets WHERE customer_id=?")) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) { 
+                if (rs.next()) walletId = rs.getInt(1); 
+            }
+        }
+        
+        if (walletId == null) {
+            final String create = """
+                INSERT INTO Wallets(customer_id, balance, created_at, updated_at)
+                VALUES (?, 0, GETDATE(), GETDATE());
+                SELECT SCOPE_IDENTITY();
+            """;
+            try (PreparedStatement ps = con.prepareStatement(create)) {
+                ps.setInt(1, customerId);
+                try (ResultSet rs = ps.executeQuery()) { 
+                    if (rs.next()) walletId = rs.getInt(1); 
+                }
+            }
+            dbg("Created new wallet with walletId=" + walletId);
         } else {
-            System.out.println("DEBUG: No refund record found for order: " + orderId);
+            dbg("Found existing wallet with walletId=" + walletId);
+        }
+
+        // Cập nhật số dư ví
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE Wallets SET balance = balance + ?, updated_at=GETDATE() WHERE wallet_id=?")) {
+            ps.setBigDecimal(1, refundAmount);
+            ps.setInt(2, walletId);
+            int n = ps.executeUpdate();
+            dbg("wallet balance updated -> rows=" + n);
+        }
+        
+        // Ghi log giao dịch
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO Wallet_Transactions(wallet_id, amount, type, order_id, description, created_at) " +
+                        "VALUES (?, ?, 'refund', ?, ?, GETDATE())")) {
+            ps.setInt(1, walletId);
+            ps.setBigDecimal(2, refundAmount);
+            ps.setInt(3, orderId);
+            ps.setString(4, "Hoàn tiền cọc đơn #" + orderId);
+            int n = ps.executeUpdate();
+            dbg("wallet transaction inserted -> rows=" + n);
+        }
+        
+        dbg("=== WALLET UPDATE SUCCESS ===");
+        return true;
+    }
+
+    private void maybeUpdateOrderCompleted(Connection con, int orderId) {
+        try {
+            if (tableHasColumn(con, "RentalOrders", "order_status")) {
+                try (PreparedStatement ps = con.prepareStatement(
+                        "UPDATE RentalOrders SET order_status='completed' WHERE order_id=?")) {
+                    ps.setInt(1, orderId);
+                    int n = ps.executeUpdate();
+                    dbg("maybeUpdateOrderCompleted: set order_status=completed -> rows=" + n);
+                    return;
+                }
+            }
+            if (tableHasColumn(con, "RentalOrders", "return_status")) {
+                try (PreparedStatement ps = con.prepareStatement(
+                        "UPDATE RentalOrders SET return_status='verified' WHERE order_id=?")) {
+                    ps.setInt(1, orderId);
+                    int n = ps.executeUpdate();
+                    dbg("maybeUpdateOrderCompleted: set return_status=verified -> rows=" + n);
+                }
+            }
+        } catch (SQLException e) {
+            dbg("WARN: mark completed ignored: " + e.getMessage());
         }
     }
-}
 
+    private boolean tableExists(Connection con, String name) {
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=?")) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) { return false; }
+    }
+
+    private boolean tableHasColumn(Connection con, String table, String column) {
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=? AND COLUMN_NAME=?")) {
+            ps.setString(1, table);
+            ps.setString(2, column);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) { return false; }
+    }
+
+    private static void dbg(String msg) {
+        System.out.println("[AdminReturnsServlet] " + msg);
+    }
 }

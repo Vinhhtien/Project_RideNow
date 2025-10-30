@@ -300,6 +300,14 @@
     <i class="fas fa-credit-card"></i> Thanh toán
   </h1>
 
+  <c:if test="${not empty sessionScope.flash}">
+    <div class="pay-alert" style="background: rgba(239, 68, 68, 0.12); border-color: #ef4444;">
+        <i class="fas fa-exclamation-circle"></i>
+        <div>${sessionScope.flash}</div>
+    </div>
+    <c:remove var="flash" scope="session"/>
+  </c:if>
+
   <c:if test="${not empty warningMessage}">
     <div class="pay-alert" style="background: rgba(245, 158, 11, 0.12); border-color: #f59e0b;">
         <i class="fas fa-exclamation-triangle"></i>
@@ -593,17 +601,7 @@
   // Chuẩn hoá số tiền
   const cleanAmount = String(raw).replace(/[^\d.]/g, '');
   const parsed  = parseFloat(cleanAmount) || 0;
-  const qrAmount = Math.round(parsed).toString();
   const bankBin = '970415';
-
-  // Tạo URL QR
-  const url = "https://img.vietqr.io/image/" + bankBin + "-" + accNo + "-qr_only.png"
-            + "?amount=" + encodeURIComponent(qrAmount)
-            + "&addInfo=" + encodeURIComponent(addInfo)
-            + "&accountName=" + encodeURIComponent(accName);
-
-  const qrImg = document.getElementById('qrImg');
-  qrImg.src = url;
 
   // Payment method calculation
   function initPaymentMethods() {
@@ -620,6 +618,7 @@
       const paymentMethodInput = document.getElementById('paymentMethodInput');
       const walletAmountInput = document.getElementById('walletAmountInput');
       const submitText = document.getElementById('submitText');
+      const qrImg = document.getElementById('qrImg');
       
       const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
       
@@ -673,6 +672,14 @@
           walletUsedSpan.className = 'calculation-value ' + (walletUsed > 0 ? 'positive' : '');
           transferAmountSpan.className = 'calculation-value ' + (transferAmount > 0 ? 'neutral' : '');
           remainingBalanceSpan.className = 'calculation-value ' + (remainingBalance >= 0 ? '' : 'negative');
+          
+          // Update QR code với số tiền chính xác
+          const qrAmount = Math.round(transferAmount).toString();
+          const url = "https://img.vietqr.io/image/" + bankBin + "-" + accNo + "-qr_only.png"
+                    + "?amount=" + encodeURIComponent(qrAmount)
+                    + "&addInfo=" + encodeURIComponent(addInfo)
+                    + "&accountName=" + encodeURIComponent(accName);
+          qrImg.src = url;
       }
       
       paymentMethods.forEach(method => {
@@ -685,6 +692,28 @@
 
   function formatMoney(amount) {
       return new Intl.NumberFormat('vi-VN').format(amount);
+  }
+
+  // Validation trước khi submit
+  function validatePayment() {
+      const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      const walletBalance = ${walletBalance};
+      const grandTotal = ${grandTotal};
+      const walletUsed = parseFloat(document.getElementById('walletAmountInput').value) || 0;
+      
+      // Kiểm tra số dư ví
+      if ((selectedMethod === 'wallet' || selectedMethod === 'wallet_transfer') && walletUsed > walletBalance) {
+          alert('❌ Số dư ví không đủ để thanh toán! Vui lòng chọn phương thức khác.');
+          return false;
+      }
+      
+      // Kiểm tra phương thức ví hoàn toàn
+      if (selectedMethod === 'wallet' && walletBalance < grandTotal) {
+          alert('❌ Số dư ví không đủ để thanh toán hoàn toàn! Vui lòng chọn phương thức khác.');
+          return false;
+      }
+      
+      return true;
   }
 
   window.copyText = function(text){
@@ -700,9 +729,14 @@
       });
   };
 
-  // Chặn double submit
+  // Chặn double submit và validation
   const form = document.getElementById('paymentForm');
-  form?.addEventListener('submit', function(){
+  form?.addEventListener('submit', function(e){
+      if (!validatePayment()) {
+          e.preventDefault();
+          return;
+      }
+      
       const btn = this.querySelector('button[type="submit"]');
       if (btn && !btn.classList.contains('is-disabled')) {
           btn.disabled = true;

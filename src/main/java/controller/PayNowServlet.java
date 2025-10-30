@@ -168,7 +168,7 @@ public class PayNowServlet extends HttpServlet {
         }
     }
 
-    /* ====================== POST: khách bấm “Tôi đã chuyển khoản” ====================== */
+    /* ====================== POST: khách bấm "Tôi đã chuyển khoản" ====================== */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -186,13 +186,19 @@ public class PayNowServlet extends HttpServlet {
             return;
         }
 
-        String paymentMethod = req.getParameter("paymentMethod"); // "transfer" | "wallet" | "wallet_transfer" | ...
+        String paymentMethod = req.getParameter("paymentMethod");
+        String walletAmountStr = req.getParameter("walletAmount");
+        BigDecimal walletAmount = (walletAmountStr != null && !walletAmountStr.isEmpty()) 
+                ? new BigDecimal(walletAmountStr) : BigDecimal.ZERO;
+
         if (paymentMethod == null) paymentMethod = "transfer";
+
+        System.out.println("DEBUG: Processing payment - method=" + paymentMethod + ", walletAmount=" + walletAmount);
 
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
             try {
-                // 1) Tính số tiền cần trả cho từng đơn = 30% + cọc (chỉ đơn 'pending' của chính user)
+                // 1) Tính số tiền cần trả cho từng đơn
                 Map<Integer, BigDecimal> payMap = getPayableOrders(con, orderIds, acc.getAccountId());
                 if (payMap.isEmpty()) {
                     flash(req, "Các đơn đã được xử lý hoặc không hợp lệ.");
@@ -200,29 +206,40 @@ public class PayNowServlet extends HttpServlet {
                     return;
                 }
 
-                // 2) Ghi Payments (status='paid') cho từng đơn với số tiền chính xác
-                insertPaidPayments(con, payMap, paymentMethod);
+                // 2) Nếu có sử dụng ví, trừ tiền từ ví trước
+                if (walletAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    boolean walletDeducted = deductFromWallet(con, acc.getAccountId(), walletAmount, orderIds);
+                    if (!walletDeducted) {
+                        con.rollback();
+                        flash(req, "❌ Số dư ví không đủ để thanh toán.");
+                        resp.sendRedirect(req.getContextPath() + "/customerorders");
+                        return;
+                    }
+                }
 
-                // 3) (Dưới DB bạn đã có trigger đẩy order → confirmed khi payment 'paid')
-                //    Nhưng vẫn cập nhật idempotent để chắc chắn đơn ở trạng thái 'confirmed'
+                // 3) Ghi Payments (status='paid') cho từng đơn
+                insertPaidPayments(con, payMap, paymentMethod, walletAmount);
+
+                // 4) Cập nhật trạng thái đơn hàng
                 setOrdersConfirmed(con, payMap.keySet());
 
-                // 4) ✅ Khóa xe: nếu HÔM NAY nằm trong [start_date, end_date] của các đơn vừa xác nhận
+                // 5) Khóa xe
                 lockBikesForActiveDates(con, payMap.keySet());
-
-                // (Tuỳ chọn) Mở lại xe hết kỳ thuê vào 'available'
-                // unlockBikesNoActiveToday(con);
 
                 con.commit();
 
-                // 5) Gửi mail xác nhận
+                // 6) Gửi mail xác nhận
                 try {
                     sendOrderConfirmedEmail(con, acc.getAccountId(), payMap.keySet());
                 } catch (Exception mailEx) {
                     mailEx.printStackTrace();
                 }
 
-                flash(req, "✅ Thanh toán thành công! Đơn hàng đã được XÁC NHẬN.");
+                String successMsg = "✅ Thanh toán thành công! Đơn hàng đã được XÁC NHẬN.";
+                if (walletAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    successMsg += " Đã sử dụng " + formatVND(walletAmount) + " đ từ ví.";
+                }
+                flash(req, successMsg);
                 resp.sendRedirect(req.getContextPath() + "/customerorders");
 
             } catch (Exception ex) {
@@ -275,29 +292,118 @@ public class PayNowServlet extends HttpServlet {
 
     /* ================== Payments & Confirm ================== */
 
-    /** Ghi payments = 'paid' cho từng order đúng số tiền (30%+cọc), map phương thức hợp lệ với schema */
-    private void insertPaidPayments(Connection con,
-                                    Map<Integer, BigDecimal> payMap,
-                                    String uiMethod) throws SQLException {
+    /** Trừ tiền từ ví */
+    private boolean deductFromWallet(Connection con, int accountId, BigDecimal amount, List<Integer> orderIds) throws SQLException, ServletException {
+        System.out.println("DEBUG: deductFromWallet - accountId=" + accountId + ", amount=" + amount);
+        
+        // Lấy customerId từ accountId
+        Integer customerId = getCustomerIdByAccount(accountId);
+        if (customerId == null) {
+            System.out.println("DEBUG: Cannot find customerId for accountId=" + accountId);
+            return false;
+        }
 
+        // Tìm ví
+        Integer walletId = null;
+        BigDecimal currentBalance = BigDecimal.ZERO;
+        
+        String selectSql = "SELECT wallet_id, balance FROM Wallets WHERE customer_id = ?";
+        try (PreparedStatement ps = con.prepareStatement(selectSql)) {
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                walletId = rs.getInt("wallet_id");
+                currentBalance = rs.getBigDecimal("balance");
+                System.out.println("DEBUG: Found wallet - walletId=" + walletId + ", balance=" + currentBalance);
+            }
+        }
+
+        // Nếu chưa có ví, tạo mới
+        if (walletId == null) {
+            String insertWallet = """
+                INSERT INTO Wallets (customer_id, balance, created_at, updated_at) 
+                VALUES (?, 0, GETDATE(), GETDATE());
+                SELECT SCOPE_IDENTITY();
+                """;
+            try (PreparedStatement ps = con.prepareStatement(insertWallet)) {
+                ps.setInt(1, customerId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    walletId = rs.getInt(1);
+                    System.out.println("DEBUG: Created new wallet - walletId=" + walletId);
+                } else {
+                    System.out.println("DEBUG: Failed to create wallet");
+                    return false;
+                }
+            }
+        }
+
+        // Kiểm tra số dư
+        if (currentBalance.compareTo(amount) < 0) {
+            System.out.println("DEBUG: Insufficient balance - current=" + currentBalance + ", required=" + amount);
+            return false;
+        }
+
+        // Trừ tiền từ ví
+        String updateSql = "UPDATE Wallets SET balance = balance - ?, updated_at = GETDATE() WHERE wallet_id = ?";
+        try (PreparedStatement ps = con.prepareStatement(updateSql)) {
+            ps.setBigDecimal(1, amount);
+            ps.setInt(2, walletId);
+            int rows = ps.executeUpdate();
+            System.out.println("DEBUG: Wallet balance updated - rows=" + rows);
+            if (rows == 0) return false;
+        }
+
+        // Ghi lịch sử giao dịch
+        String insertTxSql = """
+            INSERT INTO Wallet_Transactions (wallet_id, amount, type, order_id, description, created_at) 
+            VALUES (?, ?, 'payment', NULL, ?, GETDATE())
+            """;
+        try (PreparedStatement ps = con.prepareStatement(insertTxSql)) {
+            ps.setInt(1, walletId);
+            ps.setBigDecimal(2, amount.negate()); // Số âm vì đây là giao dịch trừ tiền
+            ps.setString(3, "Thanh toán đơn hàng: " + orderIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            int rows = ps.executeUpdate();
+            System.out.println("DEBUG: Wallet transaction recorded - rows=" + rows);
+        }
+
+        System.out.println("DEBUG: Wallet deduction completed successfully");
+        return true;
+    }
+
+    /** Ghi payments - cập nhật để hỗ trợ phương thức wallet */
+    private void insertPaidPayments(Connection con, Map<Integer, BigDecimal> payMap, String uiMethod, BigDecimal walletAmount) throws SQLException {
         if (payMap == null || payMap.isEmpty()) return;
 
-        String method = ("transfer".equalsIgnoreCase(uiMethod) || "wallet_transfer".equalsIgnoreCase(uiMethod))
-                ? "bank_transfer" : "cash"; // schema: 'cash' | 'bank_transfer'
+        // Xác định phương thức thanh toán
+        String method;
+        if ("wallet".equals(uiMethod)) {
+            method = "wallet";
+        } else if ("wallet_transfer".equals(uiMethod)) {
+            method = "mixed"; // kết hợp ví và chuyển khoản
+        } else {
+            method = "bank_transfer";
+        }
 
         String sql = """
             INSERT INTO Payments (order_id, amount, method, status, payment_date)
             VALUES (?, ?, ?, 'paid', GETDATE())
-        """;
+            """;
+        
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             for (Map.Entry<Integer, BigDecimal> e : payMap.entrySet()) {
                 ps.setInt(1, e.getKey());
+                
+                // Nếu là thanh toán hoàn toàn bằng ví, ghi số tiền thực tế
+                // Nếu là mixed, vẫn ghi tổng số tiền (phần ví đã được trừ riêng)
                 ps.setBigDecimal(2, e.getValue().setScale(0, RoundingMode.HALF_UP));
                 ps.setString(3, method);
                 ps.addBatch();
             }
             ps.executeBatch();
         }
+        
+        System.out.println("DEBUG: Payments inserted - method=" + method + ", walletAmount=" + walletAmount);
     }
 
     /** Đổi các order → confirmed (idempotent) */
@@ -322,7 +428,6 @@ public class PayNowServlet extends HttpServlet {
     }
 
     /** ✅ Khóa xe thành 'rented' nếu HÔM NAY nằm trong kỳ thuê của các đơn confirmed vừa xử lý */
-
     private void lockBikesForActiveDates(Connection con, java.util.Set<Integer> orderIds) throws SQLException {
         if (orderIds == null || orderIds.isEmpty()) return;
 
@@ -343,13 +448,12 @@ public class PayNowServlet extends HttpServlet {
                   AND CAST(GETDATE() AS DATE) BETWEEN r.start_date AND r.end_date
                   AND r.order_id IN (%s)
             )
-            """.formatted(ids);  // << chèn biến đúng cách
+            """.formatted(ids);
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.executeUpdate();
         }
     }
-
 
     /** (Tuỳ chọn) Trả xe về 'available' nếu hôm nay KHÔNG còn đơn confirmed nào bao phủ */
     private void unlockBikesNoActiveToday(Connection con) {
@@ -528,7 +632,6 @@ public class PayNowServlet extends HttpServlet {
         }
     }
     
-    
     private Integer getCustomerIdByAccount(int accountId) throws ServletException {
         String sql = "SELECT customer_id FROM Customers WHERE account_id = ?";
         try (Connection con = DBConnection.getConnection();
@@ -540,5 +643,4 @@ public class PayNowServlet extends HttpServlet {
             throw new ServletException("Không lấy được customer_id", e);
         }
     }
-    
 }
