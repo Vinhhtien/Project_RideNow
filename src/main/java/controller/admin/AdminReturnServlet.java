@@ -37,90 +37,103 @@ public class AdminReturnServlet extends HttpServlet {
         req.getRequestDispatcher("/admin/admin-return.jsp").forward(req, resp);
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-
+    @Override 
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         Account admin = (Account) req.getSession().getAttribute("account");
-        if (admin == null || !"admin".equals(admin.getRole())) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
+        if (admin == null || !"admin".equalsIgnoreCase(admin.getRole())) {
+          resp.sendRedirect(req.getContextPath()+"/login"); return;
         }
 
-        String orderIdStr = req.getParameter("orderId");
-        String actionType = req.getParameter("actionType"); // NEW: Loại hành động
-        String notes = req.getParameter("notes"); // NEW: Ghi chú
-        String lateFee = req.getParameter("lateFee"); // NEW: Phí trễ
+        String action       = req.getParameter("action");              // mark_processing | complete_refund | cancel
+        String refundMethod = req.getParameter("refundMethod");        // wallet | cash
+        String orderIdStr   = req.getParameter("orderId");
+        String insIdStr     = req.getParameter("inspectionId");
 
-        if (orderIdStr != null && !orderIdStr.trim().isEmpty()) {
-            try {
-                int orderId = Integer.parseInt(orderIdStr);
-                int adminId = 1;
+        try (Connection con = DBConnection.getConnection()) {
+          con.setAutoCommit(false);
 
-                // Xử lý theo loại hành động
-                if ("normal_return".equals(actionType)) {
-                    // Trả xe bình thường
-                    boolean canReturn = orderService.canReturnOrder(orderId);
-                    
-                    if (!canReturn) {
-                        req.getSession().setAttribute("flash", "❌ Không thể trả xe trước ngày kết thúc thuê!");
-                        resp.sendRedirect(req.getContextPath() + "/adminreturn");
-                        return;
-                    }
-
-                    boolean success = orderService.confirmOrderReturn(orderId, adminId);
-                    if (success) {
-                        String message = "✅ Đã xác nhận khách trả xe thành công!";
-                        req.getSession().setAttribute("flash", message);
-                        notifyPartnerOrderCompleted(orderId);
-                    } else {
-                        req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
-                    }
-                    
-                } else if ("overdue_return".equals(actionType)) {
-                    // Trả xe quá hạn - có phí trễ
-                    boolean success = orderService.confirmOverdueReturn(orderId, adminId, "0", notes);
-                    if (success) {
-                        String message = "⚠️ Đã xác nhận trả xe quá hạn";
-                        if (lateFee != null && !lateFee.trim().isEmpty()) {
-                            message += " - Phí trễ: " + lateFee;
-                        }
-                        if (notes != null && !notes.trim().isEmpty()) {
-                            message += " - " + notes;
-                        }
-                        req.getSession().setAttribute("flash", message);
-                        notifyPartnerOrderCompleted(orderId);
-                    } else {
-                        req.getSession().setAttribute("flash", "❌ Xác nhận thất bại!");
-                    }
-                    
-                } else if ("mark_not_returned".equals(actionType)) {
-                    // Đánh dấu là chưa trả xe
-                    boolean success = orderService.markOrderAsNotReturned(orderId, adminId, notes);
-                    if (success) {
-                        String message = "🔴 Đã đánh dấu đơn hàng chưa trả xe";
-                        if (notes != null && !notes.trim().isEmpty()) {
-                            message += " - " + notes;
-                        }
-                        req.getSession().setAttribute("flash", message);
-                    } else {
-                        req.getSession().setAttribute("flash", "❌ Cập nhật thất bại!");
-                    }
-                }
-
-            } catch (NumberFormatException e) {
-                req.getSession().setAttribute("flash", "❌ Mã đơn hàng không hợp lệ!");
-            } catch (Exception e) {
-                e.printStackTrace();
-                req.getSession().setAttribute("flash",
-                        "❌ Lỗi hệ thống khi xác nhận trả xe: " + e.getMessage());
+          if ("mark_processing".equals(action)) {
+            int inspectionId = Integer.parseInt(insIdStr);
+            try (PreparedStatement ps = con.prepareStatement(
+              "UPDATE RefundInspections SET refund_status='processing', updated_at=GETDATE(), admin_id=? " +
+              "WHERE inspection_id=? AND refund_status='pending'")) {
+              ps.setInt(1, 1); // TODO: lấy admin_id thật nếu có
+              ps.setInt(2, inspectionId);
+              ps.executeUpdate();
             }
-        } else {
-            req.getSession().setAttribute("flash", "❌ Không tìm thấy mã đơn hàng!");
+            con.commit();
+            req.getSession().setAttribute("flash","✅ Đã duyệt yêu cầu");
+
+          } else if ("complete_refund".equals(action)) {
+            int orderId = Integer.parseInt(orderIdStr);
+
+            // Lấy inspectionId nếu chưa gửi từ form
+            Integer inspectionId = null;
+            if (insIdStr != null && !insIdStr.isBlank()) {
+              inspectionId = Integer.parseInt(insIdStr);
+            } else {
+              try (PreparedStatement ps = con.prepareStatement(
+                "SELECT TOP 1 inspection_id FROM RefundInspections " +
+                "WHERE order_id=? AND refund_status IN ('pending','processing') " +
+                "ORDER BY inspected_at DESC")) {
+                ps.setInt(1, orderId);
+                try (ResultSet rs = ps.executeQuery()) {
+                  if (rs.next()) inspectionId = rs.getInt(1);
+                }
+              }
+            }
+
+            if (inspectionId == null) throw new SQLException("Không tìm thấy phiếu kiểm tra cho order #" + orderId);
+
+            // 1) hoàn tất inspection + set phương thức
+            try (PreparedStatement ps = con.prepareStatement(
+              "UPDATE RefundInspections SET refund_status='completed', refund_method=?, updated_at=GETDATE(), admin_id=? WHERE inspection_id=?")) {
+              ps.setString(1, "cash".equalsIgnoreCase(refundMethod) ? "cash" : "wallet");
+              ps.setInt(2, 1);
+              ps.setInt(3, inspectionId);
+              ps.executeUpdate();
+            }
+
+            // 2) (khuyến nghị) ghi log 1 payment reverse cho audit
+            try (PreparedStatement ps = con.prepareStatement(
+              "INSERT INTO Payments(order_id, amount, method, status, payment_date, verified_by, verified_at) " +
+              "SELECT order_id, refund_amount, ?, 'refunded', GETDATE(), ?, GETDATE() FROM RefundInspections WHERE inspection_id=?")) {
+              ps.setString(1, "cash".equalsIgnoreCase(refundMethod) ? "cash" : "bank_transfer");
+              ps.setInt(2, 1);
+              ps.setInt(3, inspectionId);
+              ps.executeUpdate();
+            }
+
+            // 3) QUAN TRỌNG: set đơn hàng → completed
+            try (PreparedStatement ps = con.prepareStatement(
+              "UPDATE RentalOrders SET status='completed' WHERE order_id=?")) {
+              ps.setInt(1, orderId);
+              ps.executeUpdate();
+            }
+
+            con.commit();
+            req.getSession().setAttribute("flash","✅ Hoàn tiền thành công, đơn đã chuyển 'Hoàn thành'");
+
+          } else if ("cancel".equals(action)) {
+            int inspectionId = Integer.parseInt(insIdStr);
+            try (PreparedStatement ps = con.prepareStatement(
+              "UPDATE RefundInspections SET refund_status='cancelled', updated_at=GETDATE(), admin_id=? " +
+              "WHERE inspection_id=? AND refund_status IN ('pending','processing')")) {
+              ps.setInt(1, 1);
+              ps.setInt(2, inspectionId);
+              ps.executeUpdate();
+            }
+            con.commit();
+            req.getSession().setAttribute("flash","⛔ Đã từ chối yêu cầu");
+          }
+
+        } catch (Exception e) {
+          e.printStackTrace();
+          req.getSession().setAttribute("flash","❌ Lỗi: " + e.getMessage());
         }
 
-        resp.sendRedirect(req.getContextPath() + "/adminreturn");
-    }
+        resp.sendRedirect(req.getContextPath()+"/adminreturns");
+      }
 
     /**
      * Gửi thông báo cho Partner của đơn hàng: "Khách đã trả xe. Đơn hàng đã hoàn tất."

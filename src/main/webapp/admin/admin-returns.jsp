@@ -508,32 +508,28 @@
                           
                           <!-- Hoàn tất với lựa chọn phương thức -->
                           <c:if test="${req.status == 'pending' || req.status == 'processing'}">
-                            <div class="dropdown">
-                              <button class="btn btn-primary btn-sm">
-                                <i class="fas fa-check-circle"></i>
-                                Hoàn tất
-                              </button>
-                              <div class="dropdown-menu">
-                                <form method="post" action="${pageContext.request.contextPath}/adminreturns">
-                                  <input type="hidden" name="orderId" value="${req.orderId}"/>
-                                  <input type="hidden" name="action" value="complete_refund"/>
-                                  <input type="hidden" name="refundMethod" value="wallet"/>
-                                  <button type="submit" class="dropdown-item" onclick="return confirm('Xác nhận hoàn ${req.refundAmount} VNĐ về ví khách hàng?')">
-                                    <i class="fas fa-wallet"></i>
-                                    Về ví
-                                  </button>
-                                </form>
-                                <form method="post" action="${pageContext.request.contextPath}/adminreturns">
-                                  <input type="hidden" name="orderId" value="${req.orderId}"/>
-                                  <input type="hidden" name="action" value="complete_refund"/>
-                                  <input type="hidden" name="refundMethod" value="cash"/>
-                                  <button type="submit" class="dropdown-item" onclick="return confirm('Xác nhận đã hoàn ${req.refundAmount} VNĐ tiền mặt cho khách?')">
-                                    <i class="fas fa-money-bill"></i>
-                                    Tiền mặt
-                                  </button>
-                                </form>
-                              </div>
-                            </div>
+                            <form method="post" action="${pageContext.request.contextPath}/adminreturns">
+                                <input type="hidden" name="orderId" value="${req.orderId}"/>
+                                <input type="hidden" name="inspectionId" value="${req.inspectionId}"/>
+                                <input type="hidden" name="action" value="complete_refund"/>
+                                <input type="hidden" name="refundMethod" value="wallet"/>
+                                <button type="submit" class="dropdown-item"
+                                        onclick="return confirm('Xác nhận hoàn ${req.refundAmount} VNĐ về ví khách hàng?')">
+                                  <i class="fas fa-wallet"></i> Về ví
+                                </button>
+                              </form>
+
+                              <form method="post" action="${pageContext.request.contextPath}/adminreturns">
+                                <input type="hidden" name="orderId" value="${req.orderId}"/>
+                                <input type="hidden" name="inspectionId" value="${req.inspectionId}"/>
+                                <input type="hidden" name="action" value="complete_refund"/>
+                                <input type="hidden" name="refundMethod" value="cash"/>
+                                <button type="submit" class="dropdown-item"
+                                        onclick="return confirm('Xác nhận đã hoàn ${req.refundAmount} VNĐ tiền mặt cho khách?')">
+                                  <i class="fas fa-money-bill"></i> Tiền mặt
+                                </button>
+                              </form>
+
                           </c:if>
                           
                           <!-- Từ chối = cancelled -->

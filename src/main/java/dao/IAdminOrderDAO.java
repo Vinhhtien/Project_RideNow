@@ -3,6 +3,7 @@ package dao;
 import model.OrderSummary;
 import model.OrderDetailItem;
 import model.PaymentInfo;
+import model.RefundInfo;
 
 import java.util.Date;
 import java.util.List;
@@ -15,4 +16,7 @@ public interface IAdminOrderDAO {
     Optional<OrderSummary> findOrderHeader(int orderId) throws Exception;
     List<OrderDetailItem> findOrderItems(int orderId) throws Exception;
     List<PaymentInfo> findPayments(int orderId) throws Exception;
+
+    /** NEW: lấy bản ghi refund mới nhất (nếu có) cho order */
+    Optional<RefundInfo> findLatestRefund(int orderId) throws Exception;
 }

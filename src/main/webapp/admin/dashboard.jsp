@@ -205,10 +205,6 @@
             <div class="action-icon primary"><i class="fas fa-handshake"></i></div>
             <div class="action-content"><div class="action-title">Manage Partners</div><div class="action-desc">Create, view and manage all partners</div></div>
           </a>
-          <a href="${pageContext.request.contextPath}/adminpaymentverify" class="action-card">
-            <div class="action-icon warning"><i class="fas fa-money-check-alt"></i></div>
-            <div class="action-content"><div class="action-title">Verify Payments</div><div class="action-desc">Process pending payments</div></div>
-          </a>
           <a href="${pageContext.request.contextPath}/admin/bikes" class="action-card">
             <div class="action-icon success"><i class="fas fa-motorcycle"></i></div>
             <div class="action-content"><div class="action-title">Manage Bikes</div><div class="action-desc">View and update bike inventory</div></div>

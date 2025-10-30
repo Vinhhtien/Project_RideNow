@@ -2,9 +2,10 @@ package service;
 
 import dao.AdminOrderDAO;
 import dao.IAdminOrderDAO;
-import model.OrderSummary;
 import model.OrderDetailItem;
+import model.OrderSummary;
 import model.PaymentInfo;
+import model.RefundInfo;
 
 import java.util.Date;
 import java.util.List;
@@ -40,6 +41,12 @@ public class AdminOrderService implements IAdminOrderService {
     @Override
     public List<PaymentInfo> findPayments(int orderId) {
         try { return dao.findPayments(orderId); }
+        catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    @Override
+    public Optional<RefundInfo> findLatestRefund(int orderId) {
+        try { return dao.findLatestRefund(orderId); }
         catch (Exception e) { throw new RuntimeException(e); }
     }
 }

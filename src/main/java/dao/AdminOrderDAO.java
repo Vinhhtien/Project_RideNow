@@ -180,4 +180,33 @@ public class AdminOrderDAO implements IAdminOrderDAO {
             }
         }
     }
+    @Override
+    public Optional<model.RefundInfo> findLatestRefund(int orderId) throws Exception {
+        String sql =
+            "SELECT TOP 1 inspection_id, order_id, admin_id, bike_condition, damage_notes, " +
+            "       damage_fee, refund_amount, refund_method, refund_status, inspected_at " +
+            "FROM RefundInspections WHERE order_id = ? " +
+            "ORDER BY inspected_at DESC, inspection_id DESC";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(sql)) {
+            st.setInt(1, orderId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (!rs.next()) return Optional.empty();
+                model.RefundInfo r = new model.RefundInfo();
+                r.setInspectionId(rs.getInt("inspection_id"));
+                r.setOrderId(rs.getInt("order_id"));
+                r.setAdminId(rs.getInt("admin_id"));
+                r.setBikeCondition(rs.getString("bike_condition"));
+                r.setDamageNotes(rs.getString("damage_notes"));
+                r.setDamageFee(rs.getBigDecimal("damage_fee"));
+                r.setRefundAmount(rs.getBigDecimal("refund_amount"));
+                r.setRefundMethod(rs.getString("refund_method"));
+                r.setRefundStatus(rs.getString("refund_status"));
+                r.setInspectedAt(rs.getTimestamp("inspected_at"));
+                return Optional.of(r);
+            }
+        }
+    }
+
 }

@@ -1,8 +1,9 @@
 package service;
 
-import model.OrderSummary;
 import model.OrderDetailItem;
+import model.OrderSummary;
 import model.PaymentInfo;
+import model.RefundInfo;
 
 import java.util.Date;
 import java.util.List;
@@ -15,4 +16,6 @@ public interface IAdminOrderService {
     Optional<OrderSummary> findOrderHeader(int orderId);
     List<OrderDetailItem> findOrderItems(int orderId);
     List<PaymentInfo> findPayments(int orderId);
+
+    Optional<RefundInfo> findLatestRefund(int orderId);
 }
