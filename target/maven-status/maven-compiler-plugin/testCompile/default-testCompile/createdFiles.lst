@@ -2,7 +2,6 @@ controller\RegisterServletTest.class
 controller\admin\AdminMotorbikesServletTest.class
 controller\CartServletTest.class
 filter\AdminOnlyFilterTest.class
-service\MotorbikeAdminServiceTest.class
 controller\Authetication\LoginServletTest.class
 controller\MotorbikeSearchServletTest.class
 controller\partner\MotorbikeManageListServletTest.class

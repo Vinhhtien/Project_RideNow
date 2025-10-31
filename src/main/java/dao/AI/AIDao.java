@@ -91,6 +91,57 @@ public class AIDao {
         return result;
     }
 
+    /** Tìm xe với nhiều điều kiện */
+    public List<Map<String, Object>> searchBikes(Map<String, String> conditions) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT M.bike_id, M.bike_name, M.price_per_day, M.description, " +
+            "M.license_plate, M.status, BT.type_name " +
+            "FROM Motorbikes M JOIN BikeTypes BT ON M.type_id = BT.type_id " +
+            "WHERE 1=1 "
+        );
+        
+        List<String> params = new ArrayList<>();
+        
+        // Loại xe
+        if (conditions.containsKey("type")) {
+            sql.append(" AND BT.type_name = ?");
+            params.add(conditions.get("type"));
+        }
+        
+        // Giá tối đa
+        if (conditions.containsKey("max_price")) {
+            sql.append(" AND M.price_per_day <= ?");
+            params.add(conditions.get("max_price"));
+        }
+        
+        // Giá tối thiểu  
+        if (conditions.containsKey("min_price")) {
+            sql.append(" AND M.price_per_day >= ?");
+            params.add(conditions.get("min_price"));
+        }
+        
+        // Trạng thái
+        if (conditions.containsKey("status")) {
+            sql.append(" AND M.status = ?");
+            params.add(conditions.get("status"));
+        }
+        
+        // Từ khóa
+        if (conditions.containsKey("keyword")) {
+            sql.append(" AND (M.bike_name LIKE ? OR M.description LIKE ?)");
+            String keyword = "%" + conditions.get("keyword") + "%";
+            params.add(keyword);
+            params.add(keyword);
+        }
+        
+        sql.append(" ORDER BY M.price_per_day ASC");
+        
+        System.out.println("DEBUG: Search SQL: " + sql.toString());
+        System.out.println("DEBUG: Search params: " + params);
+        
+        return select(sql.toString(), params);
+    }
+
     // ======== Schema doc ========
     public String buildSchemaDoc() {
         StringBuilder sb = new StringBuilder("Database Schema:\n\n");

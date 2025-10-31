@@ -2,7 +2,6 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
-
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -46,7 +45,7 @@
   </style>
 </head>
 <body>
- <%@ include file="/chatbox.jsp" %>
+
 <header id="header">
   <div class="header-top">
     <div class="container">
@@ -544,5 +543,6 @@
     loadImages();
   }
 </script>
+<jsp:include page="/chatbox.jsp" />
 </body>
 </html>

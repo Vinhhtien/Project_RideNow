@@ -53,7 +53,18 @@
         <span>Administrator</span>
       </div>
     </header>
-
+      <c:if test="${not empty param.error}">
+    <div class="alert alert-danger">
+        <c:choose>
+            <c:when test="${param.reason == 'has_orders'}">
+                ❌ Cannot delete motorbike: This bike has existing orders in the system.
+            </c:when>
+            <c:otherwise>
+                ❌ Failed to delete motorbike. Please try again.
+            </c:otherwise>
+        </c:choose>
+    </div>
+</c:if>
     <fmt:setLocale value="vi_VN"/>
 
     <!-- TÍNH KPI TỪ DANH SÁCH motorbikes -->

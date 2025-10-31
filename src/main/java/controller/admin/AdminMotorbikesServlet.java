@@ -484,22 +484,40 @@ public class AdminMotorbikesServlet extends HttpServlet {
         System.out.println("=== DEBUG updateMotorbike END ===");
     }
 
-    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        System.out.println("=== DEBUG deleteMotorbike START ===");
-        int id = intRequired(request, "id");
-        Motorbike mb = motorbikeAdminService.getMotorbikeById(id);
-        if (mb != null) {
-            try {
-                deleteImageFolder(mb.getBikeId(), mb.getTypeId());
-            } catch (Exception e) {
-                System.err.println("Delete image folder error: " + e.getMessage());
-            }
+//    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
+//            throws IOException {
+//        System.out.println("=== DEBUG deleteMotorbike START ===");
+//        int id = intRequired(request, "id");
+//        Motorbike mb = motorbikeAdminService.getMotorbikeById(id);
+//        if (mb != null) {
+//            try {
+//                deleteImageFolder(mb.getBikeId(), mb.getTypeId());
+//            } catch (Exception e) {
+//                System.err.println("Delete image folder error: " + e.getMessage());
+//            }
+//        }
+//        boolean ok = motorbikeAdminService.deleteMotorbike(id);
+//        response.sendRedirect(request.getContextPath() + "/admin/bikes?" + (ok ? "success=deleted" : "error=delete_failed"));
+//        System.out.println("=== DEBUG deleteMotorbike END ===");
+//    }
+    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+    int bikeId = Integer.parseInt(request.getParameter("id"));
+    
+    MotorbikeAdminService service = new MotorbikeAdminService();
+    boolean success = service.deleteMotorbike(bikeId);
+    
+    if (success) {
+        response.sendRedirect("bikes?success=deleted");
+    } else {
+        // Kiểm tra lý do thất bại
+        if (service.hasOrderHistory(bikeId)) {
+            response.sendRedirect("bikes?error=delete_failed&reason=has_orders");
+        } else {
+            response.sendRedirect("bikes?error=delete_failed");
         }
-        boolean ok = motorbikeAdminService.deleteMotorbike(id);
-        response.sendRedirect(request.getContextPath() + "/admin/bikes?" + (ok ? "success=deleted" : "error=delete_failed"));
-        System.out.println("=== DEBUG deleteMotorbike END ===");
     }
+}
 
     /* ------------------------ Image Handling ------------------------ */
 

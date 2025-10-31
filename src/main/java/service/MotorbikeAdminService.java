@@ -185,19 +185,54 @@ public boolean addMotorbike(Motorbike motorbike) {
         }
     }
 
-    @Override
-    public boolean deleteMotorbike(int bikeId) {
-        String sql = "DELETE FROM Motorbikes WHERE bike_id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, bikeId);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+//    @Override
+//    public boolean deleteMotorbike(int bikeId) {
+//        String sql = "DELETE FROM Motorbikes WHERE bike_id = ?";
+//        try (Connection conn = DBConnection.getConnection();
+//             PreparedStatement stmt = conn.prepareStatement(sql)) {
+//            stmt.setInt(1, bikeId);
+//            return stmt.executeUpdate() > 0;
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
 
+    @Override
+public boolean deleteMotorbike(int bikeId) {
+    // Kiểm tra xem xe có tồn tại trong OrderDetails không
+    if (hasOrderHistory(bikeId)) {
+        System.err.println("Cannot delete motorbike " + bikeId + ": Has order history");
+        return false;
+    }
+    
+    String sql = "DELETE FROM Motorbikes WHERE bike_id = ?";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, bikeId);
+        return stmt.executeUpdate() > 0;
+    } catch (SQLException e) {
+        System.err.println("SQL ERROR: " + e.getMessage());
+        return false;
+    }
+}
+
+public boolean hasOrderHistory(int bikeId) {
+    String sql = "SELECT COUNT(*) FROM OrderDetails WHERE bike_id = ?";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, bikeId);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+    
     @Override
     public List<BikeType> getAllBikeTypes() {
         List<BikeType> bikeTypes = new ArrayList<>();

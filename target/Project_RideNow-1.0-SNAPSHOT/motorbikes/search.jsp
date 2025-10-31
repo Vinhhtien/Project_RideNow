@@ -337,5 +337,6 @@
     [sd, ed].forEach(el => el && el.setAttribute('min', today));
     sd?.addEventListener('change', () => ed?.setAttribute('min', sd.value || today));
   </script>
+<jsp:include page="/chatbox.jsp" />
 </body>
 </html>

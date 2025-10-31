@@ -46,8 +46,6 @@ public class AIChatServlet extends HttpServlet {
 
         JsonObject jsonResp = new JsonObject();
         String question = null;
-        String mode = null;
-        boolean debug = "1".equals(req.getParameter("debug"));
 
         try (BufferedReader reader = req.getReader()) {
             StringBuilder body = new StringBuilder();
@@ -62,8 +60,6 @@ public class AIChatServlet extends HttpServlet {
                     question = json.get("question").getAsString().trim();
                 }
             }
-            
-            mode = req.getParameter("mode");
         } catch (Exception ex) {
             jsonResp.addProperty("error", "Không đọc được yêu cầu: " + ex.getMessage());
             resp.getWriter().write(gson.toJson(jsonResp));
@@ -78,14 +74,10 @@ public class AIChatServlet extends HttpServlet {
 
         // Fix encoding issues trước khi xử lý
         String fixedQuestion = fixEncoding(question);
-        System.out.println("AIChatServlet: Original question: " + question);
-        System.out.println("AIChatServlet: Fixed question: " + fixedQuestion);
+        System.out.println("AIChatServlet: Processing question: " + fixedQuestion);
 
-        if (mode == null || mode.isBlank()) {
-            mode = inferMode(fixedQuestion);
-        }
-
-        System.out.println("AIChatServlet: mode=" + mode + ", q=" + fixedQuestion);
+        String mode = inferMode(fixedQuestion);
+        System.out.println("AIChatServlet: mode=" + mode);
 
         try {
             String answer;
@@ -103,13 +95,8 @@ public class AIChatServlet extends HttpServlet {
             jsonResp.addProperty("answer", answer);
             
         } catch (Exception e) {
-            // In stack trace để debug
             e.printStackTrace();
             String errorMsg = "❌ Lỗi hệ thống: " + e.getMessage();
-            // Nếu là debug mode, thêm thông tin chi tiết
-            if (debug) {
-                errorMsg += "\nStack trace: " + getStackTrace(e);
-            }
             jsonResp.addProperty("error", errorMsg);
         }
 
@@ -155,15 +142,5 @@ public class AIChatServlet extends HttpServlet {
             }
         }
         return false;
-    }
-
-    /**
-     * Lấy stack trace dưới dạng string
-     */
-    private String getStackTrace(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString();
     }
 }

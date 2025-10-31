@@ -41,7 +41,7 @@ public class AIService implements IAIService {
             System.out.println("DEBUG: answerFromDatabase - Original: " + question);
             System.out.println("DEBUG: answerFromDatabase - Fixed: " + fixedQuestion);
             
-            // 0) Ưu tiên intent nhanh theo loại xe → trả top 5 + link chi tiết
+            // 1) Ưu tiên intent nhanh theo loại xe → trả top 5 + link chi tiết
             String typeIntent = detectTypeIntent(fixedQuestion);
             System.out.println("DEBUG: Detected intent: " + typeIntent);
             
@@ -55,7 +55,13 @@ public class AIService implements IAIService {
                 return renderTopListWithLinks(typeIntent, rows);
             }
 
-            // 1) Tạo schema và policy an toàn
+            // 2) Nhận diện intent phức tạp (giá, trạng thái, v.v.)
+            String complexIntent = detectComplexIntent(fixedQuestion);
+            if (complexIntent != null) {
+                return handleComplexIntent(complexIntent, fixedQuestion);
+            }
+
+            // 3) Tạo schema và policy an toàn
             String schemaDoc = getSchemaDoc();
             String policyDoc = """
                     - Chỉ sinh truy vấn SELECT có ? placeholders.
@@ -64,25 +70,25 @@ public class AIService implements IAIService {
                     - Không truy cập sysobjects/sp_/INFORMATION_SCHEMA trực tiếp.
                     """;
 
-            // 2) Nhờ Gemini sinh SQL an toàn
+            // 4) Nhờ Gemini sinh SQL an toàn
             ToolCall t1 = toolClient.turn1_buildSql(fixedQuestion, schemaDoc, policyDoc);
             if (!t1.isToolCall()) {
                 // Không sinh được tool-call → rẽ sang smalltalk
                 return chatClient.ask(fixedQuestion);
             }
 
-            // 3) Query DB (read-only)
+            // 5) Query DB (read-only)
             List<Map<String, Object>> rows = dao.select(t1.getSql(), t1.getParams());
 
-            // 4) Không có dữ liệu
+            // 6) Không có dữ liệu
             if (rows == null || rows.isEmpty()) {
                 return "⚠️ Không tìm thấy dữ liệu phù hợp trong hệ thống.";
             }
 
-            // 5) Nhờ Gemini diễn giải kết quả (chỉ câu trả lời — KHÔNG hiển thị SQL)
+            // 7) Nhờ Gemini diễn giải kết quả (chỉ câu trả lời — KHÔNG hiển thị SQL)
             String explain = toolClient.turn2_explainFromRows(fixedQuestion, rows);
 
-            // 6) Trả về câu trả lời gọn, không lộ SQL/params
+            // 8) Trả về câu trả lời gọn, không lộ SQL/params
             return "✅ " + explain;
 
         } catch (Exception e) {
@@ -118,7 +124,7 @@ public class AIService implements IAIService {
         
         try {
             // Kiểm tra xem có phải là text bị lỗi encoding không
-            if (text.matches(".*[�].*")) {
+            if (text.matches(".*[�].*") || containsEncodingIssues(text)) {
                 System.out.println("DEBUG: Detected encoding issues in: " + text);
                 
                 // Thử fix common encoding issues
@@ -134,49 +140,110 @@ public class AIService implements IAIService {
         return text;
     }
 
-    /** Nhận diện intent loại xe với xử lý encoding mạnh mẽ */
+    /** Kiểm tra xem text có bị lỗi encoding không */
+    private boolean containsEncodingIssues(String text) {
+        // Các pattern thường gặp khi lỗi encoding Vietnamese
+        String[] issuePatterns = {
+            "Nh?ng", "m?u", "xe s?", "c?a", "b?n", "l�", "g�"
+        };
+        
+        for (String pattern : issuePatterns) {
+            if (text.contains(pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Nhận diện intent loại xe */
     private String detectTypeIntent(String q) {
         if (q == null) return null;
-        
-        // Fix encoding trước
-        String fixedQ = fixEncoding(q);
-        String normalized = removeAccents(fixedQ.toLowerCase(Locale.ROOT).trim());
-        
-        System.out.println("DEBUG: detectTypeIntent - Original: " + q);
-        System.out.println("DEBUG: detectTypeIntent - Fixed: " + fixedQ);
-        System.out.println("DEBUG: detectTypeIntent - Normalized: " + normalized);
+        String normalized = removeAccents(q.toLowerCase().trim());
 
-        // Xe số - Mở rộng từ khóa nhận diện (có dấu, không dấu, và encoding issues)
+        // Xe số
         if (normalized.contains("xe so") || normalized.contains("xesố") || normalized.contains("xeso") 
                 || normalized.contains("so") || normalized.contains("số")
                 || normalized.contains("wave") || normalized.contains("future") || normalized.contains("sirius") 
                 || normalized.contains("jupiter") || normalized.contains("exciter") || normalized.contains("winner")
-                || normalized.contains("blade") || normalized.contains("alpha")
-                || normalized.contains("mau xe so") || normalized.contains("xe so nao") || normalized.contains("loai xe so")
-                || normalized.contains("xe so cua ban") || normalized.contains("mau xe so nao")
-                || normalized.contains("nhung mau xe so") || normalized.contains("cac mau xe so")) {
+                || normalized.contains("blade") || normalized.contains("alpha")) {
             return "Xe số";
         }
         // Xe ga
         if (normalized.contains("xe ga") || normalized.contains("xega") || normalized.contains("tay ga")
                 || normalized.contains("vision") || normalized.contains("air blade") || normalized.contains("airblade") 
-                || normalized.contains("vario") || normalized.contains("sh") || normalized.contains("lead")
-                || normalized.contains("mau xe ga") || normalized.contains("xe ga nao") || normalized.contains("loai xe ga")
-                || normalized.contains("xe ga cua ban") || normalized.contains("mau xe ga nao")
-                || normalized.contains("nhung mau xe ga") || normalized.contains("cac mau xe ga")) {
+                || normalized.contains("vario") || normalized.contains("sh") || normalized.contains("lead")) {
             return "Xe ga";
         }
         // PKL
         if (normalized.contains("pkl") || normalized.contains("phan khoi lon") || normalized.contains("pk l")
                 || normalized.contains("ninja") || normalized.contains("cbr") || normalized.contains("gsx") 
                 || normalized.contains("r15") || normalized.contains("r3") || normalized.contains("r1")
-                || normalized.contains("phan khoi") || normalized.contains("xe phan khoi") || normalized.contains("mau pkl")
-                || normalized.contains("xe phan khoi lon") || normalized.contains("xe pkl") || normalized.contains("mau xe pkl")
-                || normalized.contains("nhung mau pkl") || normalized.contains("cac mau xe phan khoi lon")) {
+                || normalized.contains("phan khoi") || normalized.contains("xe phan khoi")) {
             return "Phân khối lớn";
         }
         
-        System.out.println("DEBUG: No intent detected for: " + normalized);
+        return null;
+    }
+
+    /** Nhận diện intent phức tạp (giá, trạng thái, v.v.) */
+    private String detectComplexIntent(String q) {
+        if (q == null) return null;
+        String normalized = removeAccents(q.toLowerCase().trim());
+        
+        // Tìm theo giá
+        if (normalized.matches(".*(gia|giá).*(duoi|dưới|thap|rẻ).*")) {
+            return extractPriceRange(q, "max");
+        }
+        if (normalized.matches(".*(gia|giá).*(tu|từ|tren|trên).*")) {
+            return extractPriceRange(q, "min"); 
+        }
+        
+        // Tìm theo trạng thái
+        if (normalized.contains("co san") || normalized.contains("có sẵn") || normalized.contains("available")) {
+            return "available";
+        }
+        
+        return null;
+    }
+
+    private String extractPriceRange(String q, String type) {
+        // Trích xuất số từ câu hỏi "xe dưới 150k"
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\d+");
+        java.util.regex.Matcher matcher = pattern.matcher(q);
+        if (matcher.find()) {
+            String price = matcher.group();
+            // Nếu số nhỏ hơn 1000, coi như là nghìn VND (150 -> 150000)
+            if (Integer.parseInt(price) < 1000) {
+                price = String.valueOf(Integer.parseInt(price) * 1000);
+            }
+            return type + "_" + price;
+        }
+        return type + "_unknown";
+    }
+
+    private String handleComplexIntent(String intent, String question) {
+        Map<String, String> conditions = new HashMap<>();
+        
+        if (intent.startsWith("max_")) {
+            String price = intent.substring(4);
+            if (!"unknown".equals(price)) {
+                conditions.put("max_price", price);
+            }
+            conditions.put("status", "available");
+            
+            List<Map<String, Object>> rows = dao.searchBikes(conditions);
+            if (rows.isEmpty()) {
+                return "⚠️ Không tìm thấy xe nào dưới " + (Integer.parseInt(price)/1000) + "k. Hãy thử mức giá cao hơn.";
+            }
+            return renderSearchResults("xe giá dưới " + (Integer.parseInt(price)/1000) + "k", rows);
+        }
+        
+        if ("available".equals(intent)) {
+            conditions.put("status", "available");
+            List<Map<String, Object>> rows = dao.searchBikes(conditions);
+            return renderSearchResults("xe có sẵn", rows);
+        }
+        
         return null;
     }
 
@@ -187,7 +254,7 @@ public class AIService implements IAIService {
             String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
             return temp.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
         } catch (Exception e) {
-            return s; // Fallback to original if error
+            return s;
         }
     }
 
@@ -208,12 +275,12 @@ public class AIService implements IAIService {
 
             String href = DETAIL_URL.replace("{id}", String.valueOf(id));
             out.append("<li style=\"margin:8px 0; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;\">")
-                    .append("<a href=\"").append(href).append("\" style=\"font-weight:600; color:#3b82f6;\">")
+                    .append("<a href=\"").append(href).append("\" style=\"font-weight:600; color:#3b82f6; text-decoration:none;\" target=\"_blank\">")
                     .append(escape(name)).append("</a>")
                     .append("<br/><span style=\"color:#94a3b8; font-size:14px;\">")
                     .append(formatVnd(price)).append("/ngày")
                     .append(" • Biển số: ").append(escape(licensePlate))
-                    .append(" • Trạng thái: ").append(escape(status))
+                    .append(" • Trạng thái: <span style=\"color:").append(getStatusColor(status)).append("\">").append(escape(status)).append("</span>")
                     .append("</span>");
             
             if (description != null && !description.equals("null") && !description.trim().isEmpty()) {
@@ -224,8 +291,51 @@ public class AIService implements IAIService {
             out.append("</li>");
         }
         out.append("</ul>");
-        out.append("<br/><small style=\"color:#64748b;\">Click vào tên xe để xem chi tiết và đặt thuê.</small>");
+        out.append("<br/><small style=\"color:#64748b;\">🔗 Click vào tên xe để xem chi tiết và đặt thuê (mở tab mới)</small>");
         return out.toString();
+    }
+
+    /** Render kết quả tìm kiếm */
+    private String renderSearchResults(String searchType, List<Map<String, Object>> rows) {
+        StringBuilder out = new StringBuilder();
+        out.append("✅ Tìm thấy ").append(rows.size())
+                .append(" mẫu <b>").append(escape(searchType)).append("</b>:<br/>");
+        out.append("<ul style=\"margin:6px 0 0 16px; padding:0;\">");
+
+        for (Map<String, Object> r : rows) {
+            int id = ((Number) r.get("bike_id")).intValue();
+            String name = String.valueOf(r.get("bike_name"));
+            BigDecimal price = new BigDecimal(String.valueOf(r.get("price_per_day")));
+            String typeName = String.valueOf(r.get("type_name"));
+            String licensePlate = String.valueOf(r.get("license_plate"));
+            String status = String.valueOf(r.get("status"));
+
+            String href = DETAIL_URL.replace("{id}", String.valueOf(id));
+            out.append("<li style=\"margin:8px 0; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;\">")
+                    .append("<a href=\"").append(href).append("\" style=\"font-weight:600; color:#3b82f6; text-decoration:none;\" target=\"_blank\">")
+                    .append(escape(name)).append("</a>")
+                    .append("<br/><span style=\"color:#94a3b8; font-size:14px;\">")
+                    .append(formatVnd(price)).append("/ngày")
+                    .append(" • Loại: ").append(escape(typeName))
+                    .append(" • Biển số: ").append(escape(licensePlate))
+                    .append(" • Trạng thái: <span style=\"color:").append(getStatusColor(status)).append("\">").append(escape(status)).append("</span>")
+                    .append("</span>");
+            out.append("</li>");
+        }
+        out.append("</ul>");
+        out.append("<br/><small style=\"color:#64748b;\">🔗 Click vào tên xe để xem chi tiết và đặt thuê</small>");
+        return out.toString();
+    }
+
+    /** Màu sắc cho trạng thái xe */
+    private String getStatusColor(String status) {
+        if (status == null) return "#94a3b8";
+        switch (status.toLowerCase()) {
+            case "available": return "#10b981"; // green
+            case "rented": return "#ef4444";    // red
+            case "maintenance": return "#f59e0b"; // yellow
+            default: return "#94a3b8";          // gray
+        }
     }
 
     private String formatVnd(BigDecimal v) {

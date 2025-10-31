@@ -97,10 +97,10 @@
     <button type="submit" class="ai-send" aria-label="Gửi" id="ai-send-btn">Gửi</button>
   </form>
 </div>
-
-<script>
+ <script>
   (() => {
-    const ctx = '<%= request.getContextPath() %>';
+    // SỬA LỖI: Thay thế request.getContextPath() bằng pageContext.request.contextPath
+    const ctx = '${pageContext.request.contextPath}';
     const CHAT_HISTORY_KEY = 'ridenow_chat_history';
 
     const $fab = document.getElementById('ai-fab');
