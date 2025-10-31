@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-
+ <%@ include file="/chatbox.jsp" %>
 <header id="header">
   <div class="header-top">
     <div class="container">
