@@ -10,7 +10,6 @@ controller\MyOrdersServletTest.class
 controller\Authetication\LogoutServletTest.class
 service\OrderServiceTest.class
 test\CalculatorTest.class
-controller\PayNowServletTest.class
 controller\CustomerProfileServletTest.class
 service\CustomerServiceTest.class
 filter\RoleFilterTest.class

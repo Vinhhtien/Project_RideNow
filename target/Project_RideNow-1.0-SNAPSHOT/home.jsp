@@ -1,4 +1,6 @@
-    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%--<%@ page contentType="text/html;charset=UTF-8" language="java" %>--%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
@@ -13,6 +15,7 @@
   <link rel="stylesheet" href="css/homeStyle.css" />
 </head>
 <body>
+    <%@ include file="/chatbox.jsp" %>
 
   <!-- ===== HEADER ===== -->
   <header id="header">

@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-
+ <%@ include file="/chatbox.jsp" %>
 <header id="header">
   <div class="header-top">
     <div class="container">
@@ -232,60 +232,76 @@
           <div class="book card--inner">
             <div class="book-title"><i class="fa-solid fa-bolt"></i> Đặt xe nhanh</div>
 
-            <!-- ✅ Chỉ một block lỗi, kèm danh sách khoảng ngày trùng -->
-            <c:if test="${not empty sessionScope.book_error}">
-              <div class="card callout callout--error" style="margin-top:12px">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                ${sessionScope.book_error}
-                <c:if test="${not empty sessionScope.book_conflicts}">
-                  <ul style="margin:8px 0 0 24px; list-style:disc">
-                    <c:forEach var="cf" items="${sessionScope.book_conflicts}">
-                      <li>
-                        <span class="badge" style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px">
-                          ${cf}
-                        </span>
-                      </li>
-                    </c:forEach>
-                  </ul>
+            <c:choose>
+              <c:when test="${bike.status == 'maintenance'}">
+                <!-- Hiển thị thông báo khi xe đang bảo dưỡng -->
+                <div class="card callout callout--error" style="margin-top:12px">
+                  <i class="fa-solid fa-screwdriver-wrench"></i>
+                  Xe đang trong chế độ bảo dưỡng, tạm thời không thể thuê. Vui lòng quay lại sau.
+                </div>
+                <div class="extra-actions">
+                  <a href="${ctx}/motorbikesearch" class="btn-ghost"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
+                </div>
+              </c:when>
+              <c:otherwise>
+                <!-- Hiển thị form đặt xe khi xe khả dụng -->
+                
+                <!-- ✅ Chỉ một block lỗi, kèm danh sách khoảng ngày trùng -->
+                <c:if test="${not empty sessionScope.book_error}">
+                  <div class="card callout callout--error" style="margin-top:12px">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    ${sessionScope.book_error}
+                    <c:if test="${not empty sessionScope.book_conflicts}">
+                      <ul style="margin:8px 0 0 24px; list-style:disc">
+                        <c:forEach var="cf" items="${sessionScope.book_conflicts}">
+                          <li>
+                            <span class="badge" style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px">
+                              ${cf}
+                            </span>
+                          </li>
+                        </c:forEach>
+                      </ul>
+                    </c:if>
+                  </div>
+                  <c:remove var="book_error" scope="session"/>
+                  <c:remove var="book_conflicts" scope="session"/>
                 </c:if>
-              </div>
-              <c:remove var="book_error" scope="session"/>
-              <c:remove var="book_conflicts" scope="session"/>
-            </c:if>
 
-            <div id="previewBox" class="card preview">
-              <div><b>Giá/ngày:</b> <fmt:formatNumber value="${bike.pricePerDay}" type="number"/> đ</div>
-              <div><b>Số ngày:</b> <span id="pvDays">0</span></div>
-              <div><b>Tạm tính:</b> <span id="pvSubtotal">0</span> đ</div>
-              <div><b>Cọc dự kiến:</b>
-                <c:choose>
-                  <c:when test="${bike.typeName == 'Phân khối lớn'}">1,000,000</c:when>
-                  <c:otherwise>500,000</c:otherwise>
-                </c:choose> đ
-              </div>
-            </div>
+                <div id="previewBox" class="card preview">
+                  <div><b>Giá/ngày:</b> <fmt:formatNumber value="${bike.pricePerDay}" type="number"/> đ</div>
+                  <div><b>Số ngày:</b> <span id="pvDays">0</span></div>
+                  <div><b>Tạm tính:</b> <span id="pvSubtotal">0</span> đ</div>
+                  <div><b>Cọc dự kiến:</b>
+                    <c:choose>
+                      <c:when test="${bike.typeName == 'Phân khối lớn'}">1,000,000</c:when>
+                      <c:otherwise>500,000</c:otherwise>
+                    </c:choose> đ
+                  </div>
+                </div>
 
-            <form action="${ctx}/cart" method="post" class="book-form" id="addToCartForm" novalidate>
-              <input type="hidden" name="action" value="add"/>
-              <input type="hidden" name="bikeId" value="${bike.bikeId}" />
-              <label>
-                Ngày nhận
-                <input type="text" name="start" id="startDate" class="control" placeholder="Chọn ngày nhận" required>
-              </label>
-              <label>
-                Ngày trả
-                <input type="text" name="end" id="endDate" class="control" placeholder="Chọn ngày trả" required>
-              </label>
-              <button type="submit" class="btn-primary">
-                <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-              </button>
-            </form>
-            <small class="hint">* Chọn ngày để xem tạm tính. Bạn có thể thêm nhiều xe vào giỏ.</small>
+                <form action="${ctx}/cart" method="post" class="book-form" id="addToCartForm" novalidate>
+                  <input type="hidden" name="action" value="add"/>
+                  <input type="hidden" name="bikeId" value="${bike.bikeId}" />
+                  <label>
+                    Ngày nhận
+                    <input type="text" name="start" id="startDate" class="control" placeholder="Chọn ngày nhận" required>
+                  </label>
+                  <label>
+                    Ngày trả
+                    <input type="text" name="end" id="endDate" class="control" placeholder="Chọn ngày trả" required>
+                  </label>
+                  <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                  </button>
+                </form>
+                <small class="hint">* Chọn ngày để xem tạm tính. Bạn có thể thêm nhiều xe vào giỏ.</small>
 
-            <div class="extra-actions">
-              <a href="${ctx}/cart" class="btn-ghost"><i class="fa-solid fa-bag-shopping"></i> Xem giỏ hàng</a>
-              <a href="${ctx}/motorbikesearch" class="btn-ghost"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
-            </div>
+                <div class="extra-actions">
+                  <a href="${ctx}/cart" class="btn-ghost"><i class="fa-solid fa-bag-shopping"></i> Xem giỏ hàng</a>
+                  <a href="${ctx}/motorbikesearch" class="btn-ghost"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
+                </div>
+              </c:otherwise>
+            </c:choose>
           </div>
         </section>
       </div>
@@ -376,45 +392,55 @@
 
     // ✅ GUARD TRƯỚC KHI SUBMIT: luôn gửi đủ start & end
     const form = document.getElementById('addToCartForm');
-    form.addEventListener('submit', function(e){
-      const s = document.getElementById('startDate');
-      const t = document.getElementById('endDate');
+    if (form) {
+      form.addEventListener('submit', function(e){
+        const s = document.getElementById('startDate');
+        const t = document.getElementById('endDate');
 
-      // Nếu người dùng chỉ chọn 1 bên, tự đồng bộ sang bên kia (thuê 1 ngày)
-      if (!s.value && t.value) s.value = t.value;
-      if (!t.value && s.value) t.value = s.value;
+        // Nếu người dùng chỉ chọn 1 bên, tự đồng bộ sang bên kia (thuê 1 ngày)
+        if (!s.value && t.value) s.value = t.value;
+        if (!t.value && s.value) t.value = s.value;
 
-      // Nếu vẫn thiếu -> chặn submit
-      if (!s.value || !t.value) {
-        e.preventDefault();
-        alert('Vui lòng chọn ngày nhận và ngày trả.');
-        return;
-      }
+        // Nếu vẫn thiếu -> chặn submit
+        if (!s.value || !t.value) {
+          e.preventDefault();
+          alert('Vui lòng chọn ngày nhận và ngày trả.');
+          return;
+        }
 
-      // Nếu end < start -> chặn và báo lỗi tại chỗ
-      const sd = new Date(s.value);
-      const ed = new Date(t.value);
-      if (ed < sd) {
-        e.preventDefault();
-        alert('Ngày trả phải sau hoặc bằng ngày nhận.');
-        t.focus();
-        return;
-      }
-    });
+        // Nếu end < start -> chặn và báo lỗi tại chỗ
+        const sd = new Date(s.value);
+        const ed = new Date(t.value);
+        if (ed < sd) {
+          e.preventDefault();
+          alert('Ngày trả phải sau hoặc bằng ngày nhận.');
+          t.focus();
+          return;
+        }
+      });
+    }
   });
 
   function calcPreview(){
     const pvDays = document.getElementById('pvDays');
     const pvSubtotal = document.getElementById('pvSubtotal');
     const pricePerDay = Number('${bike.pricePerDay}');
-    const sVal = document.getElementById('startDate').value;
-    const eVal = document.getElementById('endDate').value;
-    if(!sVal || !eVal){ pvDays.textContent='0'; pvSubtotal.textContent='0'; return; }
+    const sVal = document.getElementById('startDate')?.value;
+    const eVal = document.getElementById('endDate')?.value;
+    if(!sVal || !eVal){ 
+      if(pvDays) pvDays.textContent='0'; 
+      if(pvSubtotal) pvSubtotal.textContent='0'; 
+      return; 
+    }
     const s = new Date(sVal), e = new Date(eVal);
-    if(isNaN(s)||isNaN(e)||e<s){ pvDays.textContent='0'; pvSubtotal.textContent='0'; return; }
+    if(isNaN(s)||isNaN(e)||e<s){ 
+      if(pvDays) pvDays.textContent='0'; 
+      if(pvSubtotal) pvSubtotal.textContent='0'; 
+      return; 
+    }
     const days = Math.floor((e - s) / (1000*60*60*24)) + 1;
-    pvDays.textContent = String(days);
-    pvSubtotal.textContent = (pricePerDay * days).toLocaleString('vi-VN');
+    if(pvDays) pvDays.textContent = String(days);
+    if(pvSubtotal) pvSubtotal.textContent = (pricePerDay * days).toLocaleString('vi-VN');
   }
 
   // ===== Gallery đơn giản & chính xác (tự dò 1..6.jpg) =====
@@ -424,6 +450,8 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const navBtns = document.getElementById('navBtns');
+
+    if (!mainImg) return;
 
     const base = "${ctx}/images/bike/${imgFolder}/${bike.bikeId}";
     const validImages = [];
