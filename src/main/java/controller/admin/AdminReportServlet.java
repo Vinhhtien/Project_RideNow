@@ -67,6 +67,7 @@ public class AdminReportServlet extends HttpServlet {
                     List<AdminRevenueItem> items = svc.getPayments(from, to, page, size);
                     int totalPages = (int) Math.ceil((double) total / size);
                     req.setAttribute("items", items);
+                    req.setAttribute("payments", items); // alias thêm để JSP cũ/new đều ăn
                     req.setAttribute("total", total);
                     req.setAttribute("totalPages", totalPages);
                     break;
@@ -76,6 +77,7 @@ public class AdminReportServlet extends HttpServlet {
                     List<AdminRefundItem> items = svc.getRefunds(from, to, page, size);
                     int totalPages = (int) Math.ceil((double) total / size);
                     req.setAttribute("refunds", items);
+                    req.setAttribute("items", items); // alias thêm nếu JSP dùng ${items}
                     req.setAttribute("total", total);
                     req.setAttribute("totalPages", totalPages);
                     break;

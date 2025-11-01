@@ -251,29 +251,217 @@
     </section>
 
     <c:choose>
+      <%-- ===== OVERVIEW ===== --%>
       <c:when test="${view=='overview'}">
-        <!-- giữ nguyên -->
+        <section class="panel">
+          <div class="panel-header"><h2>Tổng quan</h2></div>
+          <div class="panel-body">
+            <div class="grid4">
+              <div class="card">
+                <div class="muted">Tổng thu</div>
+                <h3><fmt:formatNumber value="${totalCollected}" type="number" groupingUsed="true"/></h3>
+              </div>
+              <div class="card">
+                <div class="muted">Hoàn tiền</div>
+                <h3><fmt:formatNumber value="${totalRefunded}" type="number" groupingUsed="true"/></h3>
+              </div>
+              <div class="card">
+                <div class="muted">Doanh thu ròng</div>
+                <h3><fmt:formatNumber value="${netRevenue}" type="number" groupingUsed="true"/></h3>
+              </div>
+            </div>
+
+            <h3 style="margin-top:16px">Phân bổ theo phương thức</h3>
+            <table class="data-table">
+              <thead>
+                <tr><th>Phương thức</th><th class="num">Thu</th><th class="num">Hoàn</th><th class="num">Ròng</th></tr>
+              </thead>
+              <tbody>
+                <c:forEach var="m" items="${methodStats}">
+                  <tr>
+                    <td>${m.method}</td>
+                    <td class="num"><fmt:formatNumber value="${m.paidAmount}" type="number" groupingUsed="true"/></td>
+                    <td class="num"><fmt:formatNumber value="${m.refundedAmount}" type="number" groupingUsed="true"/></td>
+                    <td class="num"><fmt:formatNumber value="${m.paidAmount - m.refundedAmount}" type="number" groupingUsed="true"/></td>
+                  </tr>
+                </c:forEach>
+                <c:if test="${empty methodStats}">
+                  <tr><td colspan="4">Không có dữ liệu.</td></tr>
+                </c:if>
+              </tbody>
+            </table>
+
+            <h3 style="margin-top:16px">Theo tháng</h3>
+            <table class="data-table">
+              <thead>
+                <tr><th>Tháng</th><th class="num">Thu</th><th class="num">Hoàn</th><th class="num">Ròng</th></tr>
+              </thead>
+              <tbody>
+                <c:forEach var="d" items="${daily}">
+                  <tr>
+                    <td><fmt:formatDate value="${d.day}" pattern="yyyy-MM"/></td>
+                    <td class="num"><fmt:formatNumber value="${d.paidAmount}" type="number" groupingUsed="true"/></td>
+                    <td class="num"><fmt:formatNumber value="${d.refundedAmount}" type="number" groupingUsed="true"/></td>
+                    <td class="num"><fmt:formatNumber value="${d.paidAmount - d.refundedAmount}" type="number" groupingUsed="true"/></td>
+                  </tr>
+                </c:forEach>
+                <c:if test="${empty daily}">
+                  <tr><td colspan="4">Không có dữ liệu.</td></tr>
+                </c:if>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </c:when>
 
+      <%-- ===== OVERVIEW-NET ===== --%>
       <c:when test="${view=='overview-net'}">
-        <!-- giữ nguyên -->
+        <section class="panel">
+          <div class="panel-header"><h2>Tổng thu ròng</h2></div>
+          <div class="panel-body">
+            <div class="grid4">
+              <div class="card"><div class="muted">Tổng thu</div><h3><fmt:formatNumber value="${totalCollected}" type="number" groupingUsed="true"/></h3></div>
+              <div class="card"><div class="muted">Hoàn tiền</div><h3><fmt:formatNumber value="${totalRefunded}" type="number" groupingUsed="true"/></h3></div>
+              <div class="card"><div class="muted">Doanh thu ròng</div><h3><fmt:formatNumber value="${netRevenue}" type="number" groupingUsed="true"/></h3></div>
+            </div>
+
+            <h3 style="margin-top:16px">Theo ngày (inspected_at)</h3>
+            <table class="data-table">
+              <thead>
+                <tr><th>Ngày</th><th class="num">Thu</th><th class="num">Hoàn</th><th class="num">Ròng</th></tr>
+              </thead>
+              <tbody>
+                <c:forEach var="r" items="${dailyNet}">
+                  <tr>
+                    <td><fmt:formatDate value="${r.paymentDate}" pattern="yyyy-MM-dd"/></td>
+                    <td class="num"><fmt:formatNumber value="${r.totalPaid}" type="number" groupingUsed="true"/></td>
+                    <td class="num"><fmt:formatNumber value="${r.refundedAmount}" type="number" groupingUsed="true"/></td>
+                    <td class="num"><fmt:formatNumber value="${r.netRevenue}" type="number" groupingUsed="true"/></td>
+                  </tr>
+                </c:forEach>
+                <c:if test="${empty dailyNet}">
+                  <tr><td colspan="4">Không có dữ liệu.</td></tr>
+                </c:if>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </c:when>
 
+      <%-- ===== PAYMENTS ===== --%>
       <c:when test="${view=='payments'}">
-        <!-- giữ nguyên -->
+        <section class="panel">
+          <div class="panel-header"><h2>Thanh toán</h2></div>
+          <div class="panel-body">
+            <table class="data-table payments-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Khách</th>
+                  <th>Order</th>
+                  <th class="num">Số tiền</th>
+                  <th>Phương thức</th>
+                  <th>Trạng thái</th>
+                  <th>Thanh toán</th>
+                  <th>Xác minh</th>
+                  <th>Ref</th>
+                </tr>
+              </thead>
+              <tbody>
+                <c:forEach var="p" items="${items}">
+                  <tr>
+                    <td>${p.paymentId}</td>
+                    <td>${p.customerName}</td>
+                    <td><a href="${ctx}/admin/reports?view=order-detail&id=${p.orderId}">#${p.orderId}</a></td>
+                    <td class="num"><fmt:formatNumber value="${p.amount}" type="number" groupingUsed="true"/></td>
+                    <td>${p.method}</td>
+                    <td>
+                      <span class="badge ${p.status=='paid'?'status-paid':(p.status=='refunded'?'status-refunded':'status-pending')}">
+                        ${p.status}
+                      </span>
+                    </td>
+                    <td><fmt:formatDate value="${p.paymentDate}" pattern="yyyy-MM-dd HH:mm"/></td>
+                    <td><fmt:formatDate value="${p.verifiedAt}" pattern="yyyy-MM-dd HH:mm"/></td>
+                    <td>${p.reference}</td>
+                  </tr>
+                </c:forEach>
+                <c:if test="${empty items}">
+                  <tr><td colspan="9">Không có dữ liệu.</td></tr>
+                </c:if>
+              </tbody>
+            </table>
+
+            <c:if test="${totalPages > 1}">
+              <div class="pager">
+                <span>Trang ${page} / ${totalPages}</span>
+                <c:if test="${page > 1}">
+                  <a class="btn" href="${ctx}/admin/reports?view=payments&from=${from}&to=${to}&size=${size}&page=${page-1}">« Trước</a>
+                </c:if>
+                <c:if test="${page < totalPages}">
+                  <a class="btn" href="${ctx}/admin/reports?view=payments&from=${from}&to=${to}&size=${size}&page=${page+1}">Tiếp »</a>
+                </c:if>
+              </div>
+            </c:if>
+          </div>
+        </section>
       </c:when>
 
+      <%-- ===== REFUNDS ===== --%>
       <c:when test="${view=='refunds'}">
-        <!-- giữ nguyên -->
+        <section class="panel">
+          <div class="panel-header"><h2>Hoàn tiền</h2></div>
+          <div class="panel-body">
+            <table class="data-table refunds-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Khách</th>
+                  <th>Order</th>
+                  <th class="num">Số tiền</th>
+                  <th>Inspected</th>
+                  <th>Phương thức</th>
+                  <th>Verified</th>
+                </tr>
+              </thead>
+              <tbody>
+                <c:forEach var="r" items="${refunds}">
+                  <tr>
+                    <td>${r.paymentId}</td>
+                    <td>${r.customerName}</td>
+                    <td><a class="chip-link" href="${ctx}/admin/reports?view=order-detail&id=${r.orderId}">#${r.orderId}</a></td>
+                    <td class="num"><fmt:formatNumber value="${r.amount}" type="number" groupingUsed="true"/></td>
+                    <td><fmt:formatDate value="${r.paymentDate}" pattern="yyyy-MM-dd HH:mm"/></td>
+                    <td><span class="chip">${r.method}</span></td>
+                    <td><fmt:formatDate value="${r.verifiedAt}" pattern="yyyy-MM-dd HH:mm"/></td>
+                  </tr>
+                </c:forEach>
+                <c:if test="${empty refunds}">
+                  <tr><td colspan="7">Không có dữ liệu.</td></tr>
+                </c:if>
+              </tbody>
+            </table>
+
+            <c:if test="${totalPages > 1}">
+              <div class="pager">
+                <span>Trang ${page} / ${totalPages}</span>
+                <c:if test="${page > 1}">
+                  <a class="btn" href="${ctx}/admin/reports?view=refunds&from=${from}&to=${to}&size=${size}&page=${page-1}">« Trước</a>
+                </c:if>
+                <c:if test="${page < totalPages}">
+                  <a class="btn" href="${ctx}/admin/reports?view=refunds&from=${from}&to=${to}&size=${size}&page=${page+1}">Tiếp »</a>
+                </c:if>
+              </div>
+            </c:if>
+          </div>
+        </section>
       </c:when>
 
-      <%-- ====== BLOCK CỬA HÀNG ====== --%>
+      <%-- ====== BLOCK CỬA HÀNG (giữ nguyên) ====== --%>
       <c:when test="${view=='stores'}">
         <section class="panel">
           <div class="panel-header"><h2>Doanh thu theo cửa hàng</h2></div>
           <div class="panel-body">
 
-            <%-- Tính platformTotal nếu Servlet chưa set: TOTAL(store) = 100% net store + 60% Σ net partners --%>
             <c:set var="platformTotal" value="${platformNetTotal}"/>
             <c:if test="${empty platformTotal}">
               <c:set var="sumStoreNet100" value="0"/>
@@ -309,7 +497,6 @@
                 <c:set var="stt" value="1"/>
                 <c:set var="renderedStore" value="0"/>
 
-                <%-- Lượt 1: các dòng 'Cửa hàng' nội bộ (không có partnerId) --%>
                 <c:forEach var="it" items="${storeRevenue}">
                   <c:if test="${empty it.partnerId}">
                     <c:set var="net" value="${empty it.netRevenue ? (it.totalPaid - it.refundedAmount) : it.netRevenue}"/>
@@ -330,7 +517,6 @@
                   </c:if>
                 </c:forEach>
 
-                <%-- Fallback: nếu DAO chưa trả hàng store, vẫn in 1 dòng 'Cửa hàng' --%>
                 <c:if test="${renderedStore == 0}">
                   <c:set var="storeOrderCount" value="0"/>
                   <c:set var="storeTotalPaid"  value="0"/>
@@ -359,7 +545,6 @@
                   <c:set var="stt" value="${stt + 1}"/>
                 </c:if>
 
-                <%-- Lượt 2: toàn bộ partners (có partnerId) --%>
                 <c:forEach var="it" items="${storeRevenue}">
                   <c:if test="${not empty it.partnerId}">
                     <c:set var="net" value="${empty it.netRevenue ? (it.totalPaid - it.refundedAmount) : it.netRevenue}"/>
@@ -390,11 +575,11 @@
       <%-- ====== HẾT BLOCK CỬA HÀNG ====== --%>
 
       <c:when test="${view=='payment-detail'}">
-        <!-- giữ nguyên -->
+        <%-- giữ nguyên --%>
       </c:when>
 
       <c:when test="${view=='order-detail'}">
-        <!-- giữ nguyên -->
+        <%-- giữ nguyên --%>
       </c:when>
     </c:choose>
   </main>

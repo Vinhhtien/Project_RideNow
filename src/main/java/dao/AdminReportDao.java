@@ -171,11 +171,17 @@ public class AdminReportDao implements IAdminReportDao {
             "       p.payment_date, p.verified_at, p.reference, c.full_name AS customer_name, " +
             "       ro.total_price, COALESCE(ro.deposit_amount,0) AS deposit_amount, " +
             "       COALESCE(agg.paid_sum,0) AS paid_sum, " +
-            "       CASE WHEN EXISTS (SELECT 1 FROM RefundInspections ri WHERE ri.order_id = p.order_id AND ri.refund_status = 'completed') THEN 1 ELSE 0 END AS inspection_verified " +
+            "       CASE WHEN EXISTS (SELECT 1 FROM RefundInspections ri WHERE ri.order_id = p.order_id AND ri.refund_status = 'completed') THEN 1 ELSE 0 END AS inspection_verified, " +
+            "       CAST(ISNULL(ro.total_price,0) + ISNULL(ro.deposit_amount,0) AS decimal(18,2)) AS totalPaid, " +
+            "       CAST(ISNULL(rf.refundedAmount,0) AS decimal(18,2)) AS refundedAmount " +
             "FROM Payments p " +
             "JOIN RentalOrders ro ON ro.order_id = p.order_id " +
             "JOIN Customers c ON c.customer_id = ro.customer_id " +
             "LEFT JOIN (SELECT order_id, SUM(amount) AS paid_sum FROM Payments WHERE status='paid' GROUP BY order_id) agg ON agg.order_id = p.order_id " +
+            "LEFT JOIN ( " +
+            "   SELECT order_id, SUM(CASE WHEN refund_status='completed' THEN ISNULL(refund_amount,0) ELSE 0 END) AS refundedAmount " +
+            "   FROM RefundInspections GROUP BY order_id " +
+            ") rf ON rf.order_id = p.order_id " +
             "WHERE (? IS NULL OR COALESCE(p.verified_at, p.payment_date) >= ?) " +
             "  AND (? IS NULL OR COALESCE(p.verified_at, p.payment_date) < DATEADD(day,1,?)) " +
             "  AND p.status='paid' " +
@@ -211,6 +217,11 @@ public class AdminReportDao implements IAdminReportDao {
                     it.setOrderPaid(paidSum);
                     it.setInspectionVerified(verified);
                     it.setDueBeforeVerify((totalPrice + deposit) - paidSum);
+
+                    // Bổ sung mapping hiển thị
+                    it.setTotalPaid(rs.getBigDecimal("totalPaid")==null?0:rs.getBigDecimal("totalPaid").doubleValue());
+                    it.setRefundedAmount(rs.getBigDecimal("refundedAmount")==null?0:rs.getBigDecimal("refundedAmount").doubleValue());
+                    // netRevenue tự tính từ setters trên
 
                     out.add(it);
                 }
@@ -388,11 +399,17 @@ public class AdminReportDao implements IAdminReportDao {
             "SELECT p.payment_id, p.order_id, p.amount, p.method, p.status, p.payment_date, p.verified_at, p.reference, " +
             "       c.full_name AS customer_name, ro.total_price, COALESCE(ro.deposit_amount,0) AS deposit_amount, " +
             "       COALESCE(agg.paid_sum,0) AS paid_sum, " +
-            "       CASE WHEN EXISTS (SELECT 1 FROM RefundInspections ri WHERE ri.order_id = p.order_id AND ri.refund_status = 'completed') THEN 1 ELSE 0 END AS inspection_verified " +
+            "       CASE WHEN EXISTS (SELECT 1 FROM RefundInspections ri WHERE ri.order_id = p.order_id AND ri.refund_status = 'completed') THEN 1 ELSE 0 END AS inspection_verified, " +
+            "       CAST(ISNULL(ro.total_price,0) + ISNULL(ro.deposit_amount,0) AS decimal(18,2)) AS totalPaid, " +
+            "       CAST(ISNULL(rf.refundedAmount,0) AS decimal(18,2)) AS refundedAmount " +
             "FROM Payments p " +
             "JOIN RentalOrders ro ON ro.order_id = p.order_id " +
             "JOIN Customers c ON c.customer_id = ro.customer_id " +
             "LEFT JOIN (SELECT order_id, SUM(amount) AS paid_sum FROM Payments WHERE status='paid' GROUP BY order_id) agg ON agg.order_id = p.order_id " +
+            "LEFT JOIN ( " +
+            "   SELECT order_id, SUM(CASE WHEN refund_status='completed' THEN ISNULL(refund_amount,0) ELSE 0 END) AS refundedAmount " +
+            "   FROM RefundInspections GROUP BY order_id " +
+            ") rf ON rf.order_id = p.order_id " +
             "WHERE p.payment_id = ?";
         try (Connection cn = DBConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -420,6 +437,12 @@ public class AdminReportDao implements IAdminReportDao {
                     it.setOrderPaid(paidSum);
                     it.setInspectionVerified(verified);
                     it.setDueBeforeVerify((totalPrice + deposit) - paidSum);
+
+                    // Bổ sung mapping hiển thị
+                    it.setTotalPaid(rs.getBigDecimal("totalPaid")==null?0:rs.getBigDecimal("totalPaid").doubleValue());
+                    it.setRefundedAmount(rs.getBigDecimal("refundedAmount")==null?0:rs.getBigDecimal("refundedAmount").doubleValue());
+                    // netRevenue tự tính
+
                     return it;
                 }
             }
