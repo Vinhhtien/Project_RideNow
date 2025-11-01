@@ -13,10 +13,14 @@ public class MotorbikeService implements IMotorbikeService {
     private final IMotorbikeDao dao = new MotorbikeDao();
 
     @Override
-    public List<Motorbike> findAll() throws Exception { return dao.findAll(); }
+    public List<Motorbike> findAll() throws Exception {
+        return dao.findAll();
+    }
 
     @Override
-    public List<Motorbike> findByTypeId(int typeId) throws Exception { return dao.findByTypeId(typeId); }
+    public List<Motorbike> findByTypeId(int typeId) throws Exception {
+        return dao.findByTypeId(typeId);
+    }
 
     @Override
     public List<MotorbikeListItem> search(Integer typeId, Date startDate, Date endDate,
@@ -41,6 +45,8 @@ public class MotorbikeService implements IMotorbikeService {
         return dao.findDetailById(bikeId);
     }
 
-     @Override
-    public List<Motorbike> getByPartnerId(int partnerId) throws Exception { return dao.findByPartnerId(partnerId); }
+    @Override
+    public List<Motorbike> getByPartnerId(int partnerId) throws Exception {
+        return dao.findByPartnerId(partnerId);
+    }
 }

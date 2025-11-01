@@ -43,15 +43,15 @@ public class AdminOrderDAO implements IAdminOrderDAO {
         String where = buildWhere(status, kw, from, to, ps);
 
         String sql =
-            "SELECT * FROM (" +
-            "  SELECT s.order_id, s.customer_id, s.customer_name, s.start_date, s.end_date, " +
-            "         s.order_total, s.order_status, s.order_created_at, s.total_paid, s.payment_count, s.last_paid_at, s.amount_due, " +
-            "         ROW_NUMBER() OVER (ORDER BY s.order_created_at DESC) rn " +
-            "  FROM vw_OrderPaymentSummary s " + where +
-            ") t WHERE t.rn BETWEEN ? AND ?";
+                "SELECT * FROM (" +
+                        "  SELECT s.order_id, s.customer_id, s.customer_name, s.start_date, s.end_date, " +
+                        "         s.order_total, s.order_status, s.order_created_at, s.total_paid, s.payment_count, s.last_paid_at, s.amount_due, " +
+                        "         ROW_NUMBER() OVER (ORDER BY s.order_created_at DESC) rn " +
+                        "  FROM vw_OrderPaymentSummary s " + where +
+                        ") t WHERE t.rn BETWEEN ? AND ?";
 
         int start = (page - 1) * pageSize + 1;
-        int end   = page * pageSize;
+        int end = page * pageSize;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {
@@ -128,9 +128,9 @@ public class AdminOrderDAO implements IAdminOrderDAO {
     @Override
     public List<model.OrderDetailItem> findOrderItems(int orderId) throws Exception {
         String sql =
-            "SELECT d.detail_id, d.bike_id, m.bike_name, m.license_plate, d.price_per_day, d.quantity, d.line_total " +
-            "FROM OrderDetails d JOIN Motorbikes m ON m.bike_id = d.bike_id " +
-            "WHERE d.order_id = ? ORDER BY d.detail_id";
+                "SELECT d.detail_id, d.bike_id, m.bike_name, m.license_plate, d.price_per_day, d.quantity, d.line_total " +
+                        "FROM OrderDetails d JOIN Motorbikes m ON m.bike_id = d.bike_id " +
+                        "WHERE d.order_id = ? ORDER BY d.detail_id";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {
@@ -156,8 +156,8 @@ public class AdminOrderDAO implements IAdminOrderDAO {
     @Override
     public List<model.PaymentInfo> findPayments(int orderId) throws Exception {
         String sql =
-            "SELECT payment_id, payment_date, amount, method, status, verified_by, verified_at " +
-            "FROM Payments WHERE order_id = ? ORDER BY payment_date DESC, payment_id DESC";
+                "SELECT payment_id, payment_date, amount, method, status, verified_by, verified_at " +
+                        "FROM Payments WHERE order_id = ? ORDER BY payment_date DESC, payment_id DESC";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {
@@ -180,13 +180,14 @@ public class AdminOrderDAO implements IAdminOrderDAO {
             }
         }
     }
+
     @Override
     public Optional<model.RefundInfo> findLatestRefund(int orderId) throws Exception {
         String sql =
-            "SELECT TOP 1 inspection_id, order_id, admin_id, bike_condition, damage_notes, " +
-            "       damage_fee, refund_amount, refund_method, refund_status, inspected_at " +
-            "FROM RefundInspections WHERE order_id = ? " +
-            "ORDER BY inspected_at DESC, inspection_id DESC";
+                "SELECT TOP 1 inspection_id, order_id, admin_id, bike_condition, damage_notes, " +
+                        "       damage_fee, refund_amount, refund_method, refund_status, inspected_at " +
+                        "FROM RefundInspections WHERE order_id = ? " +
+                        "ORDER BY inspected_at DESC, inspection_id DESC";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {

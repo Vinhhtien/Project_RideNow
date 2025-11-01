@@ -325,32 +325,32 @@
             .partner-create-page .container {
                 padding: 1rem;
             }
-            
+
             .partner-create-page .card-body {
                 padding: 1.5rem;
             }
-            
+
             .partner-create-page .card-header {
                 padding: 1.25rem 1.5rem;
             }
-            
+
             .partner-create-page .form-actions {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
+
             .partner-create-page .btn {
                 justify-content: center;
                 padding: 0.875rem 1.5rem;
             }
-            
+
             .partner-create-page .info-item {
                 flex-direction: column;
                 text-align: center;
                 gap: 1rem;
                 padding: 1.25rem;
             }
-            
+
             .partner-create-page .info-item::before {
                 width: 100%;
                 height: 4px;
@@ -358,7 +358,7 @@
                 left: 0;
                 border-radius: 4px 4px 0 0;
             }
-            
+
             .partner-create-page .info-item i {
                 width: 50px;
                 height: 50px;
@@ -373,91 +373,91 @@
                 border-color: #374151;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             }
-            
+
             .partner-create-page .card-header {
                 background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
                 border-color: #4b5563;
             }
-            
+
             .partner-create-page .card-title {
                 color: #f9fafb;
             }
-            
+
             .partner-create-page .card-title i {
                 color: #818cf8;
             }
-            
+
             .partner-create-page .form-label {
                 color: #e5e7eb;
             }
-            
+
             .partner-create-page .form-input {
                 background: #374151;
                 border-color: #4b5563;
                 color: #f9fafb;
             }
-            
+
             .partner-create-page .form-input:focus {
                 border-color: #818cf8;
                 background: #404a5c;
             }
-            
+
             .partner-create-page .form-hint {
                 color: #9ca3af;
             }
-            
+
             .partner-create-page .info-card {
                 background: linear-gradient(135deg, #1f2937 0%, #2d3748 100%);
                 border-color: #4b5563;
             }
-            
+
             .partner-create-page .info-card .card-header {
                 background: linear-gradient(135deg, #2d3748 0%, #374151 100%);
                 border-color: #4b5563;
             }
-            
+
             .partner-create-page .info-card .card-title {
                 color: #e5e7eb;
             }
-            
+
             .partner-create-page .info-card .card-title i {
                 color: #818cf8;
             }
-            
+
             .partner-create-page .info-item {
                 background: rgba(55, 65, 81, 0.8);
                 border-color: #4b5563;
             }
-            
+
             .partner-create-page .info-item::before {
                 background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
             }
-            
+
             .partner-create-page .info-item:hover {
                 background: rgba(55, 65, 81, 0.95);
                 border-color: #6366f1;
             }
-            
+
             .partner-create-page .info-item i {
                 color: #818cf8;
                 background: linear-gradient(135deg, #3730a3 0%, #312e81 100%);
                 box-shadow: 0 4px 12px rgba(129, 140, 248, 0.2);
             }
-            
+
             .partner-create-page .info-content strong {
                 color: #e5e7eb;
             }
-            
+
             .partner-create-page .info-content span {
                 color: #d1d5db;
             }
-            
+
             .partner-create-page .alert-success {
                 background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
                 color: #d1fae5;
                 border-color: #047857;
             }
-            
+
             .partner-create-page .alert-error {
                 background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
                 color: #fecaca;
@@ -467,267 +467,267 @@
     </style>
 </head>
 <body class="admin">
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-        <div class="brand">
-            <div class="brand-logo">
-                <i class="fas fa-motorcycle"></i>
-            </div>
-            <h1>RideNow Admin</h1>
+<!-- Sidebar Navigation -->
+<aside class="sidebar">
+    <div class="brand">
+        <div class="brand-logo">
+            <i class="fas fa-motorcycle"></i>
         </div>
-        
-        <nav class="sidebar-nav">
-            <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/partners" class="nav-item">
-                <i class="fas fa-handshake"></i>
-                <span>Partners</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item">
-                <i class="fas fa-users"></i>
-                <span>Customers</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item">
-                <i class="fas fa-motorcycle"></i>
-                <span>Motorbikes</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item">
-                <i class="fas fa-clipboard-list"></i>
-                <span>Orders</span>
-            </a>
-<!--            <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
+        <h1>RideNow Admin</h1>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/partners" class="nav-item">
+            <i class="fas fa-handshake"></i>
+            <span>Partners</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/customers" class="nav-item">
+            <i class="fas fa-users"></i>
+            <span>Customers</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item">
+            <i class="fas fa-motorcycle"></i>
+            <span>Motorbikes</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Orders</span>
+        </a>
+        <!--            <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
                 <i class="fas fa-money-check-alt"></i>
                 <span>Verify Payments</span>
             </a>-->
-            <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item">
-                <i class="fas fa-shipping-fast"></i>
-                <span>Vehicle Pickup</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/adminreturn" class="nav-item">
-                <i class="fas fa-undo-alt"></i>
-                <span>Vehicle Return</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/adminreturns" class="nav-item">
-                <i class="fas fa-clipboard-check"></i>
-                <span>Verify & Refund</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/reports" class="nav-item">
-                <i class="fas fa-chart-bar"></i>
-                <span>Reports</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/feedback" class="nav-item">
-                <i class="fas fa-comment-alt"></i>
-                <span>Feedback</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/logout" class="nav-item logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </nav>
-    </aside>
+        <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item">
+            <i class="fas fa-shipping-fast"></i>
+            <span>Vehicle Pickup</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/adminreturn" class="nav-item">
+            <i class="fas fa-undo-alt"></i>
+            <span>Vehicle Return</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/adminreturns" class="nav-item">
+            <i class="fas fa-clipboard-check"></i>
+            <span>Verify & Refund</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/reports" class="nav-item">
+            <i class="fas fa-chart-bar"></i>
+            <span>Reports</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/feedback" class="nav-item">
+            <i class="fas fa-comment-alt"></i>
+            <span>Feedback</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/logout" class="nav-item logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </nav>
+</aside>
 
-    <!-- Main Content -->
-    <main class="content partner-create-page">
-        <header class="content-header">
-            <div class="header-left">
-                <h1>Tạo Partner Mới</h1>
-                <div class="breadcrumb">
-                    <a href="${pageContext.request.contextPath}/admin/dashboard">Admin</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <a href="${pageContext.request.contextPath}/admin/partners">Partners</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <span class="active">Tạo mới</span>
-                </div>
+<!-- Main Content -->
+<main class="content partner-create-page">
+    <header class="content-header">
+        <div class="header-left">
+            <h1>Tạo Partner Mới</h1>
+            <div class="breadcrumb">
+                <a href="${pageContext.request.contextPath}/admin/dashboard">Admin</a>
+                <i class="fas fa-chevron-right"></i>
+                <a href="${pageContext.request.contextPath}/admin/partners">Partners</a>
+                <i class="fas fa-chevron-right"></i>
+                <span class="active">Tạo mới</span>
             </div>
-            <div class="header-right">
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <span>Administrator</span>
-                </div>
-            </div>
-        </header>
-
-        <div class="container">
-            <!-- Hiển thị thông báo -->
-            <c:if test="${not empty success}">
-                <div class="alert alert-success" role="alert" aria-live="assertive">
-                    <i class="fas fa-check-circle"></i> ${success}
-                </div>
-            </c:if>
-            <c:if test="${not empty error}">
-                <div class="alert alert-error" role="alert" aria-live="assertive">
-                    <i class="fas fa-exclamation-circle"></i> ${error}
-                </div>
-            </c:if>
-
-            <section class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Thông tin Partner</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form method="post" class="partner-form">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="username" class="form-label">
-                                    Username <span class="required">*</span>
-                                </label>
-                                <input type="text" id="username" name="username" value="${param.username}" 
-                                       class="form-input" required 
-                                       pattern="[a-zA-Z0-9._]{3,50}" 
-                                       title="3-50 ký tự, chỉ cho phép chữ, số, dấu chấm và gạch dưới">
-                                <div class="form-hint">3-50 ký tự, chỉ cho phép chữ, số, dấu chấm và gạch dưới</div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="companyName" class="form-label">
-                                    Tên công ty <span class="required">*</span>
-                                </label>
-                                <input type="text" id="companyName" name="companyName" value="${param.companyName}" 
-                                       class="form-input" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="address" class="form-label">Địa chỉ</label>
-                                <input type="text" id="address" name="address" value="${param.address}" 
-                                       class="form-input">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="phone" class="form-label">Số điện thoại</label>
-                                <input type="text" id="phone" name="phone" value="${param.phone}" 
-                                       class="form-input"
-                                       pattern="^[0-9 +()\-]{7,20}$" 
-                                       title="7-20 ký tự số, khoảng trắng, +, (), -">
-                                <div class="form-hint">7-20 ký tự số, khoảng trắng, +, (), -</div>
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Tạo Partner
-                            </button>
-                            <a href="${pageContext.request.contextPath}/admin/partners" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Quay lại
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </section>
-
-            <!-- Information Card - MÀU SẮC HÀI HÒA -->
-            <section class="card info-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Thông tin quan trọng</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="info-list">
-                        <div class="info-item">
-                            <i class="fas fa-key"></i>
-                            <div class="info-content">
-                                <strong>Mật khẩu mặc định:</strong>
-                                <span>1 (Partner nên đổi mật khẩu ngay sau khi đăng nhập)</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-user-shield"></i>
-                            <div class="info-content">
-                                <strong>Quyền hạn:</strong>
-                                <span>Partner có thể quản lý xe, đơn hàng và doanh thu của họ</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-bell"></i>
-                            <div class="info-content">
-                                <strong>Lưu ý quan trọng:</strong>
-                                <span>Partner sẽ nhận được email hướng dẫn sử dụng hệ thống</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </div>
-    </main>
+        <div class="header-right">
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <span>Administrator</span>
+            </div>
+        </div>
+    </header>
 
-    <script>
-        // Auto hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s ease';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
+    <div class="container">
+        <!-- Hiển thị thông báo -->
+        <c:if test="${not empty success}">
+            <div class="alert alert-success" role="alert" aria-live="assertive">
+                <i class="fas fa-check-circle"></i> ${success}
+            </div>
+        </c:if>
+        <c:if test="${not empty error}">
+            <div class="alert alert-error" role="alert" aria-live="assertive">
+                <i class="fas fa-exclamation-circle"></i> ${error}
+            </div>
+        </c:if>
+
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Thông tin Partner</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" class="partner-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="username" class="form-label">
+                                Username <span class="required">*</span>
+                            </label>
+                            <input type="text" id="username" name="username" value="${param.username}"
+                                   class="form-input" required
+                                   pattern="[a-zA-Z0-9._]{3,50}"
+                                   title="3-50 ký tự, chỉ cho phép chữ, số, dấu chấm và gạch dưới">
+                            <div class="form-hint">3-50 ký tự, chỉ cho phép chữ, số, dấu chấm và gạch dưới</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="companyName" class="form-label">
+                                Tên công ty <span class="required">*</span>
+                            </label>
+                            <input type="text" id="companyName" name="companyName" value="${param.companyName}"
+                                   class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address" class="form-label">Địa chỉ</label>
+                            <input type="text" id="address" name="address" value="${param.address}"
+                                   class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Số điện thoại</label>
+                            <input type="text" id="phone" name="phone" value="${param.phone}"
+                                   class="form-input"
+                                   pattern="^[0-9 +()\-]{7,20}$"
+                                   title="7-20 ký tự số, khoảng trắng, +, (), -">
+                            <div class="form-hint">7-20 ký tự số, khoảng trắng, +, (), -</div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Tạo Partner
+                        </button>
+                        <a href="${pageContext.request.contextPath}/admin/partners" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Information Card - MÀU SẮC HÀI HÒA -->
+        <section class="card info-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Thông tin quan trọng</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="info-list">
+                    <div class="info-item">
+                        <i class="fas fa-key"></i>
+                        <div class="info-content">
+                            <strong>Mật khẩu mặc định:</strong>
+                            <span>1 (Partner nên đổi mật khẩu ngay sau khi đăng nhập)</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-user-shield"></i>
+                        <div class="info-content">
+                            <strong>Quyền hạn:</strong>
+                            <span>Partner có thể quản lý xe, đơn hàng và doanh thu của họ</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-bell"></i>
+                        <div class="info-content">
+                            <strong>Lưu ý quan trọng:</strong>
+                            <span>Partner sẽ nhận được email hướng dẫn sử dụng hệ thống</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    // Auto hide alerts after 5 seconds
+    setTimeout(function () {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+
+    // Form validation and enhancement
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('.partner-form');
+        const inputs = form.querySelectorAll('.form-input');
+
+        // Real-time validation
+        inputs.forEach(input => {
+            input.addEventListener('blur', function () {
+                validateField(this);
             });
-        }, 5000);
 
-        // Form validation and enhancement
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('.partner-form');
-            const inputs = form.querySelectorAll('.form-input');
-            
-            // Real-time validation
-            inputs.forEach(input => {
-                input.addEventListener('blur', function() {
+            input.addEventListener('input', function () {
+                if (this.classList.contains('invalid')) {
                     validateField(this);
-                });
-                
-                input.addEventListener('input', function() {
-                    if (this.classList.contains('invalid')) {
-                        validateField(this);
-                    }
-                });
-            });
-            
-            function validateField(field) {
-                const isValid = field.checkValidity();
-                
-                if (field.value.trim() === '') {
-                    field.classList.remove('valid', 'invalid');
-                    return;
-                }
-                
-                if (isValid) {
-                    field.classList.remove('invalid');
-                    field.classList.add('valid');
-                } else {
-                    field.classList.remove('valid');
-                    field.classList.add('invalid');
-                }
-            }
-            
-            // Form submission enhancement
-            form.addEventListener('submit', function(e) {
-                let isValid = true;
-                
-                inputs.forEach(input => {
-                    validateField(input);
-                    if (input.classList.contains('invalid')) {
-                        isValid = false;
-                    }
-                });
-                
-                if (!isValid) {
-                    e.preventDefault();
-                    // Scroll to first invalid field
-                    const firstInvalid = form.querySelector('.invalid');
-                    if (firstInvalid) {
-                        firstInvalid.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'center' 
-                        });
-                    }
                 }
             });
         });
-    </script>
+
+        function validateField(field) {
+            const isValid = field.checkValidity();
+
+            if (field.value.trim() === '') {
+                field.classList.remove('valid', 'invalid');
+                return;
+            }
+
+            if (isValid) {
+                field.classList.remove('invalid');
+                field.classList.add('valid');
+            } else {
+                field.classList.remove('valid');
+                field.classList.add('invalid');
+            }
+        }
+
+        // Form submission enhancement
+        form.addEventListener('submit', function (e) {
+            let isValid = true;
+
+            inputs.forEach(input => {
+                validateField(input);
+                if (input.classList.contains('invalid')) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                // Scroll to first invalid field
+                const firstInvalid = form.querySelector('.invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }
+        });
+    });
+</script>
 </body>
 </html>

@@ -18,7 +18,11 @@ public class MotorbikeDetailServlet extends HttpServlet {
         String idStr = req.getParameter("bike_id");
         if (idStr == null || idStr.isBlank()) idStr = req.getParameter("id");
         if (idStr == null || idStr.isBlank()) return null;
-        try { return Integer.valueOf(idStr.trim()); } catch (Exception e) { return null; }
+        try {
+            return Integer.valueOf(idStr.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Override

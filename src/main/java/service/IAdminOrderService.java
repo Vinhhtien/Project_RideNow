@@ -11,10 +11,13 @@ import java.util.Optional;
 
 public interface IAdminOrderService {
     List<OrderSummary> findOrders(String status, String kw, Date from, Date to, int page, int pageSize);
+
     int countOrders(String status, String kw, Date from, Date to);
 
     Optional<OrderSummary> findOrderHeader(int orderId);
+
     List<OrderDetailItem> findOrderItems(int orderId);
+
     List<PaymentInfo> findPayments(int orderId);
 
     Optional<RefundInfo> findLatestRefund(int orderId);

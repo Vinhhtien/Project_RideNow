@@ -37,8 +37,8 @@ public class GoogleUtils {
         HttpURLConnection conn = (HttpURLConnection) new URL(GoogleConstants.TOKEN_URI).openConnection();
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
-        conn.setRequestProperty("Accept","application/json");
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        conn.setRequestProperty("Accept", "application/json");
 
         try (OutputStream os = conn.getOutputStream()) {
             os.write(data.getBytes(StandardCharsets.UTF_8));
@@ -65,7 +65,7 @@ public class GoogleUtils {
         String endpoint = GoogleConstants.USERINFO_URI; // v3
         HttpURLConnection conn = (HttpURLConnection) new URL(endpoint).openConnection();
         conn.setRequestProperty("Authorization", "Bearer " + accessToken);
-        conn.setRequestProperty("Accept","application/json");
+        conn.setRequestProperty("Accept", "application/json");
 
         String json = readAll(conn);
         // System.out.println("[GoogleUtils] userinfo json = " + json);
@@ -84,15 +84,20 @@ public class GoogleUtils {
     }
 
     // ===== helpers =====
-    private static String enc(String s){
-        try { return URLEncoder.encode(s,"UTF-8"); } catch(Exception e){ return ""; }
+    private static String enc(String s) {
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private static String readAll(HttpURLConnection conn) throws IOException {
         InputStream is = (conn.getResponseCode() >= 400) ? conn.getErrorStream() : conn.getInputStream();
         if (is == null) return "";
         try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            StringBuilder sb = new StringBuilder(); String line;
+            StringBuilder sb = new StringBuilder();
+            String line;
             while ((line = br.readLine()) != null) sb.append(line);
             return sb.toString();
         }

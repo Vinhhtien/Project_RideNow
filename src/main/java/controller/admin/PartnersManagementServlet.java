@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -25,11 +26,11 @@ public class PartnersManagementServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession();
         Account account = (Account) session.getAttribute("account");
-        
+
         // Kiểm tra đăng nhập và role admin
         if (account == null || !"admin".equalsIgnoreCase(account.getRole())) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -43,16 +44,16 @@ public class PartnersManagementServlet extends HttpServlet {
         } catch (Exception e) {
             req.setAttribute("error", "Không thể tải danh sách đối tác: " + e.getMessage());
         }
-        
+
         req.getRequestDispatcher("/admin/admin-partners-management.jsp").forward(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) 
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession();
         Account account = (Account) session.getAttribute("account");
-        
+
         // Kiểm tra đăng nhập và role admin
         if (account == null || !"admin".equalsIgnoreCase(account.getRole())) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -63,16 +64,16 @@ public class PartnersManagementServlet extends HttpServlet {
         handleDeletePartner(req, resp);
     }
 
-    private void handleDeletePartner(HttpServletRequest req, HttpServletResponse resp) 
+    private void handleDeletePartner(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         HttpSession session = req.getSession();
         String partnerIdStr = req.getParameter("partnerId");
-        
+
         if (partnerIdStr != null) {
             try {
                 int partnerId = Integer.parseInt(partnerIdStr);
                 boolean success = partnerAdminService.deletePartner(partnerId);
-                
+
                 if (success) {
                     session.setAttribute("success", "Xóa partner thành công!");
                 } else {
@@ -86,7 +87,7 @@ public class PartnersManagementServlet extends HttpServlet {
         } else {
             session.setAttribute("error", "Thiếu thông tin partner ID!");
         }
-        
+
         resp.sendRedirect(req.getContextPath() + "/admin/partners");
     }
 }

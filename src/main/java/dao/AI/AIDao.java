@@ -66,7 +66,9 @@ public class AIDao {
         return rows;
     }
 
-    /** Top N xe theo tên loại (Xe số / Xe ga / Phân khối lớn) */
+    /**
+     * Top N xe theo tên loại (Xe số / Xe ga / Phân khối lớn)
+     */
     public List<Map<String, Object>> topBikesByType(String typeName, int limit) {
         int n = Math.max(1, Math.min(limit, 10));
         String sql =
@@ -91,41 +93,43 @@ public class AIDao {
         return result;
     }
 
-    /** Tìm xe với nhiều điều kiện */
+    /**
+     * Tìm xe với nhiều điều kiện
+     */
     public List<Map<String, Object>> searchBikes(Map<String, String> conditions) {
         StringBuilder sql = new StringBuilder(
-            "SELECT M.bike_id, M.bike_name, M.price_per_day, M.description, " +
-            "M.license_plate, M.status, BT.type_name " +
-            "FROM Motorbikes M JOIN BikeTypes BT ON M.type_id = BT.type_id " +
-            "WHERE 1=1 "
+                "SELECT M.bike_id, M.bike_name, M.price_per_day, M.description, " +
+                        "M.license_plate, M.status, BT.type_name " +
+                        "FROM Motorbikes M JOIN BikeTypes BT ON M.type_id = BT.type_id " +
+                        "WHERE 1=1 "
         );
-        
+
         List<String> params = new ArrayList<>();
-        
+
         // Loại xe
         if (conditions.containsKey("type")) {
             sql.append(" AND BT.type_name = ?");
             params.add(conditions.get("type"));
         }
-        
+
         // Giá tối đa
         if (conditions.containsKey("max_price")) {
             sql.append(" AND M.price_per_day <= ?");
             params.add(conditions.get("max_price"));
         }
-        
+
         // Giá tối thiểu  
         if (conditions.containsKey("min_price")) {
             sql.append(" AND M.price_per_day >= ?");
             params.add(conditions.get("min_price"));
         }
-        
+
         // Trạng thái
         if (conditions.containsKey("status")) {
             sql.append(" AND M.status = ?");
             params.add(conditions.get("status"));
         }
-        
+
         // Từ khóa
         if (conditions.containsKey("keyword")) {
             sql.append(" AND (M.bike_name LIKE ? OR M.description LIKE ?)");
@@ -133,12 +137,12 @@ public class AIDao {
             params.add(keyword);
             params.add(keyword);
         }
-        
+
         sql.append(" ORDER BY M.price_per_day ASC");
-        
+
         System.out.println("DEBUG: Search SQL: " + sql.toString());
         System.out.println("DEBUG: Search params: " + params);
-        
+
         return select(sql.toString(), params);
     }
 
@@ -148,17 +152,17 @@ public class AIDao {
 
         // Lấy thông tin tables và columns
         String sql = """
-            SELECT 
-                t.TABLE_NAME, 
-                c.COLUMN_NAME, 
-                c.DATA_TYPE,
-                c.IS_NULLABLE,
-                COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') AS IS_IDENTITY
-            FROM INFORMATION_SCHEMA.TABLES t
-            JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME
-            WHERE t.TABLE_TYPE = 'BASE TABLE'
-            ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION
-        """;
+                    SELECT 
+                        t.TABLE_NAME, 
+                        c.COLUMN_NAME, 
+                        c.DATA_TYPE,
+                        c.IS_NULLABLE,
+                        COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') AS IS_IDENTITY
+                    FROM INFORMATION_SCHEMA.TABLES t
+                    JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME
+                    WHERE t.TABLE_TYPE = 'BASE TABLE'
+                    ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION
+                """;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -210,10 +214,10 @@ public class AIDao {
         if (sql == null) return false;
         String s = sql.trim().toUpperCase(Locale.ROOT);
         if (!s.startsWith("SELECT")) return false;
-        String t = s.replace("\n"," ").replace("\r"," ");
+        String t = s.replace("\n", " ").replace("\r", " ");
         if (t.contains(";")) return false;
-        String[] banned = {"--","/*","*/"," EXEC "," EXECUTE "," INSERT "," UPDATE "," DELETE "," MERGE ",
-                " DROP "," ALTER "," CREATE "," GRANT "," REVOKE "," DENY "," TRUNCATE "," XP_"," SP_","SYSOBJECTS","SYS.TABLES"};
+        String[] banned = {"--", "/*", "*/", " EXEC ", " EXECUTE ", " INSERT ", " UPDATE ", " DELETE ", " MERGE ",
+                " DROP ", " ALTER ", " CREATE ", " GRANT ", " REVOKE ", " DENY ", " TRUNCATE ", " XP_", " SP_", "SYSOBJECTS", "SYS.TABLES"};
         for (String b : banned) if (t.contains(b)) return false;
         return true;
     }

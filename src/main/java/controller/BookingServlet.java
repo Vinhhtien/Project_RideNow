@@ -12,7 +12,7 @@ import service.*;
 import java.io.IOException;
 import java.sql.Date;
 
-@WebServlet(name="BookingServlet", urlPatterns={"/customerbook"})
+@WebServlet(name = "BookingServlet", urlPatterns = {"/customerbook"})
 public class BookingServlet extends HttpServlet {
 
     private final IMotorbikeService bikeService = new MotorbikeService();
@@ -34,7 +34,7 @@ public class BookingServlet extends HttpServlet {
             // 2) Input
             int bikeId = Integer.parseInt(req.getParameter("bikeId"));
             Date start = Date.valueOf(req.getParameter("start"));
-            Date end   = Date.valueOf(req.getParameter("end"));
+            Date end = Date.valueOf(req.getParameter("end"));
 
             // 3) Kiểm tra xe có tồn tại
             MotorbikeListItem item = bikeService.getDetail(bikeId);

@@ -9,11 +9,12 @@ import java.util.List;
 
 public interface IMotorbikeService {
     List<Motorbike> findAll() throws Exception;
+
     List<Motorbike> findByTypeId(int typeId) throws Exception;
 
     List<MotorbikeListItem> search(Integer typeId, Date startDate, Date endDate,
                                    BigDecimal maxPrice, String keyword,
-                                   String sort, int page, int size) throws Exception; 
+                                   String sort, int page, int size) throws Exception;
 
     int count(Integer typeId, Date startDate, Date endDate,
               BigDecimal maxPrice, String keyword) throws Exception;
@@ -21,8 +22,8 @@ public interface IMotorbikeService {
     List<Motorbike> findAllByOwnerAccount(int accountId, String role) throws Exception;
 
     MotorbikeListItem getDetail(int bikeId) throws Exception;
-    
-    
-   // fix từ quý 
+
+
+    // fix từ quý
     List<Motorbike> getByPartnerId(int partnerId) throws Exception;
 }

@@ -3,6 +3,7 @@ package utils.AI;
 
 import okhttp3.*;
 import com.google.gson.*;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +13,7 @@ public class GeminiClient {
     private static final String MODEL = "gemini-2.5-flash";
     private static final String API_KEY = "AIzaSyCnAZscEuegrilZj5T_rRrsnlweHutKP94"; // <-- thay key của bạn
     private static final String ENDPOINT =
-        "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
+            "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
     private final OkHttpClient http = new OkHttpClient.Builder()
             .callTimeout(40, TimeUnit.SECONDS)

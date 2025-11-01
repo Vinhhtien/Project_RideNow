@@ -10,9 +10,9 @@ public class DBConnection {
     // Thông tin kết nối - ĐỔI lại cho đúng DB của bạn
     private static final String DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static final String URL =
-        "jdbc:sqlserver://localhost:1433;databaseName=MotorbikeRentalDB;encrypt=false;trustServerCertificate=true";
+            "jdbc:sqlserver://localhost:1433;databaseName=MotorbikeRentalDB;encrypt=false;trustServerCertificate=true";
     private static final String USER = "sa";
-    private static final String PASS = "12345";  
+    private static final String PASS = "12345";
 
     public static Connection getConnection() {
         Connection con = null;

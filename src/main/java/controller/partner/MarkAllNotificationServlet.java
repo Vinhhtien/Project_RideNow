@@ -4,6 +4,7 @@ package controller.partner;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,7 +12,7 @@ import java.sql.PreparedStatement;
 import model.Account;
 import utils.DBConnection;
 
-@WebServlet(name="MarkAllNotificationServlet", urlPatterns={"/partner/notifications/mark-all"})
+@WebServlet(name = "MarkAllNotificationServlet", urlPatterns = {"/partner/notifications/mark-all"})
 public class MarkAllNotificationServlet extends HttpServlet {
 
     @Override
@@ -30,7 +31,8 @@ public class MarkAllNotificationServlet extends HttpServlet {
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, acc.getAccountId());
             updated = ps.executeUpdate();
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
 
         resp.setContentType("application/json; charset=UTF-8");
         resp.getWriter().write("{\"ok\":true,\"updated\":" + updated + "}");

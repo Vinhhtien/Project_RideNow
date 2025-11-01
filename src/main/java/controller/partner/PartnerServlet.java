@@ -4,6 +4,7 @@ package controller.partner;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -106,7 +107,10 @@ public class PartnerServlet extends HttpServlet {
                 int partnerId = 0;
                 String raw = req.getParameter("partnerId");
                 if (raw != null && !raw.trim().isEmpty()) {
-                    try { partnerId = Integer.parseInt(raw.trim()); } catch (NumberFormatException ignored) {}
+                    try {
+                        partnerId = Integer.parseInt(raw.trim());
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
                 if (partnerId == 0) {
                     Partner cur = partnerService.getByAccountId(acc.getAccountId());
@@ -194,7 +198,7 @@ public class PartnerServlet extends HttpServlet {
                 } else {
                     boolean ok = partnerService.updatePassword(acc.getAccountId(), newPwd);
                     if (ok) req.setAttribute("pwd_msg", "Cập nhật mật khẩu thành công.");
-                    else     req.setAttribute("pwd_error", "Cập nhật mật khẩu thất bại.");
+                    else req.setAttribute("pwd_error", "Cập nhật mật khẩu thất bại.");
                 }
 
                 Partner p = partnerService.getByAccountId(acc.getAccountId());

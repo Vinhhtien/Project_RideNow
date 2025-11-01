@@ -34,10 +34,10 @@ public class CartItem {
         } else {
             this.days = 0;
         }
-        
+
         // Tính subtotal
         this.subtotal = pricePerDay.multiply(BigDecimal.valueOf(this.days));
-        
+
         // Tính tiền cọc
         if (typeName != null) {
             String t = typeName.toLowerCase();
@@ -52,39 +52,65 @@ public class CartItem {
     }
 
     // === getters ===
-    public int getBikeId() { return bikeId; }
-    public String getBikeName() { return bikeName; }
-    public BigDecimal getPricePerDay() { return pricePerDay; }
-    public String getTypeName() { return typeName; }
-    public Date getStartDate() { return startDate; }
-    public Date getEndDate() { return endDate; }
-    public int getDays() { return days; }
-    public BigDecimal getSubtotal() { return subtotal; }
-    public BigDecimal getDeposit() { return deposit; }
+    public int getBikeId() {
+        return bikeId;
+    }
+
+    public String getBikeName() {
+        return bikeName;
+    }
+
+    public BigDecimal getPricePerDay() {
+        return pricePerDay;
+    }
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public int getDays() {
+        return days;
+    }
+
+    public BigDecimal getSubtotal() {
+        return subtotal;
+    }
+
+    public BigDecimal getDeposit() {
+        return deposit;
+    }
 
     // === setters ===
-    public void setStartDate(Date startDate) { 
-        this.startDate = startDate; 
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
         calculateValues();
     }
-    
-    public void setEndDate(Date endDate) { 
-        this.endDate = endDate; 
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
         calculateValues();
     }
-    
-    public void setDays(int days) { 
-        this.days = days; 
+
+    public void setDays(int days) {
+        this.days = days;
     }
-    
-    public void setSubtotal(BigDecimal subtotal) { 
-        this.subtotal = subtotal; 
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
     }
-    
-    public void setDeposit(BigDecimal deposit) { 
-        this.deposit = deposit; 
+
+    public void setDeposit(BigDecimal deposit) {
+        this.deposit = deposit;
     }
-    
+
     // Phương thức cập nhật toàn bộ ngày
     public void updateDates(Date newStart, Date newEnd) {
         this.startDate = newStart;

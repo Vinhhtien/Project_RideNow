@@ -3,6 +3,7 @@ package controller;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 
 import model.Account;
@@ -19,8 +20,14 @@ public class CustomerProfileServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         Account acc = (Account) req.getSession().getAttribute("account");
-        if (acc == null) { resp.sendRedirect(req.getContextPath() + "/login"); return; }
-        if (!"customer".equalsIgnoreCase(acc.getRole())) { resp.sendRedirect(req.getContextPath() + "/home.jsp"); return; }
+        if (acc == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+        if (!"customer".equalsIgnoreCase(acc.getRole())) {
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
+        }
         try {
             Customer c = service.getProfile(acc.getAccountId());
             req.setAttribute("profile", c);
@@ -34,15 +41,21 @@ public class CustomerProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         Account acc = (Account) req.getSession().getAttribute("account");
-        if (acc == null) { resp.sendRedirect(req.getContextPath() + "/login"); return; }
-        if (!"customer".equalsIgnoreCase(acc.getRole())) { resp.sendRedirect(req.getContextPath() + "/home.jsp"); return; }
+        if (acc == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+        if (!"customer".equalsIgnoreCase(acc.getRole())) {
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
+        }
 
         String action = req.getParameter("action");
         if ("changePassword".equalsIgnoreCase(action)) {
             // ===== ĐỔI MẬT KHẨU =====
             String current = req.getParameter("current_pw");
-            String npw     = req.getParameter("new_pw");
-            String cfpw    = req.getParameter("confirm_pw");
+            String npw = req.getParameter("new_pw");
+            String cfpw = req.getParameter("confirm_pw");
 
             try {
                 if (current == null || current.isBlank()

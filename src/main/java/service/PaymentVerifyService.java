@@ -25,7 +25,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
     private final IOrderManageDao orderDao = new OrderManageDao();
     private final INotificationDao notificationDao = new NotificationDao();
     private final INotificationService notificationService = new NotificationService();
-    
+
     @Override
     public List<Object[]> getPendingPayments() {
         try {
@@ -39,7 +39,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             return List.of();
         }
     }
-  
+
     @Override
     public boolean verifyPayment(int paymentId, int adminId) {
         Connection con = null;
@@ -86,8 +86,8 @@ public class PaymentVerifyService implements IPaymentVerifyService {
 
             if (accountId > 0) {
                 notificationDao.createNotification(accountId,
-                    "Thanh toán thành công",
-                    "Đơn hàng #" + orderId + " đã được xác nhận thanh toán. Vui lòng đến nhận xe theo lịch hẹn!");
+                        "Thanh toán thành công",
+                        "Đơn hàng #" + orderId + " đã được xác nhận thanh toán. Vui lòng đến nhận xe theo lịch hẹn!");
                 System.out.println("DEBUG: Notification created successfully");
             }
 
@@ -120,8 +120,8 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             System.err.println("ERROR: " + e.getMessage());
 
             if (con != null) {
-                try { 
-                    con.rollback(); 
+                try {
+                    con.rollback();
                     System.out.println("DEBUG: Transaction rolled back");
                 } catch (SQLException ex) {
                     System.err.println("ERROR: Rollback failed: " + ex.getMessage());
@@ -131,9 +131,9 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             return false;
         } finally {
             if (con != null) {
-                try { 
-                    con.setAutoCommit(true); 
-                    con.close(); 
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
                     System.out.println("DEBUG: Connection closed");
                 } catch (SQLException e) {
                     System.err.println("ERROR: Connection close failed: " + e.getMessage());
@@ -148,7 +148,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
         try {
             System.out.println("=== START SENDING PAYMENT CONFIRMATION EMAIL ===");
             System.out.println("Payment ID: " + paymentId);
-            
+
             PaymentMailDTO mailInfo = getPaymentMailInfo(paymentId);
             if (mailInfo == null) {
                 System.out.println("❌ No mail info found for payment: " + paymentId);
@@ -167,7 +167,7 @@ public class PaymentVerifyService implements IPaymentVerifyService {
             // GỬI EMAIL
             sendVerificationEmail(mailInfo, baseUrl);
             System.out.println("✅ Email sent successfully to: " + mailInfo.customerEmail);
-            
+
         } catch (Exception e) {
             System.err.println("❌ Email sending failed: " + e.getMessage());
             e.printStackTrace();
@@ -176,21 +176,21 @@ public class PaymentVerifyService implements IPaymentVerifyService {
 
     private PaymentMailDTO getPaymentMailInfo(int paymentId) throws SQLException {
         String sql = "SELECT p.order_id, c.full_name, c.email, p.amount, p.method, " +
-                    "r.total_price, r.start_date, r.end_date, p.payment_date " +
-                    "FROM Payments p " +
-                    "JOIN RentalOrders r ON r.order_id = p.order_id " +
-                    "JOIN Customers c ON c.customer_id = r.customer_id " +
-                    "WHERE p.payment_id = ?";
-        
+                "r.total_price, r.start_date, r.end_date, p.payment_date " +
+                "FROM Payments p " +
+                "JOIN RentalOrders r ON r.order_id = p.order_id " +
+                "JOIN Customers c ON c.customer_id = r.customer_id " +
+                "WHERE p.payment_id = ?";
+
         System.out.println("🔍 Executing SQL for payment: " + paymentId);
-        
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, paymentId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     System.out.println("✅ Found customer: " + rs.getString("email"));
-                    
+
                     PaymentMailDTO dto = new PaymentMailDTO();
                     dto.orderId = rs.getInt("order_id");
                     dto.customerName = rs.getString("full_name");
@@ -200,8 +200,8 @@ public class PaymentVerifyService implements IPaymentVerifyService {
                     dto.orderTotal = rs.getBigDecimal("total_price");
                     dto.startDate = rs.getDate("start_date").toLocalDate();
                     dto.endDate = rs.getDate("end_date").toLocalDate();
-                    dto.paymentDate = rs.getTimestamp("payment_date") != null ? 
-                                     rs.getTimestamp("payment_date").toLocalDateTime() : null;
+                    dto.paymentDate = rs.getTimestamp("payment_date") != null ?
+                            rs.getTimestamp("payment_date").toLocalDateTime() : null;
                     return dto;
                 } else {
                     System.out.println("❌ No data found for payment: " + paymentId);
@@ -214,65 +214,65 @@ public class PaymentVerifyService implements IPaymentVerifyService {
     private void sendVerificationEmail(PaymentMailDTO dto, String baseUrl) throws Exception {
         String subject = "RideNow – Đơn #" + dto.orderId + " đã được xác nhận";
         String link = baseUrl + "/myorders?orderId=" + dto.orderId;
-        
+
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
 
         String htmlContent = """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">RideNow</h1>
-                        <p style="color: #6b7280; margin: 5px 0 0 0;">Xác nhận thanh toán thành công</p>
-                    </div>
-                    
-                    <p>Chào <strong>%s</strong>,</p>
-                    <p>Đơn thuê xe <strong>#%d</strong> của bạn đã được xác nhận thanh toán thành công.</p>
-                    
-                    <table style="width: 100%%; border-collapse: collapse; margin: 20px 0;">
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Khoảng thuê</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">%s → %s</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Số tiền đã thanh toán</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">%s (%s)</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Tổng giá trị đơn</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Thời điểm thanh toán</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
-                        </tr>
-                    </table>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="%s" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                            Xem chi tiết đơn hàng
-                        </a>
-                    </div>
-                    
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                        <p style="margin: 0; color: #6b7280;">
-                            Trân trọng,<br>
-                            <strong>Đội ngũ RideNow</strong>
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        """.formatted(
-            dto.customerName,
-            dto.orderId,
-            dto.startDate.format(dateFormatter),
-            dto.endDate.format(dateFormatter),
-            dto.amount, dto.method,
-            dto.orderTotal,
-            dto.paymentDate != null ? dto.paymentDate.format(dateTimeFormatter) : "N/A",
-            link
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h1 style="color: #2563eb; margin: 0;">RideNow</h1>
+                                <p style="color: #6b7280; margin: 5px 0 0 0;">Xác nhận thanh toán thành công</p>
+                            </div>
+                
+                            <p>Chào <strong>%s</strong>,</p>
+                            <p>Đơn thuê xe <strong>#%d</strong> của bạn đã được xác nhận thanh toán thành công.</p>
+                
+                            <table style="width: 100%%; border-collapse: collapse; margin: 20px 0;">
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Khoảng thuê</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">%s → %s</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Số tiền đã thanh toán</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">%s (%s)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Tổng giá trị đơn</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd; background-color: #f9fafb;"><strong>Thời điểm thanh toán</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">%s</td>
+                                </tr>
+                            </table>
+                
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="%s" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                                    Xem chi tiết đơn hàng
+                                </a>
+                            </div>
+                
+                            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                                <p style="margin: 0; color: #6b7280;">
+                                    Trân trọng,<br>
+                                    <strong>Đội ngũ RideNow</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                """.formatted(
+                dto.customerName,
+                dto.orderId,
+                dto.startDate.format(dateFormatter),
+                dto.endDate.format(dateFormatter),
+                dto.amount, dto.method,
+                dto.orderTotal,
+                dto.paymentDate != null ? dto.paymentDate.format(dateTimeFormatter) : "N/A",
+                link
         );
 
         System.out.println("📧 Sending email to: " + dto.customerEmail);

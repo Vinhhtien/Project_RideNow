@@ -1,95 +1,112 @@
 
 .motor-page {
-  background-color: #f8fafc;
-  min-height: 100vh;
-  overflow-x: hidden;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* KPI Grid */
 .motor-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  padding: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    padding: 2rem;
 }
 
 .motor-kpi-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  padding: 1.25rem 1rem;
-  gap: 1rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1rem;
+    gap: 1rem;
 }
 
 .motor-kpi-card .kpi-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
 }
 
-.motor-kpi-card.total .kpi-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.motor-kpi-card.available .kpi-icon { background: linear-gradient(135deg, #10b981, #059669); }
-.motor-kpi-card.rented .kpi-icon { background: linear-gradient(135deg, #60a5fa, #2563eb); }
-.motor-kpi-card.maintenance .kpi-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.motor-kpi-card.partners .kpi-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.motor-kpi-card.admins .kpi-icon { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.motor-kpi-card.total .kpi-icon {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.motor-kpi-card.available .kpi-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.motor-kpi-card.rented .kpi-icon {
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+}
+
+.motor-kpi-card.maintenance .kpi-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.motor-kpi-card.partners .kpi-icon {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.motor-kpi-card.admins .kpi-icon {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
 
 /* Filter Toolbar */
 .motor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1rem;
-  margin: 0 2rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    margin: 0 2rem 1rem;
 }
 
 .motor-toolbar label {
-  font-size: 0.85rem;
-  color: var(--gray-600);
-  display: block;
-  margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    display: block;
+    margin-bottom: 0.25rem;
 }
 
 .motor-toolbar select {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--gray-300);
-  border-radius: 8px;
-  background: white;
-  font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    background: white;
+    font-size: 0.875rem;
 }
 
 /* Table */
 .motor-table-section {
-  padding: 0 2rem 2rem;
+    padding: 0 2rem 2rem;
 }
 
 .motor-table th, .motor-table td {
-  padding: 0.875rem 1rem;
-  text-align: left;
+    padding: 0.875rem 1rem;
+    text-align: left;
 }
 
 .motor-table tr:hover {
-  background-color: #f9fafb;
+    background-color: #f9fafb;
 }
 
 .motor-table th {
-  background: #f8fafc;
-  font-weight: 600;
-  color: #475569;
-  font-size: 0.875rem;
-  border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 /* Buttons */
 .btn-sm {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
 }

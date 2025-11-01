@@ -5,6 +5,7 @@ package controller.admin;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -45,8 +46,8 @@ public class AdminBroadcastNotificationServlet extends HttpServlet {
             return;
         }
 
-        String title     = safeTrim(req.getParameter("title"));
-        String message   = safeTrim(req.getParameter("message"));
+        String title = safeTrim(req.getParameter("title"));
+        String message = safeTrim(req.getParameter("message"));
         // dùng cùng ô "username" cho cả username hoặc company_name
         String recipient = safeTrim(req.getParameter("username"));
 
@@ -59,25 +60,25 @@ public class AdminBroadcastNotificationServlet extends HttpServlet {
         boolean hasRecipient = recipient != null && !recipient.isEmpty();
 
         String sqlAll = """
-            INSERT INTO Notifications (account_id, title, message, is_read, created_at)
-            SELECT DISTINCT a.account_id, ?, ?, 0, SYSDATETIME()
-            FROM Accounts a
-            JOIN Partners p ON p.account_id = a.account_id
-            WHERE a.role = 'partner'
-            """;
+                INSERT INTO Notifications (account_id, title, message, is_read, created_at)
+                SELECT DISTINCT a.account_id, ?, ?, 0, SYSDATETIME()
+                FROM Accounts a
+                JOIN Partners p ON p.account_id = a.account_id
+                WHERE a.role = 'partner'
+                """;
 
         // So khớp không phân biệt hoa/thường và loại bỏ khoảng trắng hai đầu
         String sqlTarget = """
-            INSERT INTO Notifications (account_id, title, message, is_read, created_at)
-            SELECT DISTINCT a.account_id, ?, ?, 0, SYSDATETIME()
-            FROM Accounts a
-            JOIN Partners p ON p.account_id = a.account_id
-            WHERE a.role = 'partner'
-              AND (
-                    LOWER(LTRIM(RTRIM(a.username))) = LOWER(LTRIM(RTRIM(?))) OR
-                    LOWER(LTRIM(RTRIM(COALESCE(p.company_name, '')))) = LOWER(LTRIM(RTRIM(?)))
-                  )
-            """;
+                INSERT INTO Notifications (account_id, title, message, is_read, created_at)
+                SELECT DISTINCT a.account_id, ?, ?, 0, SYSDATETIME()
+                FROM Accounts a
+                JOIN Partners p ON p.account_id = a.account_id
+                WHERE a.role = 'partner'
+                  AND (
+                        LOWER(LTRIM(RTRIM(a.username))) = LOWER(LTRIM(RTRIM(?))) OR
+                        LOWER(LTRIM(RTRIM(COALESCE(p.company_name, '')))) = LOWER(LTRIM(RTRIM(?)))
+                      )
+                """;
 
         int inserted = 0;
         try (Connection c = DBConnection.getConnection();
@@ -107,5 +108,7 @@ public class AdminBroadcastNotificationServlet extends HttpServlet {
         }
     }
 
-    private static String safeTrim(String s) { return s == null ? null : s.trim(); }
+    private static String safeTrim(String s) {
+        return s == null ? null : s.trim();
+    }
 }

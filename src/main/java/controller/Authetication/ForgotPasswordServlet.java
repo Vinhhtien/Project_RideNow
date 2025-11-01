@@ -3,12 +3,14 @@ package controller.Authetication;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.sql.*;
+
 import utils.DBConnection;
 import utils.EmailUtil;
 
-@WebServlet(name="ForgotPasswordServlet", urlPatterns={"/forgot"})
+@WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot"})
 public class ForgotPasswordServlet extends HttpServlet {
 
     @Override
@@ -29,14 +31,14 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
 
         final String sqlFindAcc =
-            "SELECT a.account_id, c.full_name " +
-            "FROM Accounts a JOIN Customers c ON c.account_id = a.account_id " +
-            "WHERE c.email = ?";
+                "SELECT a.account_id, c.full_name " +
+                        "FROM Accounts a JOIN Customers c ON c.account_id = a.account_id " +
+                        "WHERE c.email = ?";
 
         // ĐÚNG tên bảng + cột ở DB: Password_Reset_Tokens + expire_at
         final String sqlInsertTok =
-            "INSERT INTO Password_Reset_Tokens(account_id, token, expire_at) " +
-            "VALUES(?, ?, DATEADD(HOUR, 1, GETDATE()))";
+                "INSERT INTO Password_Reset_Tokens(account_id, token, expire_at) " +
+                        "VALUES(?, ?, DATEADD(HOUR, 1, GETDATE()))";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sqlFindAcc)) {
@@ -60,11 +62,11 @@ public class ForgotPasswordServlet extends HttpServlet {
                             .replace("/forgot", "") + "/resetpassword?token=" + token;
 
                     EmailUtil.sendMail(
-                        email,
-                        "Đặt lại mật khẩu RideNow",
-                        "Chào " + name + ",\n\n" +
-                        "Nhấn vào liên kết để đặt lại mật khẩu (hạn 60 phút):\n" +
-                        link + "\n\nRideNow"
+                            email,
+                            "Đặt lại mật khẩu RideNow",
+                            "Chào " + name + ",\n\n" +
+                                    "Nhấn vào liên kết để đặt lại mật khẩu (hạn 60 phút):\n" +
+                                    link + "\n\nRideNow"
                     );
                 }
             }

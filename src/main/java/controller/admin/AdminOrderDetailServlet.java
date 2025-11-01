@@ -33,22 +33,69 @@ public class AdminOrderDetailServlet extends HttpServlet {
         private String adminNotes;
         private Timestamp inspectedAt;
 
-        public BigDecimal getRefundAmount() { return refundAmount; }
-        public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
-        public String getRefundMethod() { return refundMethod; }
-        public void setRefundMethod(String refundMethod) { this.refundMethod = refundMethod; }
-        public String getRefundStatus() { return refundStatus; }
-        public void setRefundStatus(String refundStatus) { this.refundStatus = refundStatus; }
-        public String getBikeCondition() { return bikeCondition; }
-        public void setBikeCondition(String bikeCondition) { this.bikeCondition = bikeCondition; }
-        public BigDecimal getDamageFee() { return damageFee; }
-        public void setDamageFee(BigDecimal damageFee) { this.damageFee = damageFee; }
-        public String getDamageNotes() { return damageNotes; }
-        public void setDamageNotes(String damageNotes) { this.damageNotes = damageNotes; }
-        public String getAdminNotes() { return adminNotes; }
-        public void setAdminNotes(String adminNotes) { this.adminNotes = adminNotes; }
-        public Timestamp getInspectedAt() { return inspectedAt; }
-        public void setInspectedAt(Timestamp inspectedAt) { this.inspectedAt = inspectedAt; }
+        public BigDecimal getRefundAmount() {
+            return refundAmount;
+        }
+
+        public void setRefundAmount(BigDecimal refundAmount) {
+            this.refundAmount = refundAmount;
+        }
+
+        public String getRefundMethod() {
+            return refundMethod;
+        }
+
+        public void setRefundMethod(String refundMethod) {
+            this.refundMethod = refundMethod;
+        }
+
+        public String getRefundStatus() {
+            return refundStatus;
+        }
+
+        public void setRefundStatus(String refundStatus) {
+            this.refundStatus = refundStatus;
+        }
+
+        public String getBikeCondition() {
+            return bikeCondition;
+        }
+
+        public void setBikeCondition(String bikeCondition) {
+            this.bikeCondition = bikeCondition;
+        }
+
+        public BigDecimal getDamageFee() {
+            return damageFee;
+        }
+
+        public void setDamageFee(BigDecimal damageFee) {
+            this.damageFee = damageFee;
+        }
+
+        public String getDamageNotes() {
+            return damageNotes;
+        }
+
+        public void setDamageNotes(String damageNotes) {
+            this.damageNotes = damageNotes;
+        }
+
+        public String getAdminNotes() {
+            return adminNotes;
+        }
+
+        public void setAdminNotes(String adminNotes) {
+            this.adminNotes = adminNotes;
+        }
+
+        public Timestamp getInspectedAt() {
+            return inspectedAt;
+        }
+
+        public void setInspectedAt(Timestamp inspectedAt) {
+            this.inspectedAt = inspectedAt;
+        }
     }
 
     @Override
@@ -111,13 +158,13 @@ public class AdminOrderDetailServlet extends HttpServlet {
 
     private RefundInfoDTO fetchLatestRefund(int orderId) {
         final String sql = """
-            SELECT TOP 1
-                   refund_amount, refund_method, refund_status,
-                   bike_condition, damage_fee, damage_notes, admin_notes, inspected_at
-            FROM RefundInspections
-            WHERE order_id = ?
-            ORDER BY inspected_at DESC, inspection_id DESC
-            """;
+                SELECT TOP 1
+                       refund_amount, refund_method, refund_status,
+                       bike_condition, damage_fee, damage_notes, admin_notes, inspected_at
+                FROM RefundInspections
+                WHERE order_id = ?
+                ORDER BY inspected_at DESC, inspection_id DESC
+                """;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);

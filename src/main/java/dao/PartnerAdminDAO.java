@@ -2,6 +2,7 @@ package dao;
 
 import model.Partner;
 import utils.DBConnection;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class PartnerAdminDAO implements IPartnerAdminDAO {
             ps.setString(1, username);
             ps.setString(2, rawPassword);
             ps.executeUpdate();
-            
+
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -51,7 +52,7 @@ public class PartnerAdminDAO implements IPartnerAdminDAO {
             ps.setString(4, phone);
             ps.setInt(5, adminId);
             ps.executeUpdate();
-            
+
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -82,35 +83,35 @@ public class PartnerAdminDAO implements IPartnerAdminDAO {
     }
 
     @Override
-public List<Partner> getAllPartners(Connection c) {
-    String sql = "SELECT p.*, a.username, a.password " +
+    public List<Partner> getAllPartners(Connection c) {
+        String sql = "SELECT p.*, a.username, a.password " +
                 "FROM Partners p " +
                 "JOIN Accounts a ON p.account_id = a.account_id " +
                 "ORDER BY p.partner_id DESC";
-    List<Partner> partners = new ArrayList<>();
-    
-    try (PreparedStatement ps = c.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            Partner partner = new Partner();
-            partner.setPartnerId(rs.getInt("partner_id"));
-            partner.setAccountId(rs.getInt("account_id"));
-            partner.setFullname(rs.getString("company_name")); // Map company_name -> fullName
-            partner.setAddress(rs.getString("address"));
-            partner.setPhone(rs.getString("phone"));
-            
-            // Xử lý admin_id có thể null
-            int adminId = rs.getInt("admin_id");
-            partner.setAdminId(rs.wasNull() ? null : adminId);
-            
-            partners.add(partner);
+        List<Partner> partners = new ArrayList<>();
+
+        try (PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Partner partner = new Partner();
+                partner.setPartnerId(rs.getInt("partner_id"));
+                partner.setAccountId(rs.getInt("account_id"));
+                partner.setFullname(rs.getString("company_name")); // Map company_name -> fullName
+                partner.setAddress(rs.getString("address"));
+                partner.setPhone(rs.getString("phone"));
+
+                // Xử lý admin_id có thể null
+                int adminId = rs.getInt("admin_id");
+                partner.setAdminId(rs.wasNull() ? null : adminId);
+
+                partners.add(partner);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi lấy danh sách partners: " + e.getMessage(), e);
         }
-    } catch (SQLException e) {
-        throw new RuntimeException("Lỗi lấy danh sách partners: " + e.getMessage(), e);
+        return partners;
     }
-    return partners;
-}
 
     @Override
     public int getAccountIdByPartnerId(Connection c, int partnerId) {

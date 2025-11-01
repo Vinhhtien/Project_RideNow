@@ -6,7 +6,7 @@ import model.Partner;
 
 public interface IPartnerDao {
 
-    /** 
+    /**
      * 1) Đăng nhập partner: trả về Partner nếu đúng user/pass, null nếu sai.
      */
     Partner login(String username, String password) throws Exception;
@@ -16,7 +16,9 @@ public interface IPartnerDao {
      * Trả về true nếu có bản ghi được cập nhật.
      */
     boolean updateAccountInfo(Partner partner) throws Exception;
+
     boolean updateAccountName(int accountId, String accountName);
+
     boolean updatePassword(int accountId, String newPassword);
 
     /**

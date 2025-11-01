@@ -3,24 +3,31 @@ package service;
 
 import dao.INotificationDao;
 import dao.NotificationDao;
+
 import java.sql.Connection;
 import java.util.ArrayList;
+
 import model.Notification;
 
 import java.util.List;
+
 import utils.DBConnection;
 
 public class NotificationService implements INotificationService {
     private final INotificationDao notificationDao = new NotificationDao();
 
-    /** Lấy tối đa `limit` thông báo chưa đọc để hiện toast nhanh. */
+    /**
+     * Lấy tối đa `limit` thông báo chưa đọc để hiện toast nhanh.
+     */
     @Override
     public List<Notification> getUnreadToasts(int accountId, int limit) {
         int lim = Math.max(1, Math.min(limit, 50)); // chặn limit quá lớn
         return notificationDao.findUnreadTop(accountId, lim);
     }
 
-    /** Lấy danh sách thông báo (mới → cũ), có phân trang + lọc. */
+    /**
+     * Lấy danh sách thông báo (mới → cũ), có phân trang + lọc.
+     */
     @Override
     public List<Notification> findByAccount(int accountId, int page, int size, String q, Boolean onlyUnread) {
         int p = Math.max(1, page);
@@ -29,12 +36,13 @@ public class NotificationService implements INotificationService {
         return notificationDao.findByAccount(accountId, p, s, query, onlyUnread);
     }
 
-    /** Đếm tổng số chưa đọc (hiển thị badge chuông). */
+    /**
+     * Đếm tổng số chưa đọc (hiển thị badge chuông).
+     */
 //    @Override
 //    public int countUnread(int accountId) {
 //        return notificationDao.countUnread(accountId);
 //    }
-    
     @Override
     public int countUnread(int accountId) {
         try (Connection c = DBConnection.getConnection()) {
@@ -43,7 +51,10 @@ public class NotificationService implements INotificationService {
             return 0;
         }
     }
-    /** NEW: lấy 1 thông báo theo id, kiểm tra thuộc về accountId (không phải thì trả null). */
+
+    /**
+     * NEW: lấy 1 thông báo theo id, kiểm tra thuộc về accountId (không phải thì trả null).
+     */
     @Override
     public Notification findByIdForAccount(int notificationId, int accountId) {
         if (notificationId <= 0) return null;
@@ -88,7 +99,8 @@ public class NotificationService implements INotificationService {
             List<Integer> ids = notificationDao.findPartnerAccountIdsByOrderId(c, orderId);
             if (ids == null || ids.isEmpty()) return 0;
             int[] res = notificationDao.createNotificationsBatch(c, ids, title, message);
-            int sum = 0; for (int r : res) sum += Math.max(0, r);
+            int sum = 0;
+            for (int r : res) sum += Math.max(0, r);
             return sum;
         } catch (Exception e) {
             return 0;
@@ -100,7 +112,8 @@ public class NotificationService implements INotificationService {
         List<Integer> ids = notificationDao.findPartnerAccountIdsByOrderId(c, orderId);
         if (ids == null || ids.isEmpty()) return 0;
         int[] res = notificationDao.createNotificationsBatch(c, ids, title, message);
-        int sum = 0; for (int r : res) sum += Math.max(0, r);
+        int sum = 0;
+        for (int r : res) sum += Math.max(0, r);
         return sum;
     }
 

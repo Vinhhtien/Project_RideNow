@@ -15,6 +15,6 @@ public interface ICustomerDao {
      *  Trả về true nếu đổi thành công (mật khẩu hiện tại đúng), ngược lại false. */
     boolean updatePassword(int accountId, String currentPw, String newPw) throws Exception;
     // LẤY TẤT CẢ KHÁCH HÀNG
-
+    public Customer findCustomerById(int customerId) throws Exception;
     List<model.Customer> findAll() throws Exception;
 }

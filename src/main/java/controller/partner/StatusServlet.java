@@ -4,6 +4,7 @@ package controller.partner;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 
 import model.Account;
@@ -33,7 +34,10 @@ public class StatusServlet extends HttpServlet {
 
         // Lấy nid từ query ?nid=...
         int nid = 0;
-        try { nid = Integer.parseInt(req.getParameter("nid")); } catch (Exception ignored) {}
+        try {
+            nid = Integer.parseInt(req.getParameter("nid"));
+        } catch (Exception ignored) {
+        }
 
         Notification n = null;
         if (nid > 0) {

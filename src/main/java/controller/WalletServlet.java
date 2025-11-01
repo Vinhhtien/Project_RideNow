@@ -12,7 +12,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet(name="WalletServlet", urlPatterns={"/wallet"})
+@WebServlet(name = "WalletServlet", urlPatterns = {"/wallet"})
 public class WalletServlet extends HttpServlet {
 
     public static class Tx {
@@ -24,22 +24,53 @@ public class WalletServlet extends HttpServlet {
         private Integer orderId;
 
         // Getters and Setters
-        public Integer getId() { return id; }
-        public void setId(Integer id) { this.id = id; }
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
         public BigDecimal getAmount() {
             return amount;
         }
+
         public void setAmount(BigDecimal amount) {
             this.amount = amount;
         }
-        public Timestamp getDate() { return date; }
-        public void setDate(Timestamp date) { this.date = date; }
-        public Integer getOrderId() { return orderId; }
-        public void setOrderId(Integer orderId) { this.orderId = orderId; }
+
+        public Timestamp getDate() {
+            return date;
+        }
+
+        public void setDate(Timestamp date) {
+            this.date = date;
+        }
+
+        public Integer getOrderId() {
+            return orderId;
+        }
+
+        public void setOrderId(Integer orderId) {
+            this.orderId = orderId;
+        }
     }
 
     @Override
@@ -69,12 +100,12 @@ public class WalletServlet extends HttpServlet {
         try (Connection con = DBConnection.getConnection()) {
             // Lấy lịch sử giao dịch từ Wallet_Transactions
             String transactionSql = """
-                SELECT wt.tx_id, wt.amount, wt.type, wt.description, wt.order_id, wt.created_at
-                FROM Wallet_Transactions wt
-                JOIN Wallets w ON wt.wallet_id = w.wallet_id
-                WHERE w.customer_id = ?
-                ORDER BY wt.created_at DESC
-                """;
+                    SELECT wt.tx_id, wt.amount, wt.type, wt.description, wt.order_id, wt.created_at
+                    FROM Wallet_Transactions wt
+                    JOIN Wallets w ON wt.wallet_id = w.wallet_id
+                    WHERE w.customer_id = ?
+                    ORDER BY wt.created_at DESC
+                    """;
 
             try (PreparedStatement ps = con.prepareStatement(transactionSql)) {
                 ps.setInt(1, customerId);

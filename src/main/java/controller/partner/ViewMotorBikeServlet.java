@@ -69,7 +69,7 @@ public class ViewMotorBikeServlet extends HttpServlet {
                     int bikeId = Integer.parseInt(bikeIdParam);
                     MotorbikeListItem bikeDetail = motorbikeService.getDetail(bikeId);
 
-                // ✅ Kiểm tra xe có thuộc partner hiện tại không
+                    // ✅ Kiểm tra xe có thuộc partner hiện tại không
                     boolean owned = false;
                     if (bikeDetail != null) {
                         List<Motorbike> myBikes = motorbikeService.getByPartnerId(partner.getPartnerId());

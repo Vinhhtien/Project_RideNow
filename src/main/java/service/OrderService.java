@@ -45,8 +45,8 @@ public class OrderService implements IOrderService {
             String overlapDetails = getOverlapDetails(bikeId, start, end);
             String professionalMessage =
                     "Xe không khả dụng trong khoảng thời gian đã chọn. "
-                  + "Xe đang được thuê bởi các đơn hàng sau: " + overlapDetails
-                  + ". Vui lòng chọn khoảng thời gian khác hoặc xe khác.";
+                            + "Xe đang được thuê bởi các đơn hàng sau: " + overlapDetails
+                            + ". Vui lòng chọn khoảng thời gian khác hoặc xe khác.";
             throw new IllegalStateException(professionalMessage);
         }
 
@@ -80,24 +80,26 @@ public class OrderService implements IOrderService {
         return orderId;
     }
 
-    /** Hiển thị chi tiết các đơn đang chồng lịch - Kết hợp logic từ cả hai phiên bản */
+    /**
+     * Hiển thị chi tiết các đơn đang chồng lịch - Kết hợp logic từ cả hai phiên bản
+     */
     private String getOverlapDetails(int bikeId, Date start, Date end) throws SQLException {
         String sql = """
-            SELECT 
-                ro.order_id, 
-                c.full_name, 
-                ro.start_date, 
-                ro.end_date,
-                ro.status
-            FROM RentalOrders ro
-            JOIN OrderDetails od ON ro.order_id = od.order_id
-            JOIN Customers c ON ro.customer_id = c.customer_id
-            WHERE od.bike_id = ?
-              AND ro.status IN ('pending','confirmed')
-              AND ro.pickup_status <> 'returned'
-              AND NOT (ro.end_date < ? OR ro.start_date > ?)
-            ORDER BY ro.start_date
-        """;
+                    SELECT 
+                        ro.order_id, 
+                        c.full_name, 
+                        ro.start_date, 
+                        ro.end_date,
+                        ro.status
+                    FROM RentalOrders ro
+                    JOIN OrderDetails od ON ro.order_id = od.order_id
+                    JOIN Customers c ON ro.customer_id = c.customer_id
+                    WHERE od.bike_id = ?
+                      AND ro.status IN ('pending','confirmed')
+                      AND ro.pickup_status <> 'returned'
+                      AND NOT (ro.end_date < ? OR ro.start_date > ?)
+                    ORDER BY ro.start_date
+                """;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -111,9 +113,9 @@ public class OrderService implements IOrderService {
                 while (rs.next()) {
                     if (!first) details.append("; ");
                     details.append("Đơn hàng #").append(rs.getInt("order_id"))
-                           .append(" (Khách hàng: ").append(rs.getString("full_name")).append(") từ ")
-                           .append(rs.getDate("start_date")).append(" đến ").append(rs.getDate("end_date"))
-                           .append(" [").append(rs.getString("status")).append("]");
+                            .append(" (Khách hàng: ").append(rs.getString("full_name")).append(") từ ")
+                            .append(rs.getDate("start_date")).append(" đến ").append(rs.getDate("end_date"))
+                            .append(" [").append(rs.getString("status")).append("]");
                     first = false;
                 }
                 if (details.length() == 0) details.append("Không tìm thấy thông tin chi tiết");
@@ -122,7 +124,9 @@ public class OrderService implements IOrderService {
         }
     }
 
-    /** Admin xác nhận đã giao xe cho khách - Kết hợp cả transaction và partner notification */
+    /**
+     * Admin xác nhận đã giao xe cho khách - Kết hợp cả transaction và partner notification
+     */
     public boolean confirmOrderPickup(int orderId, int adminId) {
         Connection con = null;
         try {
@@ -165,20 +169,26 @@ public class OrderService implements IOrderService {
             con.commit();
             return true;
         } catch (SQLException e) {
-            if (con != null) try { con.rollback(); } catch (SQLException ignored) {}
+            if (con != null) try {
+                con.rollback();
+            } catch (SQLException ignored) {
+            }
             System.err.println("[OrderService] confirmOrderPickup failed: " + e.getMessage());
             return false;
         } finally {
             if (con != null) {
-                try { 
-                    con.setAutoCommit(true); 
-                    con.close(); 
-                } catch (SQLException ignored) {}
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException ignored) {
+                }
             }
         }
     }
 
-    /** Lấy danh sách đơn chờ giao xe (phục vụ UI) - Kết hợp xử lý lỗi từ cả hai */
+    /**
+     * Lấy danh sách đơn chờ giao xe (phục vụ UI) - Kết hợp xử lý lỗi từ cả hai
+     */
     public List<Object[]> getOrdersForPickup() {
         try {
             if (orderDao instanceof OrderDao) {
@@ -198,13 +208,13 @@ public class OrderService implements IOrderService {
     @Override
     public boolean isBikeAvailable(int bikeId, Date start, Date end) throws SQLException {
         String sql = """
-            SELECT COUNT(*) AS cnt
-            FROM RentalOrders r
-            JOIN OrderDetails d ON d.order_id = r.order_id
-            WHERE d.bike_id = ?
-              AND r.status = 'confirmed'
-              AND NOT (r.end_date < ? OR r.start_date > ?)
-        """;
+                    SELECT COUNT(*) AS cnt
+                    FROM RentalOrders r
+                    JOIN OrderDetails d ON d.order_id = r.order_id
+                    WHERE d.bike_id = ?
+                      AND r.status = 'confirmed'
+                      AND NOT (r.end_date < ? OR r.start_date > ?)
+                """;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, bikeId);
@@ -216,18 +226,18 @@ public class OrderService implements IOrderService {
             }
         }
     }
-    
+
     @Override
     public List<OverlappedRange> getOverlappingRanges(int bikeId, Date start, Date end) throws SQLException {
         String sql = """
-            SELECT r.order_id, r.start_date, r.end_date
-            FROM RentalOrders r
-            JOIN OrderDetails d ON d.order_id = r.order_id
-            WHERE d.bike_id = ?
-              AND r.status = 'confirmed'
-              AND NOT (r.end_date < ? OR r.start_date > ?)
-            ORDER BY r.start_date
-        """;
+                    SELECT r.order_id, r.start_date, r.end_date
+                    FROM RentalOrders r
+                    JOIN OrderDetails d ON d.order_id = r.order_id
+                    WHERE d.bike_id = ?
+                      AND r.status = 'confirmed'
+                      AND NOT (r.end_date < ? OR r.start_date > ?)
+                    ORDER BY r.start_date
+                """;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, bikeId);
@@ -237,30 +247,30 @@ public class OrderService implements IOrderService {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(new OverlappedRange(
-                        rs.getInt("order_id"),
-                        rs.getDate("start_date"),
-                        rs.getDate("end_date")
+                            rs.getInt("order_id"),
+                            rs.getDate("start_date"),
+                            rs.getDate("end_date")
                     ));
                 }
             }
             return list;
         }
     }
-    
+
     // ===== API cho admin: check trùng lịch (loại trừ booking admin) =====
     @Override
     public boolean isBikeAvailableForAdmin(int bikeId, Date start, Date end) throws SQLException {
         String sql = """
-            SELECT COUNT(*) AS cnt
-            FROM RentalOrders r
-            JOIN OrderDetails d ON d.order_id = r.order_id
-            JOIN Customers c ON r.customer_id = c.customer_id
-            WHERE d.bike_id = ?
-              AND r.status = 'confirmed'
-              AND c.email != 'admin_booking@system.com'  -- Loại trừ các booking admin
-              AND NOT (r.end_date < ? OR r.start_date > ?)
-        """;
-        
+                    SELECT COUNT(*) AS cnt
+                    FROM RentalOrders r
+                    JOIN OrderDetails d ON d.order_id = r.order_id
+                    JOIN Customers c ON r.customer_id = c.customer_id
+                    WHERE d.bike_id = ?
+                      AND r.status = 'confirmed'
+                      AND c.email != 'admin_booking@system.com'  -- Loại trừ các booking admin
+                      AND NOT (r.end_date < ? OR r.start_date > ?)
+                """;
+
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, bikeId);
@@ -272,7 +282,7 @@ public class OrderService implements IOrderService {
             }
         }
     }
-    
+
     // ===== Tạo booking admin để đánh dấu xe đã được thuê =====
     @Override
     public boolean createAdminBooking(int bikeId, Date startDate, Date endDate, String note) throws SQLException {
@@ -283,7 +293,7 @@ public class OrderService implements IOrderService {
 
             // 1. Tìm hoặc tạo customer đặc biệt cho admin bookings
             int adminCustomerId = findOrCreateAdminCustomer(con);
-            
+
             // 2. Lấy giá xe
             BigDecimal pricePerDay = getBikePrice(bikeId, con);
             if (pricePerDay == null) {
@@ -329,7 +339,7 @@ public class OrderService implements IOrderService {
             con.commit();
             System.out.println("✅ Admin booking created successfully - Order #" + orderId + " for bike " + bikeId + " from " + startDate + " to " + endDate);
             return true;
-            
+
         } catch (SQLException e) {
             if (con != null) {
                 try {
@@ -370,7 +380,7 @@ public class OrderService implements IOrderService {
             ps.setString(1, "admin_booking");
             ps.setString(2, "system_password"); // Mật khẩu mặc định
             ps.executeUpdate();
-            
+
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
                 accountId = rs.getInt(1);
@@ -389,7 +399,7 @@ public class OrderService implements IOrderService {
             ps.setString(5, "Hệ thống");
             ps.setInt(6, 1); // admin_id = 1
             ps.executeUpdate();
-            
+
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
                 return rs.getInt(1);

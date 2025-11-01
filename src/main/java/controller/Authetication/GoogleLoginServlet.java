@@ -10,6 +10,7 @@ import utils.GoogleUtils;
 
 import java.io.IOException;
 import java.sql.*;
+
 import utils.PasswordUtil;
 
 @WebServlet(name = "GoogleLoginServlet", urlPatterns = {"/logingoogle"})
@@ -49,11 +50,11 @@ public class GoogleLoginServlet extends HttpServlet {
             // 3) Tìm account theo email
             Integer accId = null;
             String findSql = """
-                SELECT a.account_id
-                FROM Accounts a
-                JOIN Customers c ON c.account_id = a.account_id
-                WHERE c.email = ?
-            """;
+                        SELECT a.account_id
+                        FROM Accounts a
+                        JOIN Customers c ON c.account_id = a.account_id
+                        WHERE c.email = ?
+                    """;
             try (PreparedStatement ps = con.prepareStatement(findSql)) {
                 ps.setString(1, gUser.getEmail());
                 try (ResultSet rs = ps.executeQuery()) {
@@ -68,22 +69,22 @@ public class GoogleLoginServlet extends HttpServlet {
                 username = ensureUniqueUsername(con, username);
 
                 String insertAcc = """
-                    INSERT INTO Accounts(username, password, role, status, created_at, email_verified)
-                    OUTPUT INSERTED.account_id
-                    VALUES(?, ?, 'customer', 1, GETDATE(), 1)
-                """;
+                            INSERT INTO Accounts(username, password, role, status, created_at, email_verified)
+                            OUTPUT INSERTED.account_id
+                            VALUES(?, ?, 'customer', 1, GETDATE(), 1)
+                        """;
                 try (PreparedStatement ps = con.prepareStatement(insertAcc)) {
                     ps.setString(1, username);
                     ps.setString(2, PasswordUtil.hashPassword(randomPassword())); // ✅ hash
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) accId = rs.getInt(1);
                     }
-}
+                }
 
                 String insertCus = """
-                    INSERT INTO Customers(account_id, full_name, email, phone, address)
-                    VALUES(?,?,?,?,?)
-                """;
+                            INSERT INTO Customers(account_id, full_name, email, phone, address)
+                            VALUES(?,?,?,?,?)
+                        """;
                 try (PreparedStatement ps = con.prepareStatement(insertCus)) {
                     ps.setInt(1, accId);
                     ps.setString(2, gUser.getName() != null ? gUser.getName() : username);
@@ -120,13 +121,16 @@ public class GoogleLoginServlet extends HttpServlet {
     private static String baseUsername(String email) {
         return extractLocalPart(email).replaceAll("[^a-zA-Z0-9._-]", "");
     }
+
     private static String extractLocalPart(String email) {
         int i = email.indexOf('@');
         return i > 0 ? email.substring(0, i) : email;
     }
+
     private static String randomPassword() {
         return java.util.UUID.randomUUID().toString().replace("-", "");
     }
+
     private static String ensureUniqueUsername(Connection con, String base) throws SQLException {
         String u = base;
         int n = 0;

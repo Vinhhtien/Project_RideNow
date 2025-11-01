@@ -6,10 +6,12 @@ import jakarta.servlet.http.*;
 import service.IOrderManageService;
 import service.OrderManageService;
 import model.Account;
+
 import java.io.IOException;
 
 // THÊM: dùng DBConnection để chèn Notification
 import utils.DBConnection;
+
 import java.sql.*;
 
 @WebServlet("/adminpickup")
@@ -69,19 +71,19 @@ public class AdminPickupServlet extends HttpServlet {
     // THÊM: helper nội bộ, không đổi cấu trúc dự án
     private void notifyPartnerPickupConfirmed(int orderId) {
         final String findPartnerAccountSql = """
-            SELECT TOP 1 a.account_id
-            FROM RentalOrders r
-            JOIN OrderDetails d ON d.order_id = r.order_id
-            JOIN Motorbikes b  ON b.bike_id  = d.bike_id
-            JOIN Partners p    ON p.partner_id = b.partner_id
-            JOIN Accounts a    ON a.account_id = p.account_id
-            WHERE r.order_id = ?
-            """;
+                SELECT TOP 1 a.account_id
+                FROM RentalOrders r
+                JOIN OrderDetails d ON d.order_id = r.order_id
+                JOIN Motorbikes b  ON b.bike_id  = d.bike_id
+                JOIN Partners p    ON p.partner_id = b.partner_id
+                JOIN Accounts a    ON a.account_id = p.account_id
+                WHERE r.order_id = ?
+                """;
 
         final String insertNotificationSql = """
-            INSERT INTO Notifications (account_id, title, message, is_read, created_at)
-            VALUES (?, ?, ?, 0, GETDATE())
-            """;
+                INSERT INTO Notifications (account_id, title, message, is_read, created_at)
+                VALUES (?, ?, ?, 0, GETDATE())
+                """;
 
         try (Connection con = DBConnection.getConnection()) {
             Integer partnerAccountId = null;

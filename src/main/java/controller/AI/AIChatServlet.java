@@ -4,7 +4,9 @@ package controller.AI;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.*;
+
 import com.google.gson.*;
 import service.AI.AIService;
 import service.AI.IAIService;
@@ -18,16 +20,16 @@ public class AIChatServlet extends HttpServlet {
     private String inferMode(String q) {
         if (q == null) return "smalltalk";
         String t = q.toLowerCase();
-        
+
         // Mở rộng từ khóa để nhận diện câu hỏi về database
         String[] dbHints = {
-            "giá", "dưới", "trên", "từ", "đến", "ở", "tại", "đà nẵng", "hà nội", "hồ chí minh",
-            "còn xe", "tồn kho", "loại", "status", "type", "đặt", "ngày", "số lượng",
-            "where", "select", "between", "mẫu", "xe số", "xe ga", "pkl", "phân khối lớn",
-            "danh sách", "liệt kê", "có những", "nào", "gì", "bao nhiêu", "tìm", "kiếm",
-            "wave", "future", "sirius", "jupiter", "exciter", "winner", "vision", "air blade",
-            "vario", "sh", "lead", "ninja", "cbr", "gsx", "r15", "r3", "r1", "honda", "yamaha", "suzuki",
-            "biển số", "giấy tờ", "thuê", "cho thuê", "cửa hàng", "đối tác", "admin"
+                "giá", "dưới", "trên", "từ", "đến", "ở", "tại", "đà nẵng", "hà nội", "hồ chí minh",
+                "còn xe", "tồn kho", "loại", "status", "type", "đặt", "ngày", "số lượng",
+                "where", "select", "between", "mẫu", "xe số", "xe ga", "pkl", "phân khối lớn",
+                "danh sách", "liệt kê", "có những", "nào", "gì", "bao nhiêu", "tìm", "kiếm",
+                "wave", "future", "sirius", "jupiter", "exciter", "winner", "vision", "air blade",
+                "vario", "sh", "lead", "ninja", "cbr", "gsx", "r15", "r3", "r1", "honda", "yamaha", "suzuki",
+                "biển số", "giấy tờ", "thuê", "cho thuê", "cửa hàng", "đối tác", "admin"
         };
         for (String k : dbHints) {
             if (t.contains(k)) return "db";
@@ -53,7 +55,7 @@ public class AIChatServlet extends HttpServlet {
             while ((line = reader.readLine()) != null) {
                 body.append(line);
             }
-            
+
             if (body.length() > 0) {
                 JsonObject json = gson.fromJson(body.toString(), JsonObject.class);
                 if (json != null && json.has("question")) {
@@ -86,14 +88,14 @@ public class AIChatServlet extends HttpServlet {
             } else {
                 answer = aiService.smallTalk(fixedQuestion);
             }
-            
+
             // Đảm bảo answer không null
             if (answer == null || answer.isBlank()) {
                 answer = "⚠️ Không có phản hồi, hãy thử lại sau.";
             }
-            
+
             jsonResp.addProperty("answer", answer);
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             String errorMsg = "❌ Lỗi hệ thống: " + e.getMessage();
@@ -108,12 +110,12 @@ public class AIChatServlet extends HttpServlet {
      */
     private String fixEncoding(String text) {
         if (text == null) return null;
-        
+
         try {
             // Kiểm tra xem có phải là text bị lỗi encoding không
             if (text.matches(".*[�].*") || containsEncodingIssues(text)) {
                 System.out.println("DEBUG: Detected encoding issues in: " + text);
-                
+
                 // Thử fix common encoding issues
                 byte[] bytes = text.getBytes("ISO-8859-1");
                 String fixed = new String(bytes, "UTF-8");
@@ -123,7 +125,7 @@ public class AIChatServlet extends HttpServlet {
         } catch (Exception e) {
             System.out.println("DEBUG: Encoding fix failed: " + e.getMessage());
         }
-        
+
         return text;
     }
 
@@ -133,9 +135,9 @@ public class AIChatServlet extends HttpServlet {
     private boolean containsEncodingIssues(String text) {
         // Các pattern thường gặp khi lỗi encoding Vietnamese
         String[] issuePatterns = {
-            "Nh?ng", "m?u", "xe s?", "c?a", "b?n", "l�", "g�"
+                "Nh?ng", "m?u", "xe s?", "c?a", "b?n", "l�", "g�"
         };
-        
+
         for (String pattern : issuePatterns) {
             if (text.contains(pattern)) {
                 return true;

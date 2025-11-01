@@ -11,10 +11,9 @@ public class CustomerDao implements ICustomerDao {
 
     @Override
     public Customer findByAccountId(int accountId) throws Exception {
-        String sql = "SELECT customer_id, account_id, full_name, email, phone, address " +
-                     "FROM Customers WHERE account_id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "SELECT customer_id, account_id, full_name, email, phone, address "
+                + "FROM Customers WHERE account_id = ?";
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, accountId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -35,9 +34,9 @@ public class CustomerDao implements ICustomerDao {
     @Override
     public void upsertByAccountId(Customer c) throws Exception {
         String fullName = nz(c.getFullName());
-        String email    = nz(c.getEmail());
-        String phone    = c.getPhone() == null ? "" : c.getPhone().trim();
-        String address  = c.getAddress() == null ? "" : c.getAddress().trim();
+        String email = nz(c.getEmail());
+        String phone = c.getPhone() == null ? "" : c.getPhone().trim();
+        String address = c.getAddress() == null ? "" : c.getAddress().trim();
 
         if (fullName.isEmpty() || email.isEmpty()) {
             throw new IllegalArgumentException("Họ tên và Email là bắt buộc");
@@ -45,8 +44,7 @@ public class CustomerDao implements ICustomerDao {
 
         String checkSql = "SELECT COUNT(*) FROM Customers WHERE account_id = ?";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement check = con.prepareStatement(checkSql)) {
+        try (Connection con = DBConnection.getConnection(); PreparedStatement check = con.prepareStatement(checkSql)) {
             check.setInt(1, c.getAccountId());
             boolean existed;
             try (ResultSet rs = check.executeQuery()) {
@@ -83,11 +81,12 @@ public class CustomerDao implements ICustomerDao {
         // 1) Lấy hash hiện tại
         String sqlGet = "SELECT password FROM Accounts WHERE account_id = ?";
         String stored;
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sqlGet)) {
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sqlGet)) {
             ps.setInt(1, accountId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return false;
+                if (!rs.next()) {
+                    return false;
+                }
                 stored = rs.getString("password");
             }
         }
@@ -99,13 +98,13 @@ public class CustomerDao implements ICustomerDao {
 
         // 3) Cập nhật bằng hash mới
         String sqlUpd = "UPDATE Accounts SET password = ? WHERE account_id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps2 = con.prepareStatement(sqlUpd)) {
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps2 = con.prepareStatement(sqlUpd)) {
             ps2.setString(1, utils.PasswordUtil.hashPassword(newPw));
             ps2.setInt(2, accountId);
             return ps2.executeUpdate() > 0;
         }
     }
+
     @Override
     public List<model.Customer> findAll() throws Exception {
         List<model.Customer> customers = new ArrayList<>();
@@ -125,7 +124,34 @@ public class CustomerDao implements ICustomerDao {
         }
         return customers;
     }
+    @Override
+    public Customer findCustomerById(int customerId) throws Exception {
+        String sql = """
+        SELECT customer_id, account_id, full_name, phone, address
+        FROM Customers
+        WHERE customer_id = ?
+    """;
 
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-    private static String nz(String s) { return s == null ? "" : s.trim(); }
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Customer customer = new Customer();
+                customer.setCustomerId(rs.getInt("customer_id"));
+                customer.setAccountId(rs.getInt("account_id"));
+                customer.setFullName(rs.getString("full_name"));
+                customer.setPhone(rs.getString("phone"));
+                customer.setAddress(rs.getString("address"));
+                return customer;
+            }
+        }
+
+        return null; // Không tìm thấy
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s.trim();
+    }
 }

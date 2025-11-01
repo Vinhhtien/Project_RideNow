@@ -3,12 +3,13 @@ package controller.admin;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 
 import service.IAdminService;
 import service.AdminService;
 
-@WebServlet(name="AdminDashboardServlet", urlPatterns={"/admin/dashboard"})
+@WebServlet(name = "AdminDashboardServlet", urlPatterns = {"/admin/dashboard"})
 public class AdminDashboardServlet extends HttpServlet {
     private final IAdminService adminService = new AdminService();
 

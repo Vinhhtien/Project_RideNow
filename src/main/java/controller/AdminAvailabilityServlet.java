@@ -26,8 +26,8 @@ public class AdminAvailabilityServlet extends HttpServlet {
         resp.setContentType("application/json;charset=UTF-8");
 
         String bikeIdStr = req.getParameter("bikeId");
-        String startStr  = req.getParameter("start");
-        String endStr    = req.getParameter("end");
+        String startStr = req.getParameter("start");
+        String endStr = req.getParameter("end");
 
         try (PrintWriter out = resp.getWriter()) {
             // Validate params
@@ -40,8 +40,8 @@ public class AdminAvailabilityServlet extends HttpServlet {
             Date start, end;
             try {
                 bikeId = Integer.parseInt(bikeIdStr);
-                start  = Date.valueOf(startStr); // yyyy-MM-dd
-                end    = Date.valueOf(endStr);
+                start = Date.valueOf(startStr); // yyyy-MM-dd
+                end = Date.valueOf(endStr);
             } catch (Exception ex) {
                 out.print("{\"ok\":false,\"available\":false,\"message\":\"Định dạng tham số không hợp lệ.\"}");
                 return;
@@ -57,12 +57,12 @@ public class AdminAvailabilityServlet extends HttpServlet {
             }
 
             String sql =
-                "SELECT 1 " +
-                "FROM RentalOrders r " +
-                "JOIN OrderDetails d ON d.order_id = r.order_id " +
-                "WHERE d.bike_id = ? " +
-                "  AND r.status = 'confirmed' " +
-                "  AND NOT (r.end_date < ? OR r.start_date > ?)";
+                    "SELECT 1 " +
+                            "FROM RentalOrders r " +
+                            "JOIN OrderDetails d ON d.order_id = r.order_id " +
+                            "WHERE d.bike_id = ? " +
+                            "  AND r.status = 'confirmed' " +
+                            "  AND NOT (r.end_date < ? OR r.start_date > ?)";
 
             try (Connection con = DBConnection.getConnection();
                  PreparedStatement ps = con.prepareStatement(sql)) {

@@ -3,6 +3,7 @@ package controller.Authetication;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.util.Optional;
 
@@ -36,12 +37,12 @@ public class LoginServlet extends HttpServlet {
                 Account acc = opt.get();
 
                 // DEBUG: Kiểm tra giá trị status
-                System.out.println("Login attempt - Username: " + usernameOrEmail + 
-                                 ", Status: " + acc.isStatus() + 
-                                 ", Role: " + acc.getRole());
+                System.out.println("Login attempt - Username: " + usernameOrEmail +
+                        ", Status: " + acc.isStatus() +
+                        ", Role: " + acc.getRole());
 
-                
-                if (acc.isStatus() == false) {  
+
+                if (acc.isStatus() == false) {
                     req.setAttribute("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
                     req.getRequestDispatcher("/login.jsp").forward(req, resp);
                     return;
@@ -106,7 +107,7 @@ public class LoginServlet extends HttpServlet {
         resp.addCookie(cookie);
     }
 
-    private void redirectBasedOnRole(HttpServletRequest req, HttpServletResponse resp, Account acc) 
+    private void redirectBasedOnRole(HttpServletRequest req, HttpServletResponse resp, Account acc)
             throws IOException {
         String role = acc.getRole();
         String contextPath = req.getContextPath();
@@ -115,7 +116,7 @@ public class LoginServlet extends HttpServlet {
             case "customer":
                 resp.sendRedirect(contextPath + "/home.jsp");
                 break;
-                
+
             case "partner":
                 // Check if partner is using default password "1"
                 if ("1".equals(acc.getPassword())) {
@@ -125,11 +126,11 @@ public class LoginServlet extends HttpServlet {
                     resp.sendRedirect(contextPath + "/dashboard");
                 }
                 break;
-                
+
             case "admin":
                 resp.sendRedirect(contextPath + "/admin/dashboard");
                 break;
-                
+
             default:
                 // Unknown role - redirect to home
                 resp.sendRedirect(contextPath + "/home.jsp");

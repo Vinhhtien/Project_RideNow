@@ -1,6 +1,7 @@
 package service;
 
 import java.util.List;
+
 import model.Motorbike;
 import model.MotorbikeListItem;
 import model.OrderDetail;
@@ -14,8 +15,11 @@ public interface IPartnerService {
 
     // 2. Update Account Information
     boolean updateAccountInfo(Partner partner) throws Exception;
+
     boolean updateAccountName(int accountId, String accountName);
+
     boolean updatePassword(int accountId, String newPassword);
+
     // 3. View Bike Details
     MotorbikeListItem getBikeDetails(int bikeId) throws Exception;
 

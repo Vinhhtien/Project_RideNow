@@ -14,8 +14,11 @@ public class PasswordUtil {
         if (plain == null || hashed == null) return false;
         // Nếu hashed có format BCrypt hợp lệ
         if (hashed.startsWith("$2a$") || hashed.startsWith("$2b$") || hashed.startsWith("$2y$")) {
-            try { return BCrypt.checkpw(plain, hashed); }
-            catch (Exception ignore) { return false; }
+            try {
+                return BCrypt.checkpw(plain, hashed);
+            } catch (Exception ignore) {
+                return false;
+            }
         }
         // Trường hợp cũ: DB còn plaintext -> so sánh thường (để hỗ trợ nâng cấp dần)
         return plain.equals(hashed);

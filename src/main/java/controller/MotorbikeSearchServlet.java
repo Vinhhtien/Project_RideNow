@@ -26,21 +26,21 @@ public class MotorbikeSearchServlet extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
 
-        String typeStr  = req.getParameter("type_id");
-        String sdStr    = req.getParameter("start_date");
-        String edStr    = req.getParameter("end_date");
-        String maxStr   = req.getParameter("max_price");
-        String keyword  = trimToNull(req.getParameter("keyword"));
-        String pageStr  = req.getParameter("page");
-        String sizeStr  = req.getParameter("size");
-        String sort     = trimToNull(req.getParameter("sort")); // NEW
+        String typeStr = req.getParameter("type_id");
+        String sdStr = req.getParameter("start_date");
+        String edStr = req.getParameter("end_date");
+        String maxStr = req.getParameter("max_price");
+        String keyword = trimToNull(req.getParameter("keyword"));
+        String pageStr = req.getParameter("page");
+        String sizeStr = req.getParameter("size");
+        String sort = trimToNull(req.getParameter("sort")); // NEW
 
-        Integer typeId     = parseInt(typeStr);
-        Date startDate     = parseDate(sdStr);
-        Date endDate       = parseDate(edStr);
-        BigDecimal maxPrice= parseDecimal(maxStr);
-        int page           = parseIntOrDefault(pageStr, 1);
-        int size           = parseIntOrDefault(sizeStr, DEFAULT_SIZE);
+        Integer typeId = parseInt(typeStr);
+        Date startDate = parseDate(sdStr);
+        Date endDate = parseDate(edStr);
+        BigDecimal maxPrice = parseDecimal(maxStr);
+        int page = parseIntOrDefault(pageStr, 1);
+        int size = parseIntOrDefault(sizeStr, DEFAULT_SIZE);
 
         // Chỉ lọc theo lịch khi đủ cả 2 ngày
         if (startDate == null || endDate == null) {
@@ -86,20 +86,36 @@ public class MotorbikeSearchServlet extends HttpServlet {
         s = s.trim();
         return s.isEmpty() ? null : s;
     }
+
     private static Integer parseInt(String s) {
-        try { return (s == null || s.isBlank()) ? null : Integer.valueOf(s); }
-        catch (Exception e) { return null; }
+        try {
+            return (s == null || s.isBlank()) ? null : Integer.valueOf(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
+
     private static int parseIntOrDefault(String s, int def) {
-        try { return (s == null || s.isBlank()) ? def : Math.max(1, Integer.parseInt(s)); }
-        catch (Exception e) { return def; }
+        try {
+            return (s == null || s.isBlank()) ? def : Math.max(1, Integer.parseInt(s));
+        } catch (Exception e) {
+            return def;
+        }
     }
+
     private static Date parseDate(String s) {
-        try { return (s == null || s.isBlank()) ? null : Date.valueOf(s); }
-        catch (Exception e) { return null; }
+        try {
+            return (s == null || s.isBlank()) ? null : Date.valueOf(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
+
     private static BigDecimal parseDecimal(String s) {
-        try { return (s == null || s.isBlank()) ? null : new BigDecimal(s); }
-        catch (Exception e) { return null; }
+        try {
+            return (s == null || s.isBlank()) ? null : new BigDecimal(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

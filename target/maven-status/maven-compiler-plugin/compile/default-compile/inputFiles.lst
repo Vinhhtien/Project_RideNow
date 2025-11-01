@@ -6,10 +6,13 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\AdminCustomerDTO
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\ViewRentalHistoryServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\AdminCustomerDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\DashboardServlet.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminRevenueItem.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\PaymentDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminTopCustomerStat.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminReturnServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\PartnerServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\AccountDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\StoreReviewDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\MotorbikeListItem.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\EmailUtil.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\Motorbike.java
@@ -35,7 +38,9 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\NotificationDao.ja
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\PartnerAdminDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IAccountDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\ReviewService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminDailyRevenuePoint.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IPaymentService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IAdminReportService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\Authetication\LogoutServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\WalletServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IOrderManageDao.java
@@ -57,10 +62,13 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IPaymentDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\test\Calculator.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\Partner.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\AI\GeminiToolClient.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\ReviewServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IOrderManageService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IAdminReportDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderDetail.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\Authetication\VerifyEmailServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\PaymentVerifyService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\StoreReviewServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\AI\GeminiClient.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminOrdersServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\StatusServlet.java
@@ -68,6 +76,7 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\Account.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\BookingServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\RefundInfo.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminDashboardServlet.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IStoreReviewDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\WalletDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\Authetication\LoginServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\MotorbikeManageListServlet.java
@@ -83,6 +92,8 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\CustomerPro
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\MotorbikeDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\OrderDetailService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminMotorbikesServlet.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminOrderDetail.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\AdminReportDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\ViewMotorBikeServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminPickupServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\AdminOrderService.java
@@ -109,12 +120,14 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\DBConnection.jav
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\RentalOrder.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IPartnerAdminService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\com\mycompany\project_ridenow\resources\JakartaEE10Resource.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminReportServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\NotificationService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\AI\AIDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\partner\DeleteReadNotificationsServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\AI\TestGeminiTool.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\CustomerService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\PartnerService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminPaymentMethodStat.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IPartnerAdminDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IMotorbikeService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IPartnerService.java
@@ -125,6 +138,7 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\ICustomerDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminPaymentVerifyServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\CustomerDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminCustomerDetailServlet.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminRefundItem.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\Authetication\ResetPasswordServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IAdminDAO.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\MotorbikeSearchServlet.java
@@ -133,7 +147,9 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderListItem.ja
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\AdminCustomerService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IOrderQueryDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\OrderQueryDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\AdminReportService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\INotificationDao.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\StoreReview.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\utils\PasswordUtil.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\AdminAvailabilityServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\MotorbikeAdminService.java
@@ -144,7 +160,9 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderStatusHisto
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\OrderDetailItem.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\OrderManageService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\admin\AdminPaymentsServlet.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminOutstandingOrderItem.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\IRentalOrderService.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\controller\Authetication\GoogleLoginServlet.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\dao\IPaymentVerifyDao.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\service\AI\AIService.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\main\java\model\report\AdminReportSummary.java

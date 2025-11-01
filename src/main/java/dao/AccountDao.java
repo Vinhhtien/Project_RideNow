@@ -13,11 +13,11 @@ public class AccountDao implements IAccountDao {
     public Optional<Account> login(String usernameOrEmail, String password) throws Exception {
         // Lấy account theo username hoặc email; KHÔNG để password trong WHERE
         String sql =
-            "SELECT a.account_id, a.username, a.password, a.role, a.status, a.email_verified " +
-            "FROM Accounts a " +
-            "LEFT JOIN Customers c ON c.account_id = a.account_id " +
-            "WHERE (a.username = ? OR c.email = ?) " +
-            "  AND a.status = 1";
+                "SELECT a.account_id, a.username, a.password, a.role, a.status, a.email_verified " +
+                        "FROM Accounts a " +
+                        "LEFT JOIN Customers c ON c.account_id = a.account_id " +
+                        "WHERE (a.username = ? OR c.email = ?) " +
+                        "  AND a.status = 1";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql,
@@ -56,8 +56,8 @@ public class AccountDao implements IAccountDao {
     @Override
     public Optional<Account> findByUsername(String username) throws Exception {
         String sql =
-            "SELECT a.account_id, a.username, a.password, a.role, a.status, a.email_verified " +
-            "FROM Accounts a WHERE a.username = ?";
+                "SELECT a.account_id, a.username, a.password, a.role, a.status, a.email_verified " +
+                        "FROM Accounts a WHERE a.username = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -71,11 +71,11 @@ public class AccountDao implements IAccountDao {
 
     private Account mapRow(ResultSet rs) throws SQLException {
         Account acc = new Account(
-            rs.getInt("account_id"),
-            rs.getString("username"),
-            rs.getString("password"),
-            rs.getString("role"),
-            rs.getBoolean("status")
+                rs.getInt("account_id"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("role"),
+                rs.getBoolean("status")
         );
         acc.setEmailVerified(rs.getBoolean("email_verified"));
         return acc;

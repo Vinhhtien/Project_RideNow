@@ -19,7 +19,10 @@ public class WalletDao {
             String ins = "INSERT INTO Wallets(customer_id,balance) OUTPUT INSERTED.wallet_id VALUES(?,0)";
             try (PreparedStatement p2 = con.prepareStatement(ins)) {
                 p2.setInt(1, customerId);
-                try (ResultSet rs2 = p2.executeQuery()) { rs2.next(); return rs2.getInt(1); }
+                try (ResultSet rs2 = p2.executeQuery()) {
+                    rs2.next();
+                    return rs2.getInt(1);
+                }
             }
         }
     }
@@ -44,8 +47,11 @@ public class WalletDao {
                 }
                 con.commit();
             } catch (Exception ex) {
-                con.rollback(); throw ex;
-            } finally { con.setAutoCommit(true); }
+                con.rollback();
+                throw ex;
+            } finally {
+                con.setAutoCommit(true);
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import dao.IPartnerAdminDAO;
 import dao.PartnerAdminDAO;
 import model.Partner;
 import utils.DBConnection;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -41,7 +42,7 @@ public class PartnerAdminService implements IPartnerAdminService {
 
             // Lấy admin_id từ bảng Admins dựa trên account_id
             int adminId = partnerAdminDAO.getAdminIdByAccountId(c, adminAccountId);
-            
+
             System.out.println("=== DEBUG: Using admin_id: " + adminId + " for account_id: " + adminAccountId);
 
             int accId = partnerAdminDAO.insertAccountPartner(c, username, "1");
@@ -50,17 +51,26 @@ public class PartnerAdminService implements IPartnerAdminService {
             c.commit();
         } catch (SQLException e) {
             if (c != null) {
-                try { c.rollback(); } catch (SQLException ex) {}
+                try {
+                    c.rollback();
+                } catch (SQLException ex) {
+                }
             }
             throw new RuntimeException("Lỗi hệ thống khi tạo partner: " + e.getMessage());
         } catch (RuntimeException e) {
             if (c != null) {
-                try { c.rollback(); } catch (SQLException ex) {}
+                try {
+                    c.rollback();
+                } catch (SQLException ex) {
+                }
             }
             throw e;
         } finally {
             if (c != null) {
-                try { c.close(); } catch (SQLException e) {}
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
             }
         }
     }
@@ -80,34 +90,40 @@ public class PartnerAdminService implements IPartnerAdminService {
         try {
             c = DBConnection.getConnection();
             c.setAutoCommit(false);
-            
+
             // Lấy account_id từ partner_id
             int accountId = partnerAdminDAO.getAccountIdByPartnerId(c, partnerId);
-            
+
             // Xóa partner trước (vì có foreign key constraint)
             boolean partnerDeleted = partnerAdminDAO.deletePartner(c, partnerId);
             if (!partnerDeleted) {
                 c.rollback();
                 return false;
             }
-            
+
             // Sau đó xóa account
             boolean accountDeleted = partnerAdminDAO.deleteAccount(c, accountId);
             if (!accountDeleted) {
                 c.rollback();
                 return false;
             }
-            
+
             c.commit();
             return true;
         } catch (SQLException e) {
             if (c != null) {
-                try { c.rollback(); } catch (SQLException ex) {}
+                try {
+                    c.rollback();
+                } catch (SQLException ex) {
+                }
             }
             throw new RuntimeException("Lỗi xóa partner: " + e.getMessage());
         } finally {
             if (c != null) {
-                try { c.close(); } catch (SQLException e) {}
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
             }
         }
     }

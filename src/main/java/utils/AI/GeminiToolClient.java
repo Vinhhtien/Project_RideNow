@@ -3,6 +3,7 @@ package utils.AI;
 
 import okhttp3.*;
 import com.google.gson.*;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,7 @@ public class GeminiToolClient {
     private static final String API_KEY = "AIzaSyCnAZscEuegrilZj5T_rRrsnlweHutKP94"; // <-- thay key của bạn
 
     private static final String ENDPOINT =
-        "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
+            "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
     private final OkHttpClient http = new OkHttpClient.Builder()
             .callTimeout(50, TimeUnit.SECONDS)
@@ -36,8 +37,8 @@ public class GeminiToolClient {
 
         JsonArray contents = new JsonArray();
         contents.add(msg("user",
-            "Bạn là trợ lý RideNow. Dùng tool runSql để sinh truy vấn SQL Server SELECT.\n"
-          + "SCHEMA:\n" + schemaDoc + "\nPOLICY:\n" + policyDoc + "\nQUESTION:\n" + question));
+                "Bạn là trợ lý RideNow. Dùng tool runSql để sinh truy vấn SQL Server SELECT.\n"
+                        + "SCHEMA:\n" + schemaDoc + "\nPOLICY:\n" + policyDoc + "\nQUESTION:\n" + question));
         req.add("contents", contents);
 
         JsonObject gen = new JsonObject();
@@ -69,8 +70,8 @@ public class GeminiToolClient {
 
         JsonArray contents = new JsonArray();
         contents.add(msg("user",
-            "Trả lời ngắn gọn bằng tiếng Việt dựa trên dữ liệu ROWS(JSON):\n"
-          + gson.toJson(rows) + "\nQUESTION:\n" + question));
+                "Trả lời ngắn gọn bằng tiếng Việt dựa trên dữ liệu ROWS(JSON):\n"
+                        + gson.toJson(rows) + "\nQUESTION:\n" + question));
         req.add("contents", contents);
 
         JsonObject gen = new JsonObject();
@@ -209,9 +210,20 @@ public class GeminiToolClient {
             return new ToolCall(false, null, null, tx);
         }
 
-        public boolean isToolCall() { return tool; }
-        public String getSql() { return statement; }
-        public List<String> getParams() { return params == null ? List.of() : params; }
-        public String getText() { return text; }
+        public boolean isToolCall() {
+            return tool;
+        }
+
+        public String getSql() {
+            return statement;
+        }
+
+        public List<String> getParams() {
+            return params == null ? List.of() : params;
+        }
+
+        public String getText() {
+            return text;
+        }
     }
 }

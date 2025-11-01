@@ -6,6 +6,8 @@ import java.util.Map;
 
 public interface IAIService {
     String smallTalk(String question);
+
     String answerFromDatabase(String question);
+
     Map<String, Object> debugDatabaseAnswer(String question);
 }

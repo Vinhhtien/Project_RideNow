@@ -1,5 +1,4 @@
-
-package dao;
+    package dao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,18 +13,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ReviewDao implements IReviewDao {
 
     @Override
     public List<Review> findReviewByBikeId(int bikeId) throws SQLException {
         List<Review> reviews = new ArrayList<>();
 
-        String sql = "SELECT review_id, customer_id, bike_id, rating, comment, created_at " +
-                     "FROM MotorbikeRentalDB.dbo.Reviews WHERE bike_id = ?";
+        String sql = "SELECT review_id, customer_id, bike_id, rating, comment, created_at "
+                + "FROM MotorbikeRentalDB.dbo.Reviews WHERE bike_id = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, bikeId);
             ResultSet rs = stmt.executeQuery();
@@ -49,6 +46,7 @@ public class ReviewDao implements IReviewDao {
 
         return reviews;
     }
+
     @Override
     public List<model.Review> findAll() throws java.sql.SQLException {
         List<model.Review> reviews = new ArrayList<>();
@@ -73,4 +71,26 @@ public class ReviewDao implements IReviewDao {
         return reviews;
     }
 
+    @Override
+    public boolean insertReview(int customerId, int bikeId, int rating, String comment) {
+
+        // ✅ Bắt buộc: LOẠI BỎ cột order_id khỏi SQL INSERT
+        // Đảm bảo Reviews table có các cột: customer_id, bike_id, rating, comment, created_at
+        String sql = "INSERT INTO Reviews (customer_id, bike_id, rating, comment, created_at) VALUES (?, ?, ?, ?, GETDATE())";
+
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // Đảm bảo chỉ có 4 tham số được gán
+            ps.setInt(1, customerId);
+            ps.setInt(2, bikeId);
+            ps.setInt(3, rating);
+            ps.setString(4, comment);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace(); // Lỗi này sẽ in ra log server, giúp debug nếu vẫn lỗi.
+            return false;
+        }
+    }
 }

@@ -23,14 +23,17 @@ public class MotorbikeManageListServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
         Account acc = (session == null) ? null : (Account) session.getAttribute("account");
-        if (acc == null || !( "admin".equalsIgnoreCase(acc.getRole()) || "partner".equalsIgnoreCase(acc.getRole()) )) {
+        if (acc == null || !("admin".equalsIgnoreCase(acc.getRole()) || "partner".equalsIgnoreCase(acc.getRole()))) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
         String typeStr = req.getParameter("type_id");
         Integer typeId = null;
-        try { if (typeStr != null && !typeStr.isBlank()) typeId = Integer.valueOf(typeStr); } catch (Exception ignored) {}
+        try {
+            if (typeStr != null && !typeStr.isBlank()) typeId = Integer.valueOf(typeStr);
+        } catch (Exception ignored) {
+        }
 
         try {
             List<Motorbike> list = service.findAllByOwnerAccount(acc.getAccountId(), acc.getRole());

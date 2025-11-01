@@ -96,15 +96,15 @@ public class AdminMotorbikesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-            
+
         request.setCharacterEncoding("UTF-8");
-    response.setCharacterEncoding("UTF-8");
-    response.setContentType("text/html; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
 
         System.out.println("=== DEBUG doGet START ===");
         System.out.println("Request URL: " + request.getRequestURL());
         System.out.println("Query String: " + request.getQueryString());
-            
+
         String action = request.getParameter("action");
         System.out.println("Action parameter: " + action);
 
@@ -236,119 +236,119 @@ public class AdminMotorbikesServlet extends HttpServlet {
     /* ------------------------ Create/Update/Delete ------------------------ */
 
     private void createMotorbike(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException {
-    System.out.println("=== DEBUG createMotorbike START ===");
-    
-    try {
-        // DEBUG: In tất cả parameters
-        System.out.println("=== ALL PARAMETERS ===");
-        request.getParameterMap().forEach((k, v) -> 
-            System.out.println("  " + k + ": " + String.join(", ", v)));
-        
-        String bikeName = str(request, "bikeName");
-        String licensePlate = str(request, "licensePlate");
-        BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
-        
-        // 🔒 YÊU CẦU 1: Xe mới LUÔN ở trạng thái available
-        String status = "available"; // Luôn set thành available cho xe mới
-        String description = str(request, "description");
-        int typeId = intRequired(request, "typeId");
+            throws IOException, ServletException {
+        System.out.println("=== DEBUG createMotorbike START ===");
 
-        System.out.println("=== PARSED VALUES ===");
-        System.out.println("  bikeName: " + bikeName);
-        System.out.println("  licensePlate: " + licensePlate);
-        System.out.println("  pricePerDay: " + pricePerDay);
-        System.out.println("  status: " + status + " (LUÔN là available cho xe mới)");
-        System.out.println("  description: " + description);
-        System.out.println("  typeId: " + typeId);
+        try {
+            // DEBUG: In tất cả parameters
+            System.out.println("=== ALL PARAMETERS ===");
+            request.getParameterMap().forEach((k, v) ->
+                    System.out.println("  " + k + ": " + String.join(", ", v)));
 
-        String ownerType = Optional.ofNullable(str(request, "ownerType")).orElse("admin");
-        Integer partnerId = null, storeId = null;
-        
-        System.out.println("=== OWNER TYPE: " + ownerType + " ===");
-        
-        if ("partner".equalsIgnoreCase(ownerType)) {
-            partnerId = intOrNull(request, "partnerId");
-            System.out.println("  partnerId: " + partnerId);
-            
-            if (partnerId == null) {
-                System.err.println("ERROR: partnerId is null for partner ownerType");
-                request.setAttribute("formError", "Vui lòng chọn Đối tác cho chủ sở hữu = Đối tác.");
+            String bikeName = str(request, "bikeName");
+            String licensePlate = str(request, "licensePlate");
+            BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
+
+            // 🔒 YÊU CẦU 1: Xe mới LUÔN ở trạng thái available
+            String status = "available"; // Luôn set thành available cho xe mới
+            String description = str(request, "description");
+            int typeId = intRequired(request, "typeId");
+
+            System.out.println("=== PARSED VALUES ===");
+            System.out.println("  bikeName: " + bikeName);
+            System.out.println("  licensePlate: " + licensePlate);
+            System.out.println("  pricePerDay: " + pricePerDay);
+            System.out.println("  status: " + status + " (LUÔN là available cho xe mới)");
+            System.out.println("  description: " + description);
+            System.out.println("  typeId: " + typeId);
+
+            String ownerType = Optional.ofNullable(str(request, "ownerType")).orElse("admin");
+            Integer partnerId = null, storeId = null;
+
+            System.out.println("=== OWNER TYPE: " + ownerType + " ===");
+
+            if ("partner".equalsIgnoreCase(ownerType)) {
+                partnerId = intOrNull(request, "partnerId");
+                System.out.println("  partnerId: " + partnerId);
+
+                if (partnerId == null) {
+                    System.err.println("ERROR: partnerId is null for partner ownerType");
+                    request.setAttribute("formError", "Vui lòng chọn Đối tác cho chủ sở hữu = Đối tác.");
+                    request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                    request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+                    request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+                    return;
+                }
+            } else {
+                storeId = 1; // default store
+                System.out.println("  storeId: " + storeId);
+            }
+
+            // Kiểm tra biển số trùng
+            System.out.println("=== CHECKING LICENSE PLATE: " + licensePlate + " ===");
+            if (licensePlateExists(licensePlate)) {
+                System.err.println("ERROR: Duplicate license plate: " + licensePlate);
+                request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
+                request.setAttribute("prefill_ownerType", ownerType);
+                request.setAttribute("prefill_partnerId", partnerId);
+                request.setAttribute("prefill_storeId", storeId);
+                request.setAttribute("prefill", Map.of(
+                        "bikeName", bikeName,
+                        "licensePlate", licensePlate,
+                        "pricePerDay", pricePerDay.toPlainString(),
+                        "status", status,
+                        "description", description,
+                        "typeId", String.valueOf(typeId)
+                ));
                 request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
                 request.setAttribute("partners", motorbikeAdminService.getAllPartners());
                 request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
                 return;
             }
-        } else {
-            storeId = 1; // default store
-            System.out.println("  storeId: " + storeId);
-        }
 
-        // Kiểm tra biển số trùng
-        System.out.println("=== CHECKING LICENSE PLATE: " + licensePlate + " ===");
-        if (licensePlateExists(licensePlate)) {
-            System.err.println("ERROR: Duplicate license plate: " + licensePlate);
-            request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
-            request.setAttribute("prefill_ownerType", ownerType);
-            request.setAttribute("prefill_partnerId", partnerId);
-            request.setAttribute("prefill_storeId", storeId);
-            request.setAttribute("prefill", Map.of(
-                    "bikeName", bikeName,
-                    "licensePlate", licensePlate,
-                    "pricePerDay", pricePerDay.toPlainString(),
-                    "status", status,
-                    "description", description,
-                    "typeId", String.valueOf(typeId)
-            ));
-            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
-            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
-            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-            return;
-        }
+            // Tạo motorbike object
+            Motorbike nb = new Motorbike();
+            nb.setBikeName(bikeName);
+            nb.setLicensePlate(licensePlate);
+            nb.setPricePerDay(pricePerDay);
+            nb.setStatus(status); // 🔒 LUÔN là available
+            nb.setDescription(description);
+            nb.setTypeId(typeId);
+            nb.setPartnerId(partnerId);
+            nb.setStoreId(storeId);
 
-        // Tạo motorbike object
-        Motorbike nb = new Motorbike();
-        nb.setBikeName(bikeName);
-        nb.setLicensePlate(licensePlate);
-        nb.setPricePerDay(pricePerDay);
-        nb.setStatus(status); // 🔒 LUÔN là available
-        nb.setDescription(description);
-        nb.setTypeId(typeId);
-        nb.setPartnerId(partnerId);
-        nb.setStoreId(storeId);
+            System.out.println("=== BEFORE SERVICE CALL ===");
+            System.out.println("  Motorbike: " + nb.getBikeName() + ", License: " + nb.getLicensePlate());
+            System.out.println("  PartnerId: " + nb.getPartnerId() + ", StoreId: " + nb.getStoreId());
 
-        System.out.println("=== BEFORE SERVICE CALL ===");
-        System.out.println("  Motorbike: " + nb.getBikeName() + ", License: " + nb.getLicensePlate());
-        System.out.println("  PartnerId: " + nb.getPartnerId() + ", StoreId: " + nb.getStoreId());
+            boolean ok = motorbikeAdminService.addMotorbike(nb);
+            System.out.println("=== SERVICE RESULT: " + ok + " ===");
+            System.out.println("  New Bike ID: " + nb.getBikeId());
 
-        boolean ok = motorbikeAdminService.addMotorbike(nb);
-        System.out.println("=== SERVICE RESULT: " + ok + " ===");
-        System.out.println("  New Bike ID: " + nb.getBikeId());
-
-        if (!ok) {
-            System.err.println("ERROR: Service returned false");
-            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
-            return;
-        }
-
-        // Xử lý ảnh
-        if (nb.getBikeId() > 0) {
-            try {
-                handleImageUpload(request, nb.getBikeId(), typeId, false);
-            } catch (Exception e) {
-                System.err.println("Image upload error: " + e.getMessage());
+            if (!ok) {
+                System.err.println("ERROR: Service returned false");
+                response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
+                return;
             }
-        }
 
-        System.out.println("=== SUCCESS - REDIRECTING ===");
-        response.sendRedirect(request.getContextPath() + "/admin/bikes?success=created");
-        
-    } catch (Exception e) {
-        System.err.println("ERROR in createMotorbike: " + e.getMessage());
-        e.printStackTrace();
-        response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
+            // Xử lý ảnh
+            if (nb.getBikeId() > 0) {
+                try {
+                    handleImageUpload(request, nb.getBikeId(), typeId, false);
+                } catch (Exception e) {
+                    System.err.println("Image upload error: " + e.getMessage());
+                }
+            }
+
+            System.out.println("=== SUCCESS - REDIRECTING ===");
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?success=created");
+
+        } catch (Exception e) {
+            System.err.println("ERROR in createMotorbike: " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=create_failed");
+        }
     }
-}
 
     private void updateMotorbike(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
@@ -457,10 +457,10 @@ public class AdminMotorbikesServlet extends HttpServlet {
             try {
                 // Tạo một đơn hàng admin để đánh dấu xe đã được thuê trong khoảng thời gian này
                 boolean bookingCreated = orderService.createAdminBooking(
-                    bikeId, rentalStartDate, rentalEndDate, "Admin set status to rented"
+                        bikeId, rentalStartDate, rentalEndDate, "Admin set status to rented"
                 );
                 System.out.println("Admin booking created: " + bookingCreated);
-                
+
                 if (!bookingCreated) {
                     // Nếu không tạo được booking, vẫn thành công update status nhưng log lỗi
                     System.err.println("⚠️ Failed to create admin booking for bike " + bikeId);
@@ -484,7 +484,7 @@ public class AdminMotorbikesServlet extends HttpServlet {
         System.out.println("=== DEBUG updateMotorbike END ===");
     }
 
-//    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
+    //    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
 //            throws IOException {
 //        System.out.println("=== DEBUG deleteMotorbike START ===");
 //        int id = intRequired(request, "id");
@@ -500,24 +500,24 @@ public class AdminMotorbikesServlet extends HttpServlet {
 //        response.sendRedirect(request.getContextPath() + "/admin/bikes?" + (ok ? "success=deleted" : "error=delete_failed"));
 //        System.out.println("=== DEBUG deleteMotorbike END ===");
 //    }
-    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response) 
-        throws ServletException, IOException {
-    int bikeId = Integer.parseInt(request.getParameter("id"));
-    
-    MotorbikeAdminService service = new MotorbikeAdminService();
-    boolean success = service.deleteMotorbike(bikeId);
-    
-    if (success) {
-        response.sendRedirect("bikes?success=deleted");
-    } else {
-        // Kiểm tra lý do thất bại
-        if (service.hasOrderHistory(bikeId)) {
-            response.sendRedirect("bikes?error=delete_failed&reason=has_orders");
+    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        int bikeId = Integer.parseInt(request.getParameter("id"));
+
+        MotorbikeAdminService service = new MotorbikeAdminService();
+        boolean success = service.deleteMotorbike(bikeId);
+
+        if (success) {
+            response.sendRedirect("bikes?success=deleted");
         } else {
-            response.sendRedirect("bikes?error=delete_failed");
+            // Kiểm tra lý do thất bại
+            if (service.hasOrderHistory(bikeId)) {
+                response.sendRedirect("bikes?error=delete_failed&reason=has_orders");
+            } else {
+                response.sendRedirect("bikes?error=delete_failed");
+            }
         }
     }
-}
 
     /* ------------------------ Image Handling ------------------------ */
 
@@ -681,10 +681,14 @@ public class AdminMotorbikesServlet extends HttpServlet {
 
     private String getTypeFolder(int typeId) {
         switch (typeId) {
-            case 1: return "xe-so";
-            case 2: return "xe-ga";
-            case 3: return "xe-pkl";
-            default: return "khac";
+            case 1:
+                return "xe-so";
+            case 2:
+                return "xe-ga";
+            case 3:
+                return "xe-pkl";
+            default:
+                return "khac";
         }
     }
 }

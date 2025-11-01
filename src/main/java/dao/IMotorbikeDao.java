@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface IMotorbikeDao {
     List<Motorbike> findAll() throws Exception;
+
     List<Motorbike> findByTypeId(int typeId) throws Exception;
 
     List<MotorbikeListItem> search(Integer typeId, Date startDate, Date endDate,
@@ -21,7 +22,7 @@ public interface IMotorbikeDao {
     List<Motorbike> findAllByOwnerAccount(int accountId, String role) throws Exception;
 
     MotorbikeListItem findDetailById(int bikeId) throws Exception;
-    
+
     // fix từ quý 
     List<Motorbike> findByPartnerId(int partnerId) throws Exception;
 }

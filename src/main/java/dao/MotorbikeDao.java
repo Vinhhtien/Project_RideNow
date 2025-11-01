@@ -44,16 +44,16 @@ public class MotorbikeDao implements IMotorbikeDao {
 
         StringBuilder sb = new StringBuilder();
         sb.append("""
-            SELECT b.bike_id, b.bike_name, b.license_plate, b.price_per_day, b.status, b.description,
-                   t.type_name,
-                   CASE WHEN b.partner_id IS NOT NULL THEN 'partner' ELSE 'store' END AS owner_type,
-                   COALESCE(s.store_name, p.company_name) AS owner_name
-            FROM Motorbikes b
-            JOIN BikeTypes t ON t.type_id = b.type_id
-            LEFT JOIN Stores s   ON s.store_id   = b.store_id
-            LEFT JOIN Partners p ON p.partner_id = b.partner_id
-            WHERE 1=1
-        """);
+                    SELECT b.bike_id, b.bike_name, b.license_plate, b.price_per_day, b.status, b.description,
+                           t.type_name,
+                           CASE WHEN b.partner_id IS NOT NULL THEN 'partner' ELSE 'store' END AS owner_type,
+                           COALESCE(s.store_name, p.company_name) AS owner_name
+                    FROM Motorbikes b
+                    JOIN BikeTypes t ON t.type_id = b.type_id
+                    LEFT JOIN Stores s   ON s.store_id   = b.store_id
+                    LEFT JOIN Partners p ON p.partner_id = b.partner_id
+                    WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
 
         if (typeId != null) {
@@ -72,30 +72,30 @@ public class MotorbikeDao implements IMotorbikeDao {
         }
         if (startDate != null && endDate != null) {
             sb.append("""
-                AND NOT EXISTS (
-                  SELECT 1
-                  FROM OrderDetails d
-                  JOIN RentalOrders r ON r.order_id = d.order_id
-                  WHERE d.bike_id = b.bike_id
-                    AND r.status IN ('pending','confirmed')
-                    AND NOT (r.end_date < ? OR r.start_date > ?)
-                )
-            """);
+                        AND NOT EXISTS (
+                          SELECT 1
+                          FROM OrderDetails d
+                          JOIN RentalOrders r ON r.order_id = d.order_id
+                          WHERE d.bike_id = b.bike_id
+                            AND r.status IN ('pending','confirmed')
+                            AND NOT (r.end_date < ? OR r.start_date > ?)
+                        )
+                    """);
             params.add(startDate);
             params.add(endDate);
         }
 
         // Whitelist ORDER BY
         String orderBy;
-        if ("price_asc".equalsIgnoreCase(sort))      orderBy = "b.price_per_day ASC";
-        else if ("price_desc".equalsIgnoreCase(sort))orderBy = "b.price_per_day DESC";
-        else if ("name_asc".equalsIgnoreCase(sort))  orderBy = "b.bike_name ASC";
+        if ("price_asc".equalsIgnoreCase(sort)) orderBy = "b.price_per_day ASC";
+        else if ("price_desc".equalsIgnoreCase(sort)) orderBy = "b.price_per_day DESC";
+        else if ("name_asc".equalsIgnoreCase(sort)) orderBy = "b.bike_name ASC";
         else if ("name_desc".equalsIgnoreCase(sort)) orderBy = "b.bike_name DESC";
-        else                                         orderBy = "b.bike_id DESC";
+        else orderBy = "b.bike_id DESC";
 
         sb.append(" ORDER BY ").append(orderBy).append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
-        int offset = (Math.max(page,1)-1) * Math.max(size,1);
+        int offset = (Math.max(page, 1) - 1) * Math.max(size, 1);
         params.add(offset);
         params.add(size);
 
@@ -115,10 +115,10 @@ public class MotorbikeDao implements IMotorbikeDao {
                      BigDecimal maxPrice, String keyword) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("""
-            SELECT COUNT(1)
-            FROM Motorbikes b
-            WHERE 1=1
-        """);
+                    SELECT COUNT(1)
+                    FROM Motorbikes b
+                    WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
 
         if (typeId != null) {
@@ -137,15 +137,15 @@ public class MotorbikeDao implements IMotorbikeDao {
         }
         if (startDate != null && endDate != null) {
             sb.append("""
-                AND NOT EXISTS (
-                  SELECT 1
-                  FROM OrderDetails d
-                  JOIN RentalOrders r ON r.order_id = d.order_id
-                  WHERE d.bike_id = b.bike_id
-                    AND r.status IN ('pending','confirmed')
-                    AND NOT (r.end_date < ? OR r.start_date > ?)
-                )
-            """);
+                        AND NOT EXISTS (
+                          SELECT 1
+                          FROM OrderDetails d
+                          JOIN RentalOrders r ON r.order_id = d.order_id
+                          WHERE d.bike_id = b.bike_id
+                            AND r.status IN ('pending','confirmed')
+                            AND NOT (r.end_date < ? OR r.start_date > ?)
+                        )
+                    """);
             params.add(startDate);
             params.add(endDate);
         }
@@ -162,20 +162,20 @@ public class MotorbikeDao implements IMotorbikeDao {
     @Override
     public List<Motorbike> findAllByOwnerAccount(int accountId, String role) throws Exception {
         String sqlPartner = """
-            SELECT b.bike_id, b.partner_id, b.store_id, b.type_id, b.bike_name, b.license_plate,
-                   b.price_per_day, b.status, b.description
-            FROM Motorbikes b
-            JOIN Partners p ON p.partner_id = b.partner_id
-            WHERE p.account_id = ?
-        """;
+                    SELECT b.bike_id, b.partner_id, b.store_id, b.type_id, b.bike_name, b.license_plate,
+                           b.price_per_day, b.status, b.description
+                    FROM Motorbikes b
+                    JOIN Partners p ON p.partner_id = b.partner_id
+                    WHERE p.account_id = ?
+                """;
         String sqlAdmin = """
-            SELECT b.bike_id, b.partner_id, b.store_id, b.type_id, b.bike_name, b.license_plate,
-                   b.price_per_day, b.status, b.description
-            FROM Motorbikes b
-            JOIN Stores s ON s.store_id = b.store_id
-            JOIN Admins a ON a.admin_id = s.admin_id
-            WHERE a.account_id = ?
-        """;
+                    SELECT b.bike_id, b.partner_id, b.store_id, b.type_id, b.bike_name, b.license_plate,
+                           b.price_per_day, b.status, b.description
+                    FROM Motorbikes b
+                    JOIN Stores s ON s.store_id = b.store_id
+                    JOIN Admins a ON a.admin_id = s.admin_id
+                    WHERE a.account_id = ?
+                """;
         String sql = "partner".equalsIgnoreCase(role) ? sqlPartner : sqlAdmin;
 
         try (Connection con = DBConnection.getConnection();
@@ -192,16 +192,16 @@ public class MotorbikeDao implements IMotorbikeDao {
     @Override
     public MotorbikeListItem findDetailById(int bikeId) throws Exception {
         String sql = """
-            SELECT b.bike_id, b.bike_name, b.license_plate, b.price_per_day, b.status, b.description,
-                   t.type_name,
-                   CASE WHEN b.partner_id IS NOT NULL THEN 'partner' ELSE 'store' END AS owner_type,
-                   COALESCE(s.store_name, p.company_name) AS owner_name
-            FROM Motorbikes b
-            JOIN BikeTypes t ON t.type_id = b.type_id
-            LEFT JOIN Stores s   ON s.store_id   = b.store_id
-            LEFT JOIN Partners p ON p.partner_id = b.partner_id
-            WHERE b.bike_id = ?
-        """;
+                    SELECT b.bike_id, b.bike_name, b.license_plate, b.price_per_day, b.status, b.description,
+                           t.type_name,
+                           CASE WHEN b.partner_id IS NOT NULL THEN 'partner' ELSE 'store' END AS owner_type,
+                           COALESCE(s.store_name, p.company_name) AS owner_name
+                    FROM Motorbikes b
+                    JOIN BikeTypes t ON t.type_id = b.type_id
+                    LEFT JOIN Stores s   ON s.store_id   = b.store_id
+                    LEFT JOIN Partners p ON p.partner_id = b.partner_id
+                    WHERE b.bike_id = ?
+                """;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, bikeId);
@@ -214,7 +214,7 @@ public class MotorbikeDao implements IMotorbikeDao {
 
     private Motorbike mapMotorbike(ResultSet rs) throws SQLException {
         Integer partnerId = rs.getObject("partner_id") == null ? null : rs.getInt("partner_id");
-        Integer storeId   = rs.getObject("store_id")   == null ? null : rs.getInt("store_id");
+        Integer storeId = rs.getObject("store_id") == null ? null : rs.getInt("store_id");
         return new Motorbike(
                 rs.getInt("bike_id"),
                 partnerId,
@@ -248,21 +248,21 @@ public class MotorbikeDao implements IMotorbikeDao {
 
     @Override
     public List<Motorbike> findByPartnerId(int partnerId) throws Exception {
-            String sql = """
-                SELECT bike_id, partner_id, store_id, type_id, bike_name, license_plate,
-                       price_per_day, status, description
-                FROM Motorbikes
-                WHERE partner_id = ?
-            """;
-            try (Connection con = DBConnection.getConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, partnerId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    List<Motorbike> list = new ArrayList<>();
-                    while (rs.next()) list.add(mapMotorbike(rs));
-                    return list;
-                }
+        String sql = """
+                    SELECT bike_id, partner_id, store_id, type_id, bike_name, license_plate,
+                           price_per_day, status, description
+                    FROM Motorbikes
+                    WHERE partner_id = ?
+                """;
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partnerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Motorbike> list = new ArrayList<>();
+                while (rs.next()) list.add(mapMotorbike(rs));
+                return list;
             }
+        }
 
     }
 }

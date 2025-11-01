@@ -375,12 +375,13 @@ public class PayNowServlet extends HttpServlet {
     private void insertPaidPayments(Connection con, Map<Integer, BigDecimal> payMap, String uiMethod, BigDecimal walletAmount) throws SQLException {
         if (payMap == null || payMap.isEmpty()) return;
 
-        // Xác định phương thức thanh toán
+        // Xác định phương thức thanh toán theo giá trị hợp lệ của DB (CK_Payments_Method)
+        // Map: wallet -> cash, wallet_transfer -> bank_transfer, transfer -> bank_transfer
         String method;
         if ("wallet".equals(uiMethod)) {
-            method = "wallet";
+            method = "cash"; // nội bộ: trừ ví xem như cash
         } else if ("wallet_transfer".equals(uiMethod)) {
-            method = "mixed"; // kết hợp ví và chuyển khoản
+            method = "bank_transfer"; // phần chuyển khoản sẽ thể hiện bằng method này
         } else {
             method = "bank_transfer";
         }

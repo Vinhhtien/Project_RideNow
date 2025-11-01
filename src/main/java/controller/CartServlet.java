@@ -29,7 +29,7 @@ public class CartServlet extends HttpServlet {
     private final ICustomerService customerService = new CustomerService();
 
     @SuppressWarnings("unchecked")
-    private List<CartItem> getCart(HttpSession session){
+    private List<CartItem> getCart(HttpSession session) {
         Object o = session.getAttribute("cart");
         if (o == null) {
             List<CartItem> list = new ArrayList<>();
@@ -52,7 +52,7 @@ public class CartServlet extends HttpServlet {
             depositTotal = depositTotal.add(it.getDeposit());
         }
         BigDecimal upfront30 = total.multiply(BigDecimal.valueOf(0.3));
-        BigDecimal toPayNow  = upfront30.add(depositTotal);
+        BigDecimal toPayNow = upfront30.add(depositTotal);
 
         request.setAttribute("todayISO", LocalDate.now().toString());
         request.setAttribute("cartItems", cart);
@@ -87,114 +87,114 @@ public class CartServlet extends HttpServlet {
     }
 
     private void handleAddToCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-        throws IOException {
-    int bikeId = -1;
-    try {
-        // ===== 1) Lấy & chuẩn hoá tham số =====
-        String bikeIdStr = request.getParameter("bikeId");
-        String startStr  = request.getParameter("start");
-        String endStr    = request.getParameter("end");
-
-        if (bikeIdStr != null) bikeIdStr = bikeIdStr.trim();
-        if (startStr  != null) startStr  = startStr.trim();
-        if (endStr    != null) endStr    = endStr.trim();
-
-        System.out.println("[ADD] raw params => bikeId=" + bikeIdStr + ", start=" + startStr + ", end=" + endStr);
-
-        if (bikeIdStr == null || bikeIdStr.isBlank()) {
-            throw new IllegalArgumentException("Thiếu mã xe.");
-        }
-        bikeId = Integer.parseInt(bikeIdStr);
-
-        // Cho phép chọn 1 ngày: nếu thiếu start hay end thì dùng giá trị còn lại
-        if ((startStr == null || startStr.isBlank()) && (endStr == null || endStr.isBlank())) {
-            throw new IllegalArgumentException("Vui lòng chọn ngày nhận (và/hoặc ngày trả).");
-        }
-        if (startStr == null || startStr.isBlank()) startStr = endStr;
-        if (endStr   == null || endStr.isBlank())   endStr   = startStr;
-
-        // Parse yyyy-MM-dd an toàn
-        java.sql.Date start, end;
+            throws IOException {
+        int bikeId = -1;
         try {
-            start = java.sql.Date.valueOf(startStr); // yêu cầu định dạng yyyy-MM-dd
-            end   = java.sql.Date.valueOf(endStr);
-        } catch (IllegalArgumentException badFmt) {
-            throw new IllegalArgumentException("Định dạng ngày không hợp lệ. Vui lòng chọn lại (yyyy-MM-dd).");
-        }
+            // ===== 1) Lấy & chuẩn hoá tham số =====
+            String bikeIdStr = request.getParameter("bikeId");
+            String startStr = request.getParameter("start");
+            String endStr = request.getParameter("end");
 
-        // ===== 2) Validate ngày =====
-        java.time.LocalDate today = java.time.LocalDate.now();
-        if (end.before(start)) {
-            session.setAttribute("book_error", "Ngày trả phải sau hoặc bằng ngày nhận.");
-            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
-            return;
-        }
-        if (start.toLocalDate().isBefore(today)) {
-            session.setAttribute("book_error", "Ngày nhận không được ở quá khứ.");
-            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
-            return;
-        }
+            if (bikeIdStr != null) bikeIdStr = bikeIdStr.trim();
+            if (startStr != null) startStr = startStr.trim();
+            if (endStr != null) endStr = endStr.trim();
 
-        // ===== 3) Kiểm tra xe & lịch =====
-        MotorbikeListItem b = motorbikeService.getDetail(bikeId);
-        if (b == null) throw new IllegalArgumentException("Xe không tồn tại.");
+            System.out.println("[ADD] raw params => bikeId=" + bikeIdStr + ", start=" + startStr + ", end=" + endStr);
 
-        // ===== KIỂM TRA TRẠNG THÁI XE =====
-        if ("maintenance".equals(b.getStatus())) {
-            session.setAttribute("book_error", "Xe đang trong chế độ bảo dưỡng, không thể thêm vào giỏ hàng.");
-            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
-            return;
-        }
+            if (bikeIdStr == null || bikeIdStr.isBlank()) {
+                throw new IllegalArgumentException("Thiếu mã xe.");
+            }
+            bikeId = Integer.parseInt(bikeIdStr);
 
-        if (!orderService.isBikeAvailable(bikeId, start, end)) {
-            // Lấy các khoảng bị trùng để hiển thị
-            java.util.List<service.IOrderService.OverlappedRange> overlaps =
-                    orderService.getOverlappingRanges(bikeId, start, end);
+            // Cho phép chọn 1 ngày: nếu thiếu start hay end thì dùng giá trị còn lại
+            if ((startStr == null || startStr.isBlank()) && (endStr == null || endStr.isBlank())) {
+                throw new IllegalArgumentException("Vui lòng chọn ngày nhận (và/hoặc ngày trả).");
+            }
+            if (startStr == null || startStr.isBlank()) startStr = endStr;
+            if (endStr == null || endStr.isBlank()) endStr = startStr;
 
-            java.util.List<String> conflictStrings = new java.util.ArrayList<>();
-            java.time.format.DateTimeFormatter DF = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            if (overlaps != null && !overlaps.isEmpty()) {
-                for (service.IOrderService.OverlappedRange o : overlaps) {
-                    String s = o.start.toLocalDate().format(DF);
-                    String e = o.end.toLocalDate().format(DF);
-                    conflictStrings.add("#" + o.orderId + ": " + s + " → " + e);
+            // Parse yyyy-MM-dd an toàn
+            java.sql.Date start, end;
+            try {
+                start = java.sql.Date.valueOf(startStr); // yêu cầu định dạng yyyy-MM-dd
+                end = java.sql.Date.valueOf(endStr);
+            } catch (IllegalArgumentException badFmt) {
+                throw new IllegalArgumentException("Định dạng ngày không hợp lệ. Vui lòng chọn lại (yyyy-MM-dd).");
+            }
+
+            // ===== 2) Validate ngày =====
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (end.before(start)) {
+                session.setAttribute("book_error", "Ngày trả phải sau hoặc bằng ngày nhận.");
+                response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+                return;
+            }
+            if (start.toLocalDate().isBefore(today)) {
+                session.setAttribute("book_error", "Ngày nhận không được ở quá khứ.");
+                response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+                return;
+            }
+
+            // ===== 3) Kiểm tra xe & lịch =====
+            MotorbikeListItem b = motorbikeService.getDetail(bikeId);
+            if (b == null) throw new IllegalArgumentException("Xe không tồn tại.");
+
+            // ===== KIỂM TRA TRẠNG THÁI XE =====
+            if ("maintenance".equals(b.getStatus())) {
+                session.setAttribute("book_error", "Xe đang trong chế độ bảo dưỡng, không thể thêm vào giỏ hàng.");
+                response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+                return;
+            }
+
+            if (!orderService.isBikeAvailable(bikeId, start, end)) {
+                // Lấy các khoảng bị trùng để hiển thị
+                java.util.List<service.IOrderService.OverlappedRange> overlaps =
+                        orderService.getOverlappingRanges(bikeId, start, end);
+
+                java.util.List<String> conflictStrings = new java.util.ArrayList<>();
+                java.time.format.DateTimeFormatter DF = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                if (overlaps != null && !overlaps.isEmpty()) {
+                    for (service.IOrderService.OverlappedRange o : overlaps) {
+                        String s = o.start.toLocalDate().format(DF);
+                        String e = o.end.toLocalDate().format(DF);
+                        conflictStrings.add("#" + o.orderId + ": " + s + " → " + e);
+                    }
                 }
+
+                session.setAttribute("book_error",
+                        "Xe đã được xác nhận cho một khoảng ngày đè lên khung bạn chọn. Vui lòng chọn thời gian khác.");
+                if (!conflictStrings.isEmpty()) {
+                    session.setAttribute("book_conflicts", conflictStrings); // detail.jsp sẽ render danh sách này
+                }
+                response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
+                return;
             }
 
-            session.setAttribute("book_error",
-                    "Xe đã được xác nhận cho một khoảng ngày đè lên khung bạn chọn. Vui lòng chọn thời gian khác.");
-            if (!conflictStrings.isEmpty()) {
-                session.setAttribute("book_conflicts", conflictStrings); // detail.jsp sẽ render danh sách này
-            }
-            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + bikeId);
-            return;
+            // ===== 4) Add vào giỏ =====
+            CartItem item = new CartItem(
+                    b.getBikeId(), b.getBikeName(), b.getPricePerDay(), b.getTypeName(), start, end
+            );
+            getCart(session).add(item);
+            response.sendRedirect(request.getContextPath() + "/cart");
+
+        } catch (IllegalArgumentException iae) {
+            session.setAttribute("book_error", iae.getMessage());
+            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" +
+                    (bikeId == -1 ? request.getParameter("bikeId") : bikeId));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            session.setAttribute("book_error", "Không thể thêm vào giỏ: " + ex.getMessage());
+            String backId = request.getParameter("bikeId");
+            response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + backId);
         }
-
-        // ===== 4) Add vào giỏ =====
-        CartItem item = new CartItem(
-                b.getBikeId(), b.getBikeName(), b.getPricePerDay(), b.getTypeName(), start, end
-        );
-        getCart(session).add(item);
-        response.sendRedirect(request.getContextPath() + "/cart");
-
-    } catch (IllegalArgumentException iae) {
-        session.setAttribute("book_error", iae.getMessage());
-        response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" +
-                (bikeId == -1 ? request.getParameter("bikeId") : bikeId));
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        session.setAttribute("book_error", "Không thể thêm vào giỏ: " + ex.getMessage());
-        String backId = request.getParameter("bikeId");
-        response.sendRedirect(request.getContextPath() + "/motorbikedetail?id=" + backId);
     }
-}
-    
+
     private void handleRemoveFromCart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
             throws IOException {
         int index = Integer.parseInt(request.getParameter("index"));
         List<CartItem> cart = getCart(session);
         if (index >= 0 && index < cart.size()) cart.remove(index);
-        response.sendRedirect(request.getContextPath()+"/cart");
+        response.sendRedirect(request.getContextPath() + "/cart");
     }
 
     // SAVE ngày thuê 1 dòng (cập nhật session)
@@ -205,21 +205,21 @@ public class CartServlet extends HttpServlet {
             List<CartItem> cart = getCart(session);
             if (index < 0 || index >= cart.size()) {
                 session.setAttribute("error", "Mục giỏ hàng không hợp lệ.");
-                response.sendRedirect(request.getContextPath()+"/cart");
+                response.sendRedirect(request.getContextPath() + "/cart");
                 return;
             }
             Date start = Date.valueOf(request.getParameter("start"));
-            Date end   = Date.valueOf(request.getParameter("end"));
+            Date end = Date.valueOf(request.getParameter("end"));
 
             LocalDate today = LocalDate.now();
             if (start.toLocalDate().isBefore(today)) {
                 session.setAttribute("error", "Ngày nhận không được ở quá khứ.");
-                response.sendRedirect(request.getContextPath()+"/cart");
+                response.sendRedirect(request.getContextPath() + "/cart");
                 return;
             }
             if (end.before(start)) {
                 session.setAttribute("error", "Ngày trả phải sau hoặc bằng ngày nhận.");
-                response.sendRedirect(request.getContextPath()+"/cart");
+                response.sendRedirect(request.getContextPath() + "/cart");
                 return;
             }
 
@@ -228,10 +228,10 @@ public class CartServlet extends HttpServlet {
             item.setEndDate(end);
 
             session.setAttribute("success", "Đã lưu ngày thuê cho \"" + item.getBikeName() + "\".");
-            response.sendRedirect(request.getContextPath()+"/cart");
+            response.sendRedirect(request.getContextPath() + "/cart");
         } catch (Exception e) {
             session.setAttribute("error", "Không thể cập nhật ngày thuê: " + e.getMessage());
-            response.sendRedirect(request.getContextPath()+"/cart");
+            response.sendRedirect(request.getContextPath() + "/cart");
         }
     }
 
@@ -267,8 +267,10 @@ public class CartServlet extends HttpServlet {
             List<Integer> indices = new ArrayList<>();
             for (String k : params.keySet()) {
                 if (k.startsWith("start_")) {
-                    try { indices.add(Integer.parseInt(k.substring("start_".length()))); }
-                    catch (NumberFormatException ignore) {}
+                    try {
+                        indices.add(Integer.parseInt(k.substring("start_".length())));
+                    } catch (NumberFormatException ignore) {
+                    }
                 }
             }
             if (indices.isEmpty()) {
@@ -285,7 +287,7 @@ public class CartServlet extends HttpServlet {
                 if (s == null || e == null) continue;
 
                 Date newStart = Date.valueOf(s);
-                Date newEnd   = Date.valueOf(e);
+                Date newEnd = Date.valueOf(e);
 
                 if (newEnd.before(newStart)) {
                     session.setAttribute("error", "Dòng #" + (i + 1) + ": Ngày trả phải sau hoặc bằng ngày nhận.");

@@ -117,13 +117,20 @@ public class AdminReturnServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/adminreturn");
     }
 
-    /** Parse long an toàn */
+    /**
+     * Parse long an toàn
+     */
     private long safeParseLong(String s, long def) {
-        try { return (s == null || s.isBlank()) ? def : Long.parseLong(s.trim()); }
-        catch (Exception e) { return def; }
+        try {
+            return (s == null || s.isBlank()) ? def : Long.parseLong(s.trim());
+        } catch (Exception e) {
+            return def;
+        }
     }
 
-    /** Lấy admin_id từ bảng Admins theo account_id hiện tại */
+    /**
+     * Lấy admin_id từ bảng Admins theo account_id hiện tại
+     */
     private Integer findAdminIdByAccountId(int accountId) {
         String sql = "SELECT admin_id FROM Admins WHERE account_id = ?";
         try (Connection con = DBConnection.getConnection();
@@ -138,33 +145,33 @@ public class AdminReturnServlet extends HttpServlet {
         return null;
     }
 
-    /** 
-     * FIX: Tạo/cập nhật RefundInspections với inspected_at = NULL 
+    /**
+     * FIX: Tạo/cập nhật RefundInspections với inspected_at = NULL
      * để đơn hàng xuất hiện trong "Chờ kiểm tra"
      */
     private void upsertInspectionOnReturn(int orderId, int adminId, String adminNotes, long lateFee) {
         final String findOpenSql = """
-            SELECT TOP 1 inspection_id
-            FROM RefundInspections
-            WHERE order_id = ? AND refund_status IN ('pending','processing')
-            ORDER BY inspected_at DESC
-            """;
-        
+                SELECT TOP 1 inspection_id
+                FROM RefundInspections
+                WHERE order_id = ? AND refund_status IN ('pending','processing')
+                ORDER BY inspected_at DESC
+                """;
+
         // FIX: Thay đổi inspected_at thành NULL
         final String insertSql = """
-            INSERT INTO RefundInspections(
-              order_id, admin_id, bike_condition, damage_notes, damage_fee,
-              refund_amount, refund_method, refund_status, admin_notes, inspected_at, updated_at
-            ) VALUES (?, ?, 'good', NULL, ?, 0, 'wallet', 'pending', ?, NULL, GETDATE())
-            """;
-        
+                INSERT INTO RefundInspections(
+                  order_id, admin_id, bike_condition, damage_notes, damage_fee,
+                  refund_amount, refund_method, refund_status, admin_notes, inspected_at, updated_at
+                ) VALUES (?, ?, 'good', NULL, ?, 0, 'wallet', 'pending', ?, NULL, GETDATE())
+                """;
+
         final String updateSql = """
-            UPDATE RefundInspections
-               SET damage_fee = ?,
-                   admin_notes = CASE WHEN ? IS NOT NULL AND LEN(RTRIM(LTRIM(?)))>0 THEN ? ELSE admin_notes END,
-                   updated_at = GETDATE()
-             WHERE inspection_id = ?
-            """;
+                UPDATE RefundInspections
+                   SET damage_fee = ?,
+                       admin_notes = CASE WHEN ? IS NOT NULL AND LEN(RTRIM(LTRIM(?)))>0 THEN ? ELSE admin_notes END,
+                       updated_at = GETDATE()
+                 WHERE inspection_id = ?
+                """;
 
         try (Connection con = DBConnection.getConnection()) {
             Integer existId = null;
@@ -201,22 +208,24 @@ public class AdminReturnServlet extends HttpServlet {
         }
     }
 
-    /** Gửi thông báo cho partner; fail-safe nếu thiếu bảng Notifications */
+    /**
+     * Gửi thông báo cho partner; fail-safe nếu thiếu bảng Notifications
+     */
     private void notifyPartnerOrderCompleted(int orderId, String title, String message) {
         final String findPartnerAccountSql = """
-            SELECT TOP 1 a.account_id
-            FROM RentalOrders r
-            JOIN OrderDetails d ON d.order_id = r.order_id
-            JOIN Motorbikes b  ON b.bike_id  = d.bike_id
-            JOIN Partners p    ON p.partner_id = b.partner_id
-            JOIN Accounts a    ON a.account_id = p.account_id
-            WHERE r.order_id = ?
-            """;
+                SELECT TOP 1 a.account_id
+                FROM RentalOrders r
+                JOIN OrderDetails d ON d.order_id = r.order_id
+                JOIN Motorbikes b  ON b.bike_id  = d.bike_id
+                JOIN Partners p    ON p.partner_id = b.partner_id
+                JOIN Accounts a    ON a.account_id = p.account_id
+                WHERE r.order_id = ?
+                """;
 
         final String insertNotificationSql = """
-            INSERT INTO Notifications (account_id, title, message, is_read, created_at)
-            VALUES (?, ?, ?, 0, GETDATE())
-            """;
+                INSERT INTO Notifications (account_id, title, message, is_read, created_at)
+                VALUES (?, ?, ?, 0, GETDATE())
+                """;
 
         try (Connection con = DBConnection.getConnection()) {
             Integer partnerAccountId = null;
@@ -252,7 +261,9 @@ public class AdminReturnServlet extends HttpServlet {
         }
     }
 
-    /** Kiểm tra bảng tồn tại (SQL Server) */
+    /**
+     * Kiểm tra bảng tồn tại (SQL Server)
+     */
     private boolean tableExists(Connection con, String tableName) {
         try (PreparedStatement ps = con.prepareStatement(
                 "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?")) {

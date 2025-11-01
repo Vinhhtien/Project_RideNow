@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class CheckoutServlet extends HttpServlet {
 
     private final ICustomerService customerService = new CustomerService();
-    private final IOrderService     orderService   = new OrderService();
+    private final IOrderService orderService = new OrderService();
 
     @SuppressWarnings("unchecked")
     private List<CartItem> getCart(HttpSession session) {

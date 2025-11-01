@@ -9,6 +9,6 @@ public interface ICustomerService {
     void saveProfile(Customer c) throws Exception;
     boolean changePassword(int accountId, String currentPw, String newPw) throws Exception;
     boolean cancelOrder(int customerId, int orderId) throws Exception; 
-    
+    Customer getCustomerById(int customerId) throws Exception;
     List<model.Customer> getAll() throws Exception;
-}
+}   

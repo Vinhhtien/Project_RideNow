@@ -16,37 +16,55 @@ public class AdminOrderService implements IAdminOrderService {
 
     @Override
     public List<OrderSummary> findOrders(String status, String kw, Date from, Date to, int page, int pageSize) {
-        try { return dao.findOrders(status, kw, from, to, page, pageSize); }
-        catch (Exception e) { throw new RuntimeException(e); }
+        try {
+            return dao.findOrders(status, kw, from, to, page, pageSize);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public int countOrders(String status, String kw, Date from, Date to) {
-        try { return dao.countOrders(status, kw, from, to); }
-        catch (Exception e) { throw new RuntimeException(e); }
+        try {
+            return dao.countOrders(status, kw, from, to);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public Optional<OrderSummary> findOrderHeader(int orderId) {
-        try { return dao.findOrderHeader(orderId); }
-        catch (Exception e) { throw new RuntimeException(e); }
+        try {
+            return dao.findOrderHeader(orderId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public List<OrderDetailItem> findOrderItems(int orderId) {
-        try { return dao.findOrderItems(orderId); }
-        catch (Exception e) { throw new RuntimeException(e); }
+        try {
+            return dao.findOrderItems(orderId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public List<PaymentInfo> findPayments(int orderId) {
-        try { return dao.findPayments(orderId); }
-        catch (Exception e) { throw new RuntimeException(e); }
+        try {
+            return dao.findPayments(orderId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public Optional<RefundInfo> findLatestRefund(int orderId) {
-        try { return dao.findLatestRefund(orderId); }
-        catch (Exception e) { throw new RuntimeException(e); }
+        try {
+            return dao.findLatestRefund(orderId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -14,10 +14,10 @@ public class PartnerDao implements IPartnerDao {
     @Override
     public Partner login(String username, String password) throws Exception {
         final String sql =
-            "SELECT p.partner_id, p.account_id, p.company_name, p.address, p.phone, p.admin_id " +  // KHÔNG có email
-            "FROM Partners p " +
-            "JOIN Accounts a ON p.account_id = a.account_id " +
-            "WHERE a.username = ? AND a.password = ? AND a.role = 'partner' AND a.status = 1";
+                "SELECT p.partner_id, p.account_id, p.company_name, p.address, p.phone, p.admin_id " +  // KHÔNG có email
+                        "FROM Partners p " +
+                        "JOIN Accounts a ON p.account_id = a.account_id " +
+                        "WHERE a.username = ? AND a.password = ? AND a.role = 'partner' AND a.status = 1";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -48,6 +48,7 @@ public class PartnerDao implements IPartnerDao {
             return false;
         }
     }
+
     @Override
     public boolean updateAccountName(int accountId, String accountName) {
         String sql = "UPDATE Accounts SET username = ? WHERE account_id = ?";
@@ -74,38 +75,37 @@ public class PartnerDao implements IPartnerDao {
             return false;
         }
     }
-    
 
 
-   @Override
-public Partner getByAccountId(int accountId) {
-    String sql = "SELECT partner_id, account_id, company_name, address, phone, admin_id " +
-                 "FROM Partners WHERE account_id = ?";
-    try (Connection con = DBConnection.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setInt(1, accountId);
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                Partner p = new Partner();
-                p.setPartnerId(rs.getInt("partner_id"));
-                p.setAccountId(rs.getInt("account_id"));
-                p.setFullname(rs.getString("company_name"));
-                p.setAddress(rs.getString("address"));
-                p.setPhone(rs.getString("phone"));
-                int adminId = rs.getInt("admin_id");
-                if (rs.wasNull()) {
-                    p.setAdminId(null);
-                } else {
-                    p.setAdminId(adminId);
+    @Override
+    public Partner getByAccountId(int accountId) {
+        String sql = "SELECT partner_id, account_id, company_name, address, phone, admin_id " +
+                "FROM Partners WHERE account_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Partner p = new Partner();
+                    p.setPartnerId(rs.getInt("partner_id"));
+                    p.setAccountId(rs.getInt("account_id"));
+                    p.setFullname(rs.getString("company_name"));
+                    p.setAddress(rs.getString("address"));
+                    p.setPhone(rs.getString("phone"));
+                    int adminId = rs.getInt("admin_id");
+                    if (rs.wasNull()) {
+                        p.setAdminId(null);
+                    } else {
+                        p.setAdminId(adminId);
+                    }
+                    return p;
                 }
-                return p;
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
 
 
     // --- Helper ---

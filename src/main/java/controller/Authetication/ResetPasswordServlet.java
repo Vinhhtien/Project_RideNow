@@ -3,8 +3,10 @@ package controller.Authetication;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.sql.*;
+
 import utils.DBConnection;
 
 @WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/resetpassword"})
@@ -23,10 +25,10 @@ public class ResetPasswordServlet extends HttpServlet {
         }
 
         final String sqlCheckToken = """
-            SELECT TOP 1 account_id
-            FROM Password_Reset_Tokens
-            WHERE token = ? AND used = 0 AND expire_at > GETDATE()
-        """;
+                    SELECT TOP 1 account_id
+                    FROM Password_Reset_Tokens
+                    WHERE token = ? AND used = 0 AND expire_at > GETDATE()
+                """;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sqlCheckToken)) {
@@ -53,8 +55,8 @@ public class ResetPasswordServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String token   = req.getParameter("token");
-        String newPw   = req.getParameter("password");
+        String token = req.getParameter("token");
+        String newPw = req.getParameter("password");
         String confirm = req.getParameter("confirm");
 
         if (token == null || token.isBlank()) {
@@ -77,20 +79,20 @@ public class ResetPasswordServlet extends HttpServlet {
 
         // Cập nhật Accounts.password và đánh dấu token used=1 (đúng tên bảng/cột)
         final String sqlUpdate = """
-            DECLARE @acc INT;
-            SELECT TOP 1 @acc = account_id
-            FROM Password_Reset_Tokens
-            WHERE token = ? AND used = 0 AND expire_at > GETDATE();
-
-            IF @acc IS NOT NULL
-            BEGIN
-                UPDATE Accounts SET password = ? WHERE account_id = @acc; -- DEMO: plaintext
-                UPDATE Password_Reset_Tokens SET used = 1 WHERE token = ?;
-                SELECT 1 AS ok;
-            END
-            ELSE
-                SELECT 0 AS ok;
-        """;
+                    DECLARE @acc INT;
+                    SELECT TOP 1 @acc = account_id
+                    FROM Password_Reset_Tokens
+                    WHERE token = ? AND used = 0 AND expire_at > GETDATE();
+                
+                    IF @acc IS NOT NULL
+                    BEGIN
+                        UPDATE Accounts SET password = ? WHERE account_id = @acc; -- DEMO: plaintext
+                        UPDATE Password_Reset_Tokens SET used = 1 WHERE token = ?;
+                        SELECT 1 AS ok;
+                    END
+                    ELSE
+                        SELECT 0 AS ok;
+                """;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sqlUpdate)) {

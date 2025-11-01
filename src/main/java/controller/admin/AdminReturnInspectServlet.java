@@ -19,18 +19,54 @@ public class AdminReturnInspectServlet extends HttpServlet {
         private String bikeName;
         private BigDecimal depositAmount;
         private Timestamp returnedAt;
-        public int getOrderId() { return orderId; }
-        public void setOrderId(int orderId) { this.orderId = orderId; }
-        public String getCustomerName() { return customerName; }
-        public void setCustomerName(String customerName) { this.customerName = customerName; }
-        public String getCustomerPhone() { return customerPhone; }
-        public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
-        public String getBikeName() { return bikeName; }
-        public void setBikeName(String bikeName) { this.bikeName = bikeName; }
-        public BigDecimal getDepositAmount() { return depositAmount; }
-        public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
-        public Timestamp getReturnedAt() { return returnedAt; }
-        public void setReturnedAt(Timestamp returnedAt) { this.returnedAt = returnedAt; }
+
+        public int getOrderId() {
+            return orderId;
+        }
+
+        public void setOrderId(int orderId) {
+            this.orderId = orderId;
+        }
+
+        public String getCustomerName() {
+            return customerName;
+        }
+
+        public void setCustomerName(String customerName) {
+            this.customerName = customerName;
+        }
+
+        public String getCustomerPhone() {
+            return customerPhone;
+        }
+
+        public void setCustomerPhone(String customerPhone) {
+            this.customerPhone = customerPhone;
+        }
+
+        public String getBikeName() {
+            return bikeName;
+        }
+
+        public void setBikeName(String bikeName) {
+            this.bikeName = bikeName;
+        }
+
+        public BigDecimal getDepositAmount() {
+            return depositAmount;
+        }
+
+        public void setDepositAmount(BigDecimal depositAmount) {
+            this.depositAmount = depositAmount;
+        }
+
+        public Timestamp getReturnedAt() {
+            return returnedAt;
+        }
+
+        public void setReturnedAt(Timestamp returnedAt) {
+            this.returnedAt = returnedAt;
+        }
     }
 
     @Override
@@ -70,11 +106,11 @@ public class AdminReturnInspectServlet extends HttpServlet {
         Integer adminId = (Integer) session.getAttribute("admin_id");
         if (adminId == null) adminId = 1;
 
-        String orderIdStr    = req.getParameter("orderId");
+        String orderIdStr = req.getParameter("orderId");
         String bikeCondition = req.getParameter("bikeCondition");
-        String damageNotes   = req.getParameter("damageNotes");
-        String damageFeeStr  = req.getParameter("damageFee");
-        String refundMethod  = req.getParameter("refundMethod");
+        String damageNotes = req.getParameter("damageNotes");
+        String damageFeeStr = req.getParameter("damageFee");
+        String refundMethod = req.getParameter("refundMethod");
 
         try {
             if (orderIdStr == null || orderIdStr.isBlank()) {
@@ -97,8 +133,11 @@ public class AdminReturnInspectServlet extends HttpServlet {
 
             BigDecimal damageFee = BigDecimal.ZERO;
             if (damageFeeStr != null && !damageFeeStr.isBlank()) {
-                try { damageFee = new BigDecimal(damageFeeStr.trim()); }
-                catch (NumberFormatException nfe) { damageFee = BigDecimal.ZERO; }
+                try {
+                    damageFee = new BigDecimal(damageFeeStr.trim());
+                } catch (NumberFormatException nfe) {
+                    damageFee = BigDecimal.ZERO;
+                }
             }
             if (damageFee.compareTo(BigDecimal.ZERO) < 0) damageFee = BigDecimal.ZERO;
             if (damageFee.compareTo(depositAmount) > 0) damageFee = depositAmount;
@@ -130,16 +169,16 @@ public class AdminReturnInspectServlet extends HttpServlet {
 
     private InspectionOrderVM getOrderForInspection(int orderId) {
         String sql = """
-            SELECT r.order_id, c.full_name, c.phone, b.bike_name,
-                   r.deposit_amount, r.returned_at
-              FROM RentalOrders r
-              JOIN Customers c   ON c.customer_id = r.customer_id
-              JOIN OrderDetails d ON d.order_id   = r.order_id
-              JOIN Motorbikes b  ON b.bike_id     = d.bike_id
-             WHERE r.order_id = ?
-               AND r.return_status  = 'returned'
-               AND r.deposit_status = 'held'
-        """;
+                    SELECT r.order_id, c.full_name, c.phone, b.bike_name,
+                           r.deposit_amount, r.returned_at
+                      FROM RentalOrders r
+                      JOIN Customers c   ON c.customer_id = r.customer_id
+                      JOIN OrderDetails d ON d.order_id   = r.order_id
+                      JOIN Motorbikes b  ON b.bike_id     = d.bike_id
+                     WHERE r.order_id = ?
+                       AND r.return_status  = 'returned'
+                       AND r.deposit_status = 'held'
+                """;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -180,11 +219,11 @@ public class AdminReturnInspectServlet extends HttpServlet {
 
             // 1) Tạo inspection = pending
             String inspectionSql = """
-                INSERT INTO RefundInspections
-                  (order_id, admin_id, bike_condition, damage_notes, damage_fee,
-                   refund_amount, refund_method, refund_status, inspected_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', GETDATE())
-            """;
+                        INSERT INTO RefundInspections
+                          (order_id, admin_id, bike_condition, damage_notes, damage_fee,
+                           refund_amount, refund_method, refund_status, inspected_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', GETDATE())
+                    """;
             try (PreparedStatement ps = con.prepareStatement(inspectionSql)) {
                 ps.setInt(1, orderId);
                 ps.setInt(2, adminId);
@@ -208,11 +247,18 @@ public class AdminReturnInspectServlet extends HttpServlet {
             return true;
 
         } catch (SQLException e) {
-            if (con != null) try { con.rollback(); } catch (SQLException ignore) {}
+            if (con != null) try {
+                con.rollback();
+            } catch (SQLException ignore) {
+            }
             e.printStackTrace();
             return false;
         } finally {
-            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (SQLException ignore) {}
+            if (con != null) try {
+                con.setAutoCommit(true);
+                con.close();
+            } catch (SQLException ignore) {
+            }
         }
     }
 }
