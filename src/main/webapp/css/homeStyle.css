@@ -39,13 +39,68 @@
     --transition: all .3s ease;
 }
 
+/* ===== BOOTSTRAP FIXES ===== */
+/* Reset Bootstrap font overrides */
+body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label,
+.hero h2, .hero p, .section-title h2, .section-title p, .category-card h3, 
+.category-card p, .bike-card h3, .bike-price, .step h3, .step p, .review-comment,
+.customer-name, .review-date, .btn, .btn-hero, .btn-category, .bike-action, 
+.btn-search, .control, .form-control, .form-select, .alert, .carousel, 
+.carousel-item, .carousel-control-prev, .carousel-control-next, 
+.carousel-indicators, .carousel-caption {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Fix Bootstrap button styles */
+.btn {
+    border: 1px solid transparent;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Fix form controls */
+.form-control, .form-select {
+    background: var(--dark) !important;
+    border: 1px solid var(--primary-light) !important;
+    color: var(--light) !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+    background: var(--primary-dark) !important;
+}
+
+/* Fix alerts */
+.alert {
+    border: none !important;
+    border-radius: var(--radius) !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Fix carousel */
+.carousel {
+    font-family: 'Inter', sans-serif !important;
+}
+
+.carousel-item {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* ===== BASE STYLES ===== */
 html, body {
     height: 100%;
     scroll-behavior: smooth;
 }
 
 body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     background: linear-gradient(135deg, #0a0b0d 0%, #121318 100%);
     color: var(--light);
     line-height: 1.6;
@@ -68,12 +123,13 @@ img {
 header {
     position: sticky;
     top: 0;
-    z-index: 3000; /* ↑ cao hơn hero & search-card */
+    z-index: 3000;
     background: rgba(11, 11, 13, .94);
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-md);
     transition: var(--transition);
     border-bottom: 1px solid var(--primary-light);
+    font-family: 'Inter', sans-serif !important;
 }
 
 header.scrolled {
@@ -116,6 +172,7 @@ header.scrolled {
     font-weight: 800;
     letter-spacing: -0.5px;
     text-shadow: 0 0 10px rgba(59, 130, 246, .25);
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Navigation */
@@ -136,6 +193,7 @@ nav ul {
     position: relative;
     padding: 8px 0;
     transition: var(--transition);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .nav-link:after {
@@ -177,7 +235,7 @@ nav ul {
     opacity: 0;
     pointer-events: none;
     transition: opacity .2s, transform .2s;
-    z-index: 4000; /* ↑ nổi trên search-card */
+    z-index: 4000;
 }
 
 .dropdown a {
@@ -189,6 +247,7 @@ nav ul {
     font-weight: 600;
     font-size: 14px;
     transition: var(--transition);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .dropdown a:hover {
@@ -210,25 +269,12 @@ nav ul {
     gap: 12px;
 }
 
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius);
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: var(--transition);
-    border: none;
-    outline: none;
-    gap: 8px;
-}
-
 .btn--ghost {
     color: var(--light);
     padding: 8px 16px;
     background: transparent;
     border: 1px solid var(--primary-light);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .btn--ghost:hover {
@@ -243,6 +289,7 @@ nav ul {
     padding: 10px 20px;
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     font-weight: 700;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .btn--solid:hover {
@@ -268,7 +315,7 @@ nav ul {
     color: var(--accent);
 }
 
-/* ===== SEARCH FORM (header generic) ===== */
+/* ===== SEARCH FORM ===== */
 .search-bar {
     background: var(--dark-light);
     color: var(--light);
@@ -295,6 +342,7 @@ nav ul {
     margin: 0 0 6px 2px;
     font-weight: 600;
     letter-spacing: .3px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .control {
@@ -306,7 +354,7 @@ nav ul {
     color: var(--light);
     padding: 0 16px;
     font-size: 14px;
-    font-family: inherit;
+    font-family: 'Inter', sans-serif !important;
     transition: var(--transition);
 }
 
@@ -337,7 +385,7 @@ select.control {
     background: var(--accent);
     color: var(--white);
     font-weight: 700;
-    font-family: inherit;
+    font-family: 'Inter', sans-serif !important;
     transition: var(--transition);
     cursor: pointer;
     display: flex;
@@ -362,7 +410,7 @@ select.control {
     background: var(--primary-light);
     color: var(--light);
     font-weight: 700;
-    font-family: inherit;
+    font-family: 'Inter', sans-serif !important;
     transition: var(--transition);
     cursor: pointer;
     display: flex;
@@ -515,7 +563,7 @@ select.control {
     border-top: 1px solid var(--primary-light);
     animation: slideDown .3s ease;
     position: relative;
-    z-index: 2500; /* ↑ đứng giữa header và hero */
+    z-index: 2500;
 }
 
 @keyframes slideDown {
@@ -542,6 +590,7 @@ select.control {
     text-decoration: none;
     font-weight: 600;
     transition: var(--transition);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .mobile-actions a:hover {
@@ -565,6 +614,7 @@ select.control {
     text-decoration: none;
     font-weight: 500;
     transition: var(--transition);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .mobile-nav a:hover {
@@ -588,7 +638,7 @@ select.control {
     padding: 140px 0;
     position: relative;
     overflow: visible;
-    z-index: 1; /* tạo thứ tự lớp rõ ràng */
+    z-index: 1;
 }
 
 /* iOS/mobile fix cho background-attachment: fixed */
@@ -622,6 +672,7 @@ select.control {
     line-height: 1.2;
     letter-spacing: -0.5px;
     text-shadow: 0 2px 10px rgba(0, 0, 0, .5);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .hero p {
@@ -630,6 +681,7 @@ select.control {
     opacity: .9;
     font-weight: 400;
     color: var(--gray-light);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .btn-hero {
@@ -646,6 +698,7 @@ select.control {
     overflow: hidden;
     border: none;
     cursor: pointer;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .btn-hero:before {
@@ -670,20 +723,19 @@ select.control {
 }
 
 /* === Search overlay on HERO === */
-/* === Search overlay on HERO === */
 .hero--with-search {
     position: relative;
-    padding-bottom: 125px; /* Giảm nhiều hơn */
+    padding-bottom: 125px;
 }
 
 .search-card {
-    position: relative; /* Thay đổi từ absolute */
+    position: relative;
     left: auto;
     transform: none;
     bottom: auto;
     width: 100%;
     max-width: 1120px;
-    margin: 30px auto -10px; /* Căn giữa và tạo khoảng cách */
+    margin: 30px auto -10px;
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(148, 163, 184, 0.3);
@@ -708,6 +760,7 @@ select.control {
     color: #cbd5e1;
     margin: 0 0 6px 2px;
     font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .search-card .control {
@@ -717,6 +770,7 @@ select.control {
     color: #e2e8f0;
     border: 1px solid #334155;
     padding: 0 12px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Columns mapping for desktop */
@@ -827,6 +881,7 @@ select.control {
     font-weight: 700;
     margin-bottom: 16px;
     text-shadow: 0 0 10px rgba(59, 130, 246, .22);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .section-title h2:after {
@@ -845,6 +900,7 @@ select.control {
     max-width: 600px;
     margin: 0 auto;
     font-size: 1.05rem;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* ===== Categories ===== */
@@ -910,11 +966,13 @@ select.control {
     color: var(--accent);
     font-size: 1.5rem;
     font-weight: 700;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .category-content p {
     color: var(--gray-light);
     margin-bottom: 20px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .btn-category {
@@ -930,6 +988,7 @@ select.control {
     gap: 8px;
     border: none;
     cursor: pointer;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .btn-category:hover {
@@ -993,6 +1052,7 @@ select.control {
     font-weight: 700;
     z-index: 2;
     box-shadow: var(--shadow-sm);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .bike-details {
@@ -1010,12 +1070,14 @@ select.control {
     color: var(--accent);
     font-size: 1.3rem;
     font-weight: 700;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .bike-price {
     color: var(--accent);
     font-weight: 800;
     font-size: 1.25rem;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .bike-specs {
@@ -1024,6 +1086,7 @@ select.control {
     margin-bottom: 20px;
     color: var(--gray-light);
     font-size: 14px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .bike-specs span {
@@ -1045,6 +1108,7 @@ select.control {
     transition: var(--transition);
     border: none;
     cursor: pointer;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .bike-action:hover {
@@ -1132,6 +1196,7 @@ select.control {
     font-weight: 800;
     color: rgba(59, 130, 246, .12);
     line-height: 1;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .step-icon {
@@ -1152,112 +1217,185 @@ select.control {
     margin-bottom: 12px;
     font-size: 1.3rem;
     color: var(--accent);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .step p {
     color: var(--gray-light);
+    font-family: 'Inter', sans-serif !important;
 }
 
-/* ===== Testimonials ===== */
-.testimonials {
-    margin-bottom: 80px;
-}
-
-.testimonial-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    align-items: stretch;
-}
-
-.testimonial-card {
-    background: var(--dark-light);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    padding: 30px;
-    flex: 1 1 calc(33.333% - 20px);
-    max-width: calc(33.333% - 20px);
-    transition: var(--transition);
+/* ===== Customer Reviews ===== */
+.customer-reviews {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 80px 0;
+    color: white;
     position: relative;
-    border: 1px solid var(--primary-light);
+    font-family: 'Inter', sans-serif !important;
 }
 
-.testimonial-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--accent);
-}
-
-.testimonial-card:before {
-    content: '"';
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 60px;
-    color: var(--accent);
-    opacity: .1;
-    font-family: Georgia, serif;
-    line-height: 1;
-}
-
-.rating {
+.review-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 50px 40px;
+    margin: 20px 60px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-height: 280px;
     display: flex;
-    gap: 4px;
-    margin-bottom: 16px;
-    color: var(--accent);
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.testimonial-text {
-    font-style: italic;
-    color: var(--light);
-    margin-bottom: 24px;
-    position: relative;
-    z-index: 2;
-}
-
-.testimonial-author {
+.rating-stars {
+    font-size: 28px;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
-.author-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-right: 16px;
-    flex: 0 0 60px;
-    border: 3px solid var(--accent);
+.star {
+    color: #ddd;
+    margin: 0 3px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.author-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.star.filled {
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-.author-info h4 {
-    color: var(--accent);
-    margin-bottom: 4px;
+.rating-text {
     font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-left: 10px;
+    font-family: 'Inter', sans-serif !important;
 }
 
-.author-info p {
-    color: var(--gray-light);
+.review-comment {
+    font-size: 20px;
+    font-style: italic;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    color: white;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.customer-info {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding-top: 20px;
+}
+
+.customer-name {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: white;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.review-date {
     font-size: 14px;
+    opacity: 0.8;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Inter', sans-serif !important;
 }
 
-@media (max-width: 992px) {
-    .testimonial-card {
-        flex-basis: calc(50% - 20px);
-        max-width: calc(50% - 20px);
+.no-reviews {
+    padding: 60px 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.no-reviews p {
+    font-size: 18px;
+    margin-bottom: 0;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Carousel Customization */
+.carousel-indicators {
+    bottom: -60px;
+}
+
+.carousel-indicators button {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    margin: 0 6px !important;
+    background-color: rgba(255, 255, 255, 0.5) !important;
+    border: none !important;
+}
+
+.carousel-indicators button.active {
+    background-color: white !important;
+    transform: scale(1.2);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 50px !important;
+    height: 50px !important;
+    top: 50% !important;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    margin: 0 20px;
+}
+
+.carousel-control-prev {
+    left: 20px !important;
+}
+
+.carousel-control-next {
+    right: 20px !important;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 20px 20px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .customer-reviews {
+        padding: 50px 0;
     }
-}
-
-@media (max-width: 576px) {
-    .testimonial-card {
-        flex-basis: 100%;
-        max-width: 100%;
+    
+    .review-card {
+        padding: 30px 20px;
+        margin: 10px 20px;
+        min-height: 220px;
+    }
+    
+    .rating-stars {
+        font-size: 22px;
+    }
+    
+    .review-comment {
+        font-size: 16px;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 40px !important;
+        height: 40px !important;
+        margin: 0 10px;
     }
 }
 
@@ -1286,12 +1424,14 @@ select.control {
     color: var(--accent);
     margin-bottom: 16px;
     font-size: 2.2rem;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .app-text p {
     color: var(--gray-light);
     margin-bottom: 0;
     font-size: 1.1rem;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .app-buttons {
@@ -1313,6 +1453,7 @@ select.control {
     min-width: 160px;
     border: none;
     cursor: pointer;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .app-btn:hover {
@@ -1423,12 +1564,14 @@ footer.site-footer {
     align-items: center;
     gap: 10px;
     color: var(--accent);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .site-footer .footer-about p {
     color: var(--gray-light);
     margin-bottom: 20px;
     line-height: 1.7;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .site-footer .footer-links h3,
@@ -1438,6 +1581,7 @@ footer.site-footer {
     font-size: 18px;
     position: relative;
     padding-bottom: 10px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .site-footer .footer-links h3:after,
@@ -1467,6 +1611,7 @@ footer.site-footer {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .site-footer .footer-links a:hover {
@@ -1514,7 +1659,7 @@ footer.site-footer {
     border-radius: var(--radius);
     background: var(--dark-light);
     color: var(--light);
-    font-family: inherit;
+    font-family: 'Inter', sans-serif !important;
     font-size: 15px;
 }
 
@@ -1536,6 +1681,7 @@ footer.site-footer {
     justify-content: center;
     font-weight: 600;
     transition: var(--transition);
+    font-family: 'Inter', sans-serif !important;
 }
 
 .site-footer .newsletter-form button:hover {
@@ -1548,6 +1694,7 @@ footer.site-footer {
     text-align: center;
     color: var(--gray-light);
     font-size: 14px;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .site-footer a {
