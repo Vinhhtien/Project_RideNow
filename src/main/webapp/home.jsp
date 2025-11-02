@@ -302,6 +302,163 @@
                 margin: 0 10px;
             }
         }
+        
+        /* ===== FIX FOR LONG USERNAMES - UPDATED ===== */
+/* Fix for header auth section */
+.auth {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    min-width: 0; /* Quan trọng: cho phép thu nhỏ */
+}
+
+.auth .btn--ghost {
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 0; /* Quan trọng: cho phép thu nhỏ */
+    flex-shrink: 1; /* Cho phép co lại khi cần */
+}
+
+/* Specific fix for user greeting button */
+.auth .btn--ghost:has(strong) {
+    max-width: 180px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.auth .btn--ghost strong {
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    flex-shrink: 1;
+}
+
+/* Fix for mobile panel */
+.mobile-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mobile-actions > div {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.mobile-actions a {
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/* Customer name in reviews */
+.customer-info {
+    text-align: center;
+    padding-top: 15px;
+}
+
+.customer-name {
+    display: inline-block;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .auth .btn--ghost:has(strong) {
+        max-width: 160px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 90px;
+    }
+}
+
+@media (max-width: 992px) {
+    .auth .btn--ghost:has(strong) {
+        max-width: 140px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 70px;
+    }
+}
+
+@media (max-width: 768px) {
+    .auth {
+        gap: 6px;
+    }
+    
+    .auth .btn--ghost:has(strong) {
+        max-width: 120px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 60px;
+    }
+    
+    .customer-name {
+        max-width: 150px;
+    }
+    
+    /* Mobile panel adjustments */
+    .mobile-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .mobile-actions > div {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .auth .btn--ghost:has(strong) {
+        max-width: 100px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 50px;
+    }
+    
+    .customer-name {
+        max-width: 120px;
+    }
+    
+    /* Stack auth buttons on very small screens */
+    .auth {
+        flex-direction: column;
+        width: 100%;
+        gap: 4px;
+    }
+    
+    .auth .btn--ghost,
+    .auth .btn--solid {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        max-width: none !important;
+    }
+}
+
+/* Ensure icons don't get squeezed */
+.auth .btn--ghost i,
+.mobile-actions i {
+    flex-shrink: 0;
+}
+        
         </style>
 
 </head>
@@ -350,9 +507,10 @@
                         <c:when test="${not empty sessionScope.account}">
                             <c:choose>
                                 <c:when test="${sessionScope.account.role == 'customer'}">
-                                    <a href="${pageContext.request.contextPath}/customer/profile" class="btn btn--ghost"
-                                       title="Chỉnh sửa hồ sơ">
-                                        <i class="fas fa-user-circle"></i> Xin chào,
+                                    <a href="${pageContext.request.contextPath}/customer/profile" class="btn btn--ghost user-greeting"
+                                       title="Chào ${sessionScope.account.username} - Nhấn để xem hồ sơ">
+                                        <i class="fas fa-user-circle"></i> 
+                                        <span class="greeting-text">Xin chào,</span>
                                         <strong>${sessionScope.account.username}</strong>
                                     </a>
                                 </c:when>

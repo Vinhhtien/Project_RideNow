@@ -31,12 +31,11 @@ public class StoreReviewServlet extends HttpServlet {
         System.out.println("View parameter: " + view);
 
         try {
+            // 1) Load tất cả reviews
             List<StoreReview> reviews = reviewDao.findAll();
 
-            // DEBUG CHI TIẾT
             System.out.println("=== SERVLET DEBUG ===");
             System.out.println("Reviews size: " + (reviews != null ? reviews.size() : "null"));
-
             if (reviews != null && !reviews.isEmpty()) {
                 System.out.println("✅ CÓ DỮ LIỆU REVIEWS:");
                 for (int i = 0; i < reviews.size(); i++) {
@@ -47,20 +46,23 @@ public class StoreReviewServlet extends HttpServlet {
                 System.out.println("❌ KHÔNG CÓ REVIEWS NÀO ĐƯỢC TRẢ VỀ!");
             }
 
-            // KIỂM TRA USER ĐÃ CÓ REVIEW CHƯA (CHO CHỨC NĂNG CHỈNH SỬA)
+            // 2) Kiểm tra user đã có review chưa (THEO account_id)
             HttpSession session = request.getSession();
             Account account = (Account) session.getAttribute("account");
-            
+
             if (account != null && "customer".equalsIgnoreCase(account.getRole())) {
-                StoreReview userReview = ((StoreReviewDao) reviewDao).findByCustomerId(account.getAccountId());
+                int accountId = account.getAccountId(); // đây là account_id
+                StoreReview userReview = ((StoreReviewDao) reviewDao).findByAccountId(accountId);
                 if (userReview != null) {
                     userReview.setCanEdit(true);
                     request.setAttribute("userReview", userReview);
-                    System.out.println("✅ USER ĐÃ CÓ REVIEW: ID=" + userReview.getStoreReviewId());
+                    // gửi kèm accountId để JSP có thể đánh dấu "Đánh giá của bạn"
+                    request.setAttribute("currentAccountId", accountId);
+                    System.out.println("✅ USER ĐÃ CÓ REVIEW (by account): ID=" + userReview.getStoreReviewId());
                 }
             }
 
-            // Đặt attribute vào request
+            // 3) Set list reviews và forward
             request.setAttribute("reviews", reviews);
 
             String targetPage;
@@ -100,7 +102,9 @@ public class StoreReviewServlet extends HttpServlet {
             return;
         }
 
-        int customerId = account.getAccountId();
+        // LƯU Ý: đây là account_id (không phải customer_id)
+        int accountId = account.getAccountId();
+
         String ratingParam = request.getParameter("rating");
         String comment = request.getParameter("comment");
         String action = request.getParameter("action"); // "create" hoặc "update"
@@ -133,13 +137,12 @@ public class StoreReviewServlet extends HttpServlet {
         }
 
         System.out.println("=== SUBMIT REVIEW ===");
-        System.out.println("Customer ID: " + customerId);
+        System.out.println("Account ID (not customer_id): " + accountId);
         System.out.println("Rating: " + rating);
         System.out.println("Comment: " + comment);
         System.out.println("Action: " + action);
 
         boolean success = false;
-        String message = "";
 
         try {
             if ("update".equals(action)) {
@@ -153,24 +156,34 @@ public class StoreReviewServlet extends HttpServlet {
 
                 int storeReviewId = Integer.parseInt(storeReviewIdParam);
                 success = ((StoreReviewDao) reviewDao).updateReview(storeReviewId, rating, comment);
-                message = success ? "Cập nhật đánh giá thành công!" : "Cập nhật đánh giá thất bại!";
+                session.setAttribute("message", success ? "Cập nhật đánh giá thành công!" : "Cập nhật đánh giá thất bại!");
                 System.out.println("🔄 Update review: " + (success ? "SUCCESS" : "FAILED"));
 
             } else {
-                // Tạo đánh giá mới - Kiểm tra xem user đã có đánh giá chưa
-                if (((StoreReviewDao) reviewDao).hasCustomerReviewed(customerId)) {
+                // CREATE – kiểm tra theo account_id để tránh nhầm khoá
+                if (((StoreReviewDao) reviewDao).hasAccountReviewed(accountId)) {
                     session.setAttribute("message", "Bạn đã đánh giá cửa hàng rồi. Bạn chỉ có thể chỉnh sửa đánh giá hiện có.");
                     System.out.println("❌ User đã có review, không thể tạo mới");
                     response.sendRedirect(request.getContextPath() + "/storereview?view=page");
                     return;
                 }
-                
-                success = reviewDao.insertReview(customerId, rating, comment);
-                message = success ? "Cảm ơn bạn đã gửi đánh giá!" : "Gửi đánh giá thất bại!";
+
+                // Insert theo account_id; DAO sẽ tự map account_id -> customer_id qua JOIN Customers
+                success = ((StoreReviewDao) reviewDao).insertReviewByAccountId(accountId, rating, comment);
+
+                if (!success) {
+                    // Hai trường hợp hay gặp:
+                    // 1) Tài khoản chưa có bản ghi trong Customers (chưa hoàn thiện hồ sơ)
+                    // 2) Vi phạm UNIQUE/FK (đã có review/khách hàng không hợp lệ)
+                    session.setAttribute("message",
+                        "Không thể gửi đánh giá. Có thể tài khoản của bạn chưa có hồ sơ Khách hàng. " +
+                        "Vui lòng vào trang Hồ sơ để bổ sung thông tin.");
+                } else {
+                    session.setAttribute("message", "Cảm ơn bạn đã gửi đánh giá!");
+                }
+
                 System.out.println("🆕 Create review: " + (success ? "SUCCESS" : "FAILED"));
             }
-
-            session.setAttribute("message", message);
 
         } catch (Exception e) {
             System.err.println("❌ ERROR IN REVIEW SUBMISSION: " + e.getMessage());
