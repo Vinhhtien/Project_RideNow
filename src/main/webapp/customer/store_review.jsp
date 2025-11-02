@@ -555,10 +555,10 @@
                         <h4 class="mb-3">Vui lòng đăng nhập để đánh giá</h4>
                         <p class="mb-4">Bạn cần đăng nhập bằng tài khoản khách hàng để gửi đánh giá.</p>
                         <a href="${ctx}/login" class="btn-primary-custom me-3">
-                            <i class="fas fa-sign-in-alt me-2"></i>Đăng Nhập
+                            <i></i>Đăng Nhập
                         </a>
                         <a href="${ctx}/home" class="btn-secondary-custom">
-                            <i class="fas fa-home me-2"></i>Về Trang Chủ
+                            <i></i>Về Trang Chủ
                         </a>
                     </div>
                 </c:otherwise>
