@@ -2,7 +2,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
-
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -71,6 +71,17 @@
         .review-form-container h2 {
             color: var(--accent);
             text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .user-review-badge {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 20px;
         }
         
         .rating-stars {
@@ -143,12 +154,25 @@
             border: 1px solid rgba(59, 130, 246, 0.2);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
+            position: relative;
         }
         
         .review-card:hover {
             transform: translateY(-5px);
             border-color: rgba(59, 130, 246, 0.4);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        
+        .user-review-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--accent);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
         }
         
         .review-comment {
@@ -228,6 +252,23 @@
             transform: translateY(-2px);
         }
         
+        .btn-edit-custom {
+            background: transparent;
+            color: var(--accent-light);
+            border: 1px solid var(--accent-light);
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-edit-custom:hover {
+            background: var(--accent-light);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+        
         /* Login prompt styles */
         .login-prompt {
             background: rgba(255, 255, 255, 0.05);
@@ -257,6 +298,14 @@
         .alert-success {
             background: rgba(34, 197, 94, 0.1);
             border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--light);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+        }
+        
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
             color: var(--light);
             backdrop-filter: blur(10px);
             border-radius: 10px;
@@ -414,39 +463,88 @@
             
             <c:choose>
                 <c:when test="${not empty sessionScope.account and sessionScope.account.role == 'customer'}">
-                    <form action="${ctx}/storereview" method="post" id="reviewForm">
-                        <div class="mb-4">
-                            <label class="form-label">Đánh giá sao:</label>
-                            <div class="rating-stars mb-3" id="ratingStars">
-                                <span class="star" data-rating="1">★</span>
-                                <span class="star" data-rating="2">★</span>
-                                <span class="star" data-rating="3">★</span>
-                                <span class="star" data-rating="4">★</span>
-                                <span class="star" data-rating="5">★</span>
+                    <c:choose>
+                        <c:when test="${not empty userReview}">
+                            <!-- Hiển thị form chỉnh sửa nếu user đã có đánh giá -->
+                            <div class="user-review-badge">
+                                <i class="fas fa-edit me-2"></i>Bạn đã đánh giá cửa hàng
                             </div>
-                            <input type="hidden" name="rating" id="ratingInput" required>
-                            <small class="form-text">Chọn số sao để đánh giá (1-5 sao)</small>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="comment" class="form-label">Nhận xét của bạn:</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="5" 
-                                      placeholder="Chia sẻ trải nghiệm của bạn với cửa hàng..." 
-                                      maxlength="500" required></textarea>
-                            <div class="form-text">
-                                <span id="charCount">0</span>/500 ký tự
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button type="submit" class="btn-primary-custom me-3">
-                                <i class="fas fa-paper-plane me-2"></i>Gửi Đánh Giá
-                            </button>
-                            <a href="${ctx}/home" class="btn-secondary-custom">
-                                <i class="fas fa-home me-2"></i>Về Trang Chủ
-                            </a>
-                        </div>
-                    </form>
+                            
+                            <form action="${ctx}/storereview" method="post" id="reviewForm">
+                                <input type="hidden" name="action" value="update">
+                                <input type="hidden" name="storeReviewId" value="${userReview.storeReviewId}">
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Đánh giá sao:</label>
+                                    <div class="rating-stars mb-3" id="ratingStars">
+                                        <c:forEach begin="1" end="5" var="star">
+                                            <span class="star ${star <= userReview.rating ? 'filled' : ''}" 
+                                                  data-rating="${star}">★</span>
+                                        </c:forEach>
+                                    </div>
+                                    <input type="hidden" name="rating" id="ratingInput" value="${userReview.rating}" required>
+                                    <small class="form-text">Chọn số sao để cập nhật đánh giá (1-5 sao)</small>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="comment" class="form-label">Nhận xét của bạn:</label>
+                                    <textarea class="form-control" id="comment" name="comment" rows="5" 
+                                              placeholder="Chia sẻ trải nghiệm của bạn với cửa hàng..." 
+                                              maxlength="500" required>${userReview.comment}</textarea>
+<!--                                    <div class="form-text">
+                                        <span id="charCount">${fn:length(userReview.comment)}</span>/500 ký tự
+                                    </div>-->
+                                </div>
+                                
+                                <div class="text-center">
+                                    <button type="submit" class="btn-primary-custom me-3">
+                                        <i class="fas fa-sync-alt me-2"></i>Cập Nhật Đánh Giá
+                                    </button>
+                                    <a href="${ctx}/home" class="btn-secondary-custom">
+                                        <i class="fas fa-home me-2"></i>Về Trang Chủ
+                                    </a>
+                                </div>
+                            </form>
+                        </c:when>
+                        <c:otherwise>
+                            <!-- Hiển thị form tạo mới nếu user chưa có đánh giá -->
+                            <form action="${ctx}/storereview" method="post" id="reviewForm">
+                                <input type="hidden" name="action" value="create">
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Đánh giá sao:</label>
+                                    <div class="rating-stars mb-3" id="ratingStars">
+                                        <span class="star" data-rating="1">★</span>
+                                        <span class="star" data-rating="2">★</span>
+                                        <span class="star" data-rating="3">★</span>
+                                        <span class="star" data-rating="4">★</span>
+                                        <span class="star" data-rating="5">★</span>
+                                    </div>
+                                    <input type="hidden" name="rating" id="ratingInput" required>
+                                    <small class="form-text">Chọn số sao để đánh giá (1-5 sao)</small>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="comment" class="form-label">Nhận xét của bạn:</label>
+                                    <textarea class="form-control" id="comment" name="comment" rows="5" 
+                                              placeholder="Chia sẻ trải nghiệm của bạn với cửa hàng..." 
+                                              maxlength="500" required></textarea>
+                                    <div class="form-text">
+                                        <span id="charCount">0</span>/500 ký tự
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <button type="submit" class="btn-primary-custom me-3">
+                                        <i class="fas fa-paper-plane me-2"></i>Gửi Đánh Giá
+                                    </button>
+                                    <a href="${ctx}/home" class="btn-secondary-custom">
+                                        <i class="fas fa-home me-2"></i>Về Trang Chủ
+                                    </a>
+                                </div>
+                            </form>
+                        </c:otherwise>
+                    </c:choose>
                 </c:when>
                 
                 <c:otherwise>
@@ -457,10 +555,10 @@
                         <h4 class="mb-3">Vui lòng đăng nhập để đánh giá</h4>
                         <p class="mb-4">Bạn cần đăng nhập bằng tài khoản khách hàng để gửi đánh giá.</p>
                         <a href="${ctx}/login" class="btn-primary-custom me-3">
-                            <i></i>Đăng Nhập
+                            <i class="fas fa-sign-in-alt me-2"></i>Đăng Nhập
                         </a>
                         <a href="${ctx}/home" class="btn-secondary-custom">
-                            <i></i>Về Trang Chủ
+                            <i class="fas fa-home me-2"></i>Về Trang Chủ
                         </a>
                     </div>
                 </c:otherwise>
@@ -475,6 +573,13 @@
                 <c:when test="${not empty reviews}">
                     <c:forEach items="${reviews}" var="review">
                         <div class="review-card">
+                            <!-- Chỉ báo đánh giá của user hiện tại -->
+                            <c:if test="${not empty sessionScope.account and sessionScope.account.accountId == review.customerId}">
+                                <div class="user-review-indicator">
+                                    <i class="fas fa-user me-1"></i>Đánh giá của bạn
+                                </div>
+                            </c:if>
+                            
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div class="rating-stars">
                                     <c:forEach begin="1" end="5" var="star">
@@ -641,6 +746,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 charCount.style.color = 'var(--gray-light)';
             }
         });
+        
+        // Khởi tạo đếm ký tự nếu có giá trị ban đầu (trong trường hợp chỉnh sửa)
+        if (commentTextarea.value) {
+            charCount.textContent = commentTextarea.value.length;
+            if (commentTextarea.value.length > 450) {
+                charCount.style.color = '#ef4444';
+            } else if (commentTextarea.value.length > 400) {
+                charCount.style.color = '#f59e0b';
+            }
+        }
     }
     
     // Validate form
