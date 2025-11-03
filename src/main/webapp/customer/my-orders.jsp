@@ -248,18 +248,6 @@
                 border:1px solid rgba(59,130,246,.3);
             }
 
-            /* DEBUG (tuỳ giữ) */
-            .debug-info{
-                background:#1a1a1a;
-                padding:10px;
-                margin:10px 0;
-                border-radius:5px;
-                font-size:12px;
-                border-left:4px solid var(--accent)
-            }
-            .debug-info strong{
-                color:var(--accent)
-            }
             @media (max-width:768px){
                 .wrap{
                     padding:20px 16px
@@ -301,12 +289,6 @@
                 </div>
             </div>
 
-            <!-- DEBUG (tuỳ giữ) -->
-            <!--    <div class="debug-info">
-                  <strong>DEBUG:</strong>
-                  OrdersVm size: ${not empty ordersVm ? ordersVm.size() : 0}
-                </div>-->
-
             <!-- Flash -->
             <c:if test="${not empty sessionScope.flash}">
                 <div class="alert"><i class="fas fa-info-circle"></i> ${sessionScope.flash}</div>
@@ -328,7 +310,7 @@
                     <div class="hint">
                         <i class="fas fa-info-circle"></i>
                         Chọn các đơn <b>pending</b> để thanh toán (30% + cọc). 
-                        Sau khi thanh toán xong, <b>đơn sẽ chuyển sang “Completed” ngay</b> và hệ thống gửi email xác nhận cho bạn.
+                        Sau khi thanh toán xong, <b>đơn sẽ chuyển sang "Completed" ngay</b> và hệ thống gửi email xác nhận cho bạn.
                     </div>
 
                     <form id="payForm" method="get" action="${ctx}/paynow" onsubmit="return buildOrdersCsv()">
@@ -390,6 +372,30 @@
                                                         <i class="fas fa-ban"></i> Hủy
                                                     </button>
                                                 </c:if>
+                                                
+                                               
+    
+                                                <!-- Nếu đơn đã confirmed và còn trong 30' kể từ khi confirmed -->
+                                                <c:if test="${o.status == 'confirmed'}">
+                                                  <c:choose>
+                                                    <c:when test="${o.changeRemainingMin != null && o.changeRemainingMin > 0}">
+                                                      <a class="btn"
+                                                         href="${ctx}/change-order?orderId=${o.orderId}">
+                                                        <i class="fas fa-pen-to-square"></i>
+                                                        Đổi đơn
+                                                        <span style="opacity:.8;font-size:.85em;">
+                                                          (${o.changeRemainingMin} phút còn lại)
+                                                        </span>
+                                                      </a>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                      <button class="btn" disabled
+                                                              title="Hết thời gian đổi (30 phút sau khi xác nhận)">
+                                                        <i class="fas fa-pen-to-square"></i> Đổi đơn
+                                                      </button>
+                                                    </c:otherwise>
+                                                  </c:choose>
+                                                </c:if>
 
                                                 <!-- Nếu đơn hàng đã hoàn tất, hiển thị nút Tạo đánh giá -->
                                                 <c:if test="${o.status == 'completed' and not empty o.bikeId}">
@@ -399,11 +405,9 @@
                                                     </a>
                                                 </c:if>
                                             </td>
-
                                         </tr>
                                     </c:forEach>
                                 </tbody>
-
                             </table>
                         </div>
 
