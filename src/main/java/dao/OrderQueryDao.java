@@ -61,8 +61,8 @@ public class OrderQueryDao implements IOrderQueryDao {
             "  CASE " +
             "    WHEN r.status = 'confirmed' AND r.confirmed_at IS NOT NULL THEN " +
             "      CASE " +
-            "        WHEN (30 - DATEDIFF(MINUTE, r.confirmed_at, GETDATE())) < 0 THEN 0 " +
-            "        ELSE (30 - DATEDIFF(MINUTE, r.confirmed_at, GETDATE())) " +
+            "        WHEN (60 - DATEDIFF(MINUTE, r.confirmed_at, GETDATE())) < 0 THEN 0 " +
+            "        ELSE (60 - DATEDIFF(MINUTE, r.confirmed_at, GETDATE())) " +
             "      END " +
             "    ELSE NULL " +
             "  END AS change_remaining_min " +

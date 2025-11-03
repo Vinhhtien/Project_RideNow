@@ -6,9 +6,10 @@ import jakarta.servlet.http.*;
 import dao.IOrderChangeDao;
 import dao.OrderChangeDao;
 import java.io.IOException;
+import java.math.BigDecimal;
 import model.Account;
 import model.ChangeOrderVM;
-import java.sql.Date; // THÊM IMPORT NÀY
+import java.sql.Date;
 
 @WebServlet(name="ChangeOrderServlet", urlPatterns={"/change-order"})
 public class ChangeOrderServlet extends HttpServlet {
@@ -58,6 +59,8 @@ public class ChangeOrderServlet extends HttpServlet {
             }
             
             System.out.println("[ChangeOrder] VM details - Status: " + vm.getStatus() + 
+                ", BikeId: " + vm.getBikeId() +
+                ", RentalDays: " + vm.getOriginalRentalDays() +
                 ", RemainingMinutes: " + vm.getRemainingMinutes() +
                 ", ConfirmedAt: " + vm.getConfirmedAt());
             
@@ -108,32 +111,103 @@ public class ChangeOrderServlet extends HttpServlet {
         try {
             int orderId = Integer.parseInt(sid);
 
-            if ("cancel".equals(action)) {
-                int rows = changeDao.cancelConfirmedOrderWithin30Min(orderId, acc.getAccountId()); // SỬA: getAccountId()
-                req.getSession().setAttribute("flash",
-                    rows>0 ? ("Đã hủy đơn #"+orderId) : "Hủy thất bại (có thể đã quá hạn hoặc không đúng quyền).");
-                resp.sendRedirect(req.getContextPath()+"/customerorders");
-                return;
-            }
+            // Trong phần xử lý hủy đơn của ChangeOrderServlet
+if ("cancel".equals(action)) {
+    // Load thông tin đơn trước khi hủy để tính toán số tiền
+    ChangeOrderVM vmBeforeCancel = changeDao.loadChangeOrderVM(orderId, acc.getAccountId());
+    if (vmBeforeCancel == null) {
+        req.getSession().setAttribute("flash", "Không tìm thấy đơn hàng hoặc không có quyền truy cập.");
+        resp.sendRedirect(req.getContextPath()+"/customerorders");
+        return;
+    }
+    
+    // Tính toán số tiền hoàn sẽ nhận (để hiển thị)
+    BigDecimal expectedRefund = vmBeforeCancel.getRefundAmount();
+    
+    System.out.println("[ChangeOrderServlet] Cancelling order #" + orderId + 
+        ", expected refund: " + expectedRefund);
+    
+    int rows = changeDao.cancelConfirmedOrderWithin30Min(orderId, acc.getAccountId());
+    if (rows > 0) {
+        req.getSession().setAttribute("flash", 
+            "Đã hủy đơn #" + orderId + " thành công. Số tiền " + 
+            String.format("%,d", expectedRefund.intValue()) + " đ (cọc + 30%) đã được hoàn vào ví.");
+        
+        // Ghi log chi tiết
+        System.out.println("[ChangeOrderServlet] Successfully cancelled order #" + orderId + 
+            ", refund amount: " + expectedRefund);
+    } else {
+        req.getSession().setAttribute("flash", 
+            "Hủy thất bại (có thể đã quá hạn 30 phút hoặc không đúng quyền).");
+        System.out.println("[ChangeOrderServlet] Failed to cancel order #" + orderId);
+    }
+    resp.sendRedirect(req.getContextPath()+"/customerorders");
+    return;
+}
 
             if ("update_dates".equals(action)) {
                 Date newStart = Date.valueOf(req.getParameter("start"));
-                Date newEnd   = Date.valueOf(req.getParameter("end"));
-                IOrderChangeDao.ChangeResult result = changeDao.updateOrderDatesWithin30Min(orderId, acc.getAccountId(), newStart, newEnd); // SỬA: ChangeResult
+                Date newEnd = Date.valueOf(req.getParameter("end")); // Lấy từ form thay vì tự tính
+
+                // Load thông tin đơn hàng để kiểm tra
+                ChangeOrderVM vm = changeDao.loadChangeOrderVM(orderId, acc.getAccountId());
+                if (vm == null || !vm.isWithin30Min()) {
+                    req.getSession().setAttribute("flash", "Không thể đổi đơn: đơn không tồn tại hoặc đã quá hạn.");
+                    resp.sendRedirect(req.getContextPath()+"/customerorders");
+                    return;
+                }
+
+                // Kiểm tra số ngày thuê có giữ nguyên không
+                int newRentalDays = (int) ((newEnd.getTime() - newStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                if (newRentalDays != vm.getOriginalRentalDays()) {
+                    req.getSession().setAttribute("flash", 
+                        "Số ngày thuê phải giữ nguyên (" + vm.getOriginalRentalDays() + " ngày). " +
+                        "Bạn đã chọn " + newRentalDays + " ngày.");
+                    resp.sendRedirect(req.getContextPath()+"/change-order?orderId=" + orderId);
+                    return;
+                }
+
+                // Kiểm tra ngày mới có hợp lệ không
+                if (newStart.after(newEnd)) {
+                    req.getSession().setAttribute("flash", "Ngày bắt đầu không thể sau ngày kết thúc.");
+                    resp.sendRedirect(req.getContextPath()+"/change-order?orderId=" + orderId);
+                    return;
+                }
+
+                // Kiểm tra ngày bắt đầu không trong quá khứ
+                Date today = new Date(System.currentTimeMillis());
+                if (newStart.before(today)) {
+                    req.getSession().setAttribute("flash", "Không thể chọn ngày trong quá khứ.");
+                    resp.sendRedirect(req.getContextPath()+"/change-order?orderId=" + orderId);
+                    return;
+                }
+
+                // Thực hiện đổi đơn - DAO sẽ kiểm tra trùng lịch tự động
+                IOrderChangeDao.ChangeResult result = changeDao.updateOrderDatesWithin30Min(
+                    orderId, acc.getAccountId(), newStart, newEnd);
+
                 switch (result) {
-                    case OK -> req.getSession().setAttribute("flash","Đã đổi thời gian cho đơn #"+orderId);
-                    case EXPIRED -> req.getSession().setAttribute("flash","Đã quá hạn 30 phút để đổi.");
-                    case CONFLICT -> req.getSession().setAttribute("flash","Khoảng thời gian mới bị trùng lịch xe.");
-                    default -> req.getSession().setAttribute("flash","Cập nhật thất bại.");
+                    case OK -> req.getSession().setAttribute("flash", 
+                        "Đã đổi thời gian cho đơn #"+orderId + " (" + vm.getOriginalRentalDays() + " ngày)");
+                    case EXPIRED -> req.getSession().setAttribute("flash", "Đã quá hạn 30 phút để đổi.");
+                    case CONFLICT -> req.getSession().setAttribute("flash", 
+                        "Khoảng thời gian này đã có người đặt. Vui lòng chọn ngày khác.");
+                    case FAIL -> req.getSession().setAttribute("flash", 
+                        "Cập nhật thất bại. Vui lòng kiểm tra lại thông tin.");
+                    default -> req.getSession().setAttribute("flash", "Cập nhật thất bại.");
                 }
                 resp.sendRedirect(req.getContextPath()+"/customerorders");
                 return;
             }
 
             resp.sendRedirect(req.getContextPath()+"/customerorders");
+        } catch (IllegalArgumentException e) {
+            // Xử lý lỗi định dạng ngày
+            req.getSession().setAttribute("flash", "Định dạng ngày không hợp lệ. Vui lòng chọn lại.");
+            resp.sendRedirect(req.getContextPath()+"/change-order?orderId=" + sid);
         } catch (Exception e) {
             e.printStackTrace();
-            req.getSession().setAttribute("flash","Lỗi đổi/hủy: "+e.getMessage());
+            req.getSession().setAttribute("flash", "Lỗi đổi/hủy: "+e.getMessage());
             resp.sendRedirect(req.getContextPath()+"/customerorders");
         }
     }
