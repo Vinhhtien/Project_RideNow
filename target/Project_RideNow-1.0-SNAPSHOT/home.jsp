@@ -1,20 +1,470 @@
 <%--<%@ page contentType="text/html;charset=UTF-8" language="java" %>--%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
-
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 
+<c:if test="${empty requestScope.reviews}">
+    <jsp:forward page="/home"/>
+</c:if>
+
+
 <!DOCTYPE html>
 <html lang="vi">
-<head>
+    <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>RideNow - Đặt Xe Máy Dễ Dàng</title>
+    
+    <!-- Bootstrap CSS - ĐẶT TRƯỚC custom CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS - ĐẶT SAU Bootstrap -->
     <link rel="stylesheet" href="css/homeStyle.css"/>
+    
+    <style>
+        /* ===== Customer Reviews Improved Styles ===== */
+        .customer-reviews {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark) 100%);
+            padding: 80px 0;
+            color: var(--light);
+            position: relative;
+            border-top: 1px solid var(--primary-light);
+            border-bottom: 1px solid var(--primary-light);
+        }
+
+        .review-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px 40px;
+            margin: 20px 60px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .review-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .review-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .review-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .rating-stars {
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .star {
+            color: var(--gray-dark);
+            margin: 0 4px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+        }
+
+        .star.filled {
+            color: #FFD700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            transform: scale(1.1);
+        }
+
+        .rating-text {
+            font-size: 16px;
+            color: var(--gray-light);
+            margin-left: 12px;
+            font-weight: 600;
+        }
+
+        .review-comment {
+            font-size: 20px;
+            font-style: italic;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            color: var(--light);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .customer-info {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+        }
+
+        .customer-name {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .review-date {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .no-reviews {
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .no-reviews i {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .no-reviews h5 {
+            color: var(--accent-light);
+            margin-bottom: 10px;
+        }
+
+        .no-reviews p {
+            font-size: 16px;
+            margin-bottom: 0;
+            color: var(--gray-light);
+        }
+
+        /* Carousel Customization - Improved */
+        .carousel-indicators {
+            bottom: -50px;
+        }
+
+        .carousel-indicators button {
+            width: 10px !important;
+            height: 10px !important;
+            border-radius: 50% !important;
+            margin: 0 8px !important;
+            background-color: var(--gray-dark) !important;
+            border: 2px solid transparent !important;
+            transition: var(--transition);
+        }
+
+        .carousel-indicators button.active {
+            background-color: var(--accent) !important;
+            transform: scale(1.3);
+            border-color: var(--accent-light) !important;
+        }
+
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 60px !important;
+            height: 60px !important;
+            top: 50% !important;
+            transform: translateY(-50%);
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            margin: 0 25px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            transition: var(--transition);
+        }
+
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--accent);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-control-prev {
+            left: 10px !important;
+        }
+
+        .carousel-control-next {
+            right: 10px !important;
+        }
+
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            background-size: 18px 18px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Nút đánh giá */
+        .customer-reviews .btn--solid {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: var(--white);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+            border: none;
+        }
+
+        .customer-reviews .btn--solid:hover {
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Alert customization */
+        .customer-reviews .alert {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--light);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .customer-reviews {
+                padding: 60px 0;
+            }
+
+            .review-card {
+                padding: 30px 20px;
+                margin: 10px 20px;
+                min-height: 250px;
+            }
+
+            .rating-stars {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            .review-comment {
+                font-size: 16px;
+                margin-bottom: 20px;
+            }
+
+            .carousel-control-prev,
+            .carousel-control-next {
+                width: 50px !important;
+                height: 50px !important;
+                margin: 0 15px;
+            }
+
+            .carousel-indicators {
+                bottom: -50px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .review-card {
+                padding: 25px 15px;
+                margin: 5px 10px;
+                min-height: 220px;
+            }
+
+            .rating-stars {
+                font-size: 20px;
+            }
+
+            .review-comment {
+                font-size: 14px;
+            }
+
+            .carousel-control-prev,
+            .carousel-control-next {
+                width: 40px !important;
+                height: 40px !important;
+                margin: 0 10px;
+            }
+        }
+        
+        /* ===== FIX FOR LONG USERNAMES - UPDATED ===== */
+/* Fix for header auth section */
+.auth {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    min-width: 0; /* Quan trọng: cho phép thu nhỏ */
+}
+
+.auth .btn--ghost {
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 0; /* Quan trọng: cho phép thu nhỏ */
+    flex-shrink: 1; /* Cho phép co lại khi cần */
+}
+
+/* Specific fix for user greeting button */
+.auth .btn--ghost:has(strong) {
+    max-width: 180px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.auth .btn--ghost strong {
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    flex-shrink: 1;
+}
+
+/* Fix for mobile panel */
+.mobile-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mobile-actions > div {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.mobile-actions a {
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/* Customer name in reviews */
+.customer-info {
+    text-align: center;
+    padding-top: 15px;
+}
+
+.customer-name {
+    display: inline-block;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .auth .btn--ghost:has(strong) {
+        max-width: 160px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 90px;
+    }
+}
+
+@media (max-width: 992px) {
+    .auth .btn--ghost:has(strong) {
+        max-width: 140px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 70px;
+    }
+}
+
+@media (max-width: 768px) {
+    .auth {
+        gap: 6px;
+    }
+    
+    .auth .btn--ghost:has(strong) {
+        max-width: 120px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 60px;
+    }
+    
+    .customer-name {
+        max-width: 150px;
+    }
+    
+    /* Mobile panel adjustments */
+    .mobile-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .mobile-actions > div {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .auth .btn--ghost:has(strong) {
+        max-width: 100px;
+    }
+    
+    .auth .btn--ghost strong {
+        max-width: 50px;
+    }
+    
+    .customer-name {
+        max-width: 120px;
+    }
+    
+    /* Stack auth buttons on very small screens */
+    .auth {
+        flex-direction: column;
+        width: 100%;
+        gap: 4px;
+    }
+    
+    .auth .btn--ghost,
+    .auth .btn--solid {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        max-width: none !important;
+    }
+}
+
+/* Ensure icons don't get squeezed */
+.auth .btn--ghost i,
+.mobile-actions i {
+    flex-shrink: 0;
+}
+        
+        </style>
+
 </head>
+
+
+
 <body>
 <%@ include file="/chatbox.jsp" %>
 
@@ -57,9 +507,10 @@
                         <c:when test="${not empty sessionScope.account}">
                             <c:choose>
                                 <c:when test="${sessionScope.account.role == 'customer'}">
-                                    <a href="${pageContext.request.contextPath}/customer/profile" class="btn btn--ghost"
-                                       title="Chỉnh sửa hồ sơ">
-                                        <i class="fas fa-user-circle"></i> Xin chào,
+                                    <a href="${pageContext.request.contextPath}/customer/profile" class="btn btn--ghost user-greeting"
+                                       title="Chào ${sessionScope.account.username} - Nhấn để xem hồ sơ">
+                                        <i class="fas fa-user-circle"></i> 
+                                        <span class="greeting-text">Xin chào,</span>
                                         <strong>${sessionScope.account.username}</strong>
                                     </a>
                                 </c:when>
@@ -325,60 +776,114 @@
     </div>
 </section>
 
-<!-- ===== Testimonials ===== -->
-<section class="container testimonials" id="testimonials">
-    <div class="section-title fade-in">
-        <h2>Khách Hàng Nói Gì</h2>
-        <p>Những đánh giá chân thật từ khách hàng đã sử dụng dịch vụ</p>
-    </div>
-    <div class="testimonial-grid">
-        <div class="testimonial-card fade-in delay-1">
-            <div class="rating">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                    class="fas fa-star"></i><i class="fas fa-star"></i>
-            </div>
-            <div class="testimonial-text">"Dịch vụ thuê xe tuyệt vời! Xe mới, sạch sẽ và vận hành êm ái. Nhân viên hỗ
-                trợ rất nhiệt tình và chuyên nghiệp."
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar"><img src="https://randomuser.me/api/portraits/men/32.jpg"
-                                                alt="Nguyễn Văn An"></div>
-                <div class="author-info"><h4>Nguyễn Văn An</h4>
-                    <p>Hà Nội</p></div>
-            </div>
+<!-- ===== Customer Reviews ===== -->
+<!-- ===== Customer Reviews ===== -->
+<section class="customer-reviews" id="testimonials">
+    <div class="container">
+        <div class="section-title fade-in">
+            <h2>Đánh giá từ khách hàng</h2>
+            <p>Những trải nghiệm thực tế từ khách hàng đã sử dụng dịch vụ của chúng tôi</p>
         </div>
-        <div class="testimonial-card fade-in delay-2">
-            <div class="rating">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                    class="fas fa-star"></i><i class="fas fa-star"></i>
+
+        <!-- Thông báo -->
+        <c:if test="${not empty sessionScope.message}">
+            <div class="alert alert-success alert-dismissible fade show mx-auto" style="max-width: 600px; font-family: 'Inter', sans-serif;" role="alert">
+                ${sessionScope.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div class="testimonial-text">"Giá hợp lý và thủ tục nhanh gọn, rất tiện lợi! Tôi đã thuê xe cho chuyến du
-                lịch Đà Nẵng và hoàn toàn hài lòng."
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar"><img src="https://randomuser.me/api/portraits/women/44.jpg"
-                                                alt="Trần Thị Minh"></div>
-                <div class="author-info"><h4>Trần Thị Minh</h4>
-                    <p>Đà Nẵng</p></div>
-            </div>
-        </div>
-        <div class="testimonial-card fade-in delay-3">
-            <div class="rating">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                    class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-            </div>
-            <div class="testimonial-text">"Xe PKL cực chất, đầy đủ phụ tùng và bảo hộ. Tôi đã có trải nghiệm tuyệt vời
-                khi thuê xe tại MotoRent."
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar"><img src="https://randomuser.me/api/portraits/men/67.jpg" alt="Lê Quốc Bảo">
+            <c:remove var="message" scope="session"/>
+        </c:if>
+
+        <c:choose>
+            <c:when test="${not empty reviews}">
+                <!-- Carousel Container -->
+                <div id="reviewCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <!-- Indicators -->
+                    <div class="carousel-indicators">
+                        <c:forEach items="${reviews}" var="review" varStatus="loop">
+                            <button type="button" data-bs-target="#reviewCarousel"
+                                    data-bs-slide-to="${loop.index}"
+                                    class="<c:if test='${loop.index == 0}'>active</c:if>"
+                                    aria-label="Review ${loop.index + 1}"></button>
+                        </c:forEach>
+                    </div>
+
+                    <!-- Carousel Items -->
+                    <div class="carousel-inner">
+                        <c:forEach items="${reviews}" var="review" varStatus="loop">
+                            <div class="carousel-item <c:if test='${loop.index == 0}'>active</c:if>">
+                                <div class="review-card text-center">
+                                    <!-- Hiển thị sao đánh giá -->
+                                    <div class="rating-stars mb-4">
+                                        <c:forEach begin="1" end="5" var="star">
+                                            <c:choose>
+                                                <c:when test="${star <= review.rating}">
+                                                    <span class="star filled">★</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="star">★</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:forEach>
+                                        <span class="rating-text">(${review.rating}/5)</span>
+                                    </div>
+
+                                    <!-- Nội dung đánh giá -->
+                                    <p class="review-comment">"${review.comment}"</p>
+
+                                    <!-- Thông tin khách hàng -->
+                                    <div class="customer-info">
+                                        <strong class="customer-name">
+                                            <c:choose>
+                                                <c:when test="${not empty review.customerName}">
+                                                    ${review.customerName}
+                                                </c:when>
+                                                <c:otherwise>
+                                                    Khách hàng #${review.customerId}
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </strong>
+                                        <c:if test="${not empty review.createdAt}">
+                                            <span class="review-date">
+                                                <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy"/>
+                                            </span>
+                                        </c:if>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </div>
+
+                    <!-- Navigation Controls -->
+                    <button class="carousel-control-prev" type="button" data-bs-target="#reviewCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#reviewCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
                 </div>
-                <div class="author-info"><h4>Lê Quốc Bảo</h4>
-                    <p>TP.HCM</p></div>
-            </div>
+            </c:when>
+
+            <c:otherwise>
+                <div class="text-center no-reviews">
+                    <i class="fas fa-comments mb-3" style="font-size: 3rem; opacity: 0.7;"></i>
+                    <h5>Chưa có đánh giá nào</h5>
+                    <p>Hãy là người đầu tiên đánh giá dịch vụ của chúng tôi!</p>
+                </div>
+            </c:otherwise>
+        </c:choose>
+
+        <!-- Nút đánh giá -->
+        <div class="text-center mt-5">
+            <a href="${ctx}/storereview?view=page" class="btn btn--solid btn-lg">
+                <i class="fas fa-star me-2"></i>Đánh giá ngay
+            </a>
         </div>
     </div>
 </section>
+
 
 <!-- ===== App download & Footer giữ nguyên ===== -->
 <section class="app-download">
@@ -601,5 +1106,30 @@
     setHeaderData(saved);
     setMobileData(saved);
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const reviewCarousel = document.getElementById('reviewCarousel');
+    
+    if (reviewCarousel) {
+        // Khởi tạo carousel với autoplay
+        const carousel = new bootstrap.Carousel(reviewCarousel, {
+            interval: 4000, // 4 giây
+            pause: 'hover', // Dừng khi hover
+            wrap: true,     // Quay vòng
+            touch: true     // Cho phép touch trên mobile
+        });
+        
+        // Thêm hiệu ứng smooth transition
+        reviewCarousel.addEventListener('slide.bs.carousel', function(event) {
+            const items = this.querySelectorAll('.carousel-item');
+            items.forEach(item => {
+                item.style.transition = 'transform 0.6s ease-in-out';
+            });
+        });
+    }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

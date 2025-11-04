@@ -1,289 +1,177 @@
-🚀 RideNow - Motorbike Rental Management System
+# RideNow — Hệ thống quản lý thuê xe máy trực tuyến
 
-A complete online motorbike rental platform that connects customers, partners, and administrators through a secure and efficient web-based ecosystem.
+Nền tảng web quản lý thuê xe máy nhiều vai trò (Khách hàng, Đối tác, Quản trị), hỗ trợ tìm kiếm, đặt xe, thanh toán, duyệt xác minh, hoàn trả, quản lý đối tác và phân tích vận hành. Dự án thuộc học phần SWP391.
 
-📘 Overview
+- Kiến trúc: MVC (Servlets/JSP/DAO/Service)
+- Máy chủ ứng dụng: Tomcat 10.1 (Jakarta EE 10)
+- CSDL: SQL Server
+- Build & Test: Maven, JUnit 5, Mockito, JaCoCo
+- Tích hợp: Đăng nhập Google (OAuth), Email SMTP, AI Gemini (hỏi đáp dữ liệu)
 
-RideNow is a multi-role Motorbike Rental Management System developed under the SWP391 Software Project at FPT University.
-The platform streamlines end-to-end motorbike rental processes — from browsing and booking to payment, verification, and returns, supporting both customers and rental partners under a unified admin supervision.
+## Tính năng chính
 
-RideNow’s MVC architecture ensures clean separation of concerns, maintainable business logic, and robust database interaction with SQL Server.
+- Xác thực & phân quyền
+  - Đăng ký, đăng nhập, quên mật khẩu (mã xác minh email)
+  - Băm mật khẩu bằng BCrypt
+  - Phân quyền theo vai trò (customer/partner/admin) bằng Servlet Filters
+- Tìm kiếm & đặt xe
+  - Tìm theo loại xe, giá, tình trạng
+  - Kiểm tra sẵn sàng theo khoảng ngày, tính tổng chi phí
+  - Lịch sử đặt xe, theo dõi trạng thái đơn
+- Quản lý xe & Đối tác
+  - Thêm/sửa/xóa xe, tải ảnh, phân loại (xe số, xe ga, PKL)
+  - Đối tác quản lý danh sách xe, xem lịch đặt
+- Thanh toán & Ví
+  - Mô phỏng thanh toán (PayNow), xác minh giao dịch bởi Admin
+  - Quản lý hoàn/refund, phí trễ hạn
+- Admin Dashboard & Báo cáo
+  - Tổng quan doanh thu, số đơn, số xe, người dùng
+  - Quản lý khách hàng, đối tác, đơn thuê, lịch nhận/trả
+- Hỗ trợ AI (tùy chọn)
+  - Chat “small talk” và hỏi đáp dựa trên dữ liệu (đọc-only)
+  - Gemini sinh SQL an toàn (SELECT + tham số), diễn giải kết quả
 
-🎯 Core Objectives
+## Kiến trúc & công nghệ
 
-Simplify the process of renting and managing motorbikes online.
+- Ngôn ngữ: Java 17
+- Jakarta EE 10: Servlets, JSP, JSTL
+- Build: Apache Maven (đóng gói WAR)
+- CSDL: Microsoft SQL Server (JDBC driver mssql-jdbc)
+- Thư viện:
+  - Bảo mật: jBCrypt
+  - Email: Jakarta Mail (SMTP Gmail)
+  - JSON/HTTP: Gson, OkHttp
+  - Kiểm thử: JUnit 5, Mockito, AssertJ
+  - Coverage: JaCoCo
 
-Provide a secure and user-friendly experience for all roles.
+## Cấu trúc thư mục
 
-Support partner collaboration and admin oversight.
+- `src/main/java`
+  - `controller/` — Servlets (ví dụ: `LoginServlet`, `BookingServlet`, `CartServlet`, `admin/...`)
+  - `service/` — Lớp nghiệp vụ + interface (`IOrderService`, `MotorbikeService`, …), `service/AI/...`
+  - `dao/` — Data Access Object (DAO + interface) truy vấn SQL
+  - `model/` — Thực thể (Account, Customer, Motorbike, …)
+  - `filter/` — `RoleFilter`, `AdminOnlyFilter` (chặn truy cập theo vai trò)
+  - `utils/` — `DBConnection`, `EmailUtil`, `GoogleConstants`, `PasswordUtil`, `AI/Gemini*.java`
+- `src/main/webapp`
+  - JSP trang chủ/đăng nhập/đăng ký/giỏ/chi tiết, thư mục `customer/`, `partner/`, `admin/`
+  - Tài nguyên tĩnh: `css/`, `images/`
+  - `WEB-INF/web.xml` — cấu hình web, `home.jsp` là welcome file
+- `database/RideNow_DATABASE.sql` — Schema + đối tượng DB (table, view, function)
+- `pom.xml` — Cấu hình Maven (Jakarta EE, MSSQL JDBC, JUnit, Mockito, JaCoCo)
+- `src/test/java/...` — Test JUnit/Mockito các lớp DAO/Service/Filter/Controller
 
-Improve operational transparency through analytics dashboards.
+## Yêu cầu môi trường
 
-💡 Key Concept
+- JDK 17+
+- Apache Maven 3.9+
+- Microsoft SQL Server 2019+
+- Apache Tomcat 10.1.x
+- Git (tùy chọn)
 
-RideNow integrates all core rental operations (searching, booking, payments, management, verification) into one cohesive ecosystem — optimizing efficiency for both customers and administrators.
+## Cài đặt & chạy
 
-⚙️ Tech Stack
-🧩 Backend
-Component	Technology
-Language	Java 17
-Framework	Jakarta EE (Servlets, JSP, JSTL)
-Architecture	MVC (Model–View–Controller)
-Build Tool	Apache Maven 3.9+
-Application Server	Apache Tomcat 10.1.x
-🗄️ Database & Persistence
-Layer	Technology
-Database	Microsoft SQL Server 2019+
-Connection	JDBC (MSSQL JDBC Driver 12.6.1)
-DAO Pattern	Custom DAO + Interface-based abstraction
-Connection Utils	DBConnection.java
-🔐 Security & Session
-Feature	Library / Mechanism
-Password Hashing	BCrypt (jBCrypt 0.4)
-Session Control	HttpSession-based login tracking
-Access Control	Role-based filter system (Guest, Customer, Partner, Admin)
-Input Validation	Server-side + client-side (Regex, JSTL tags)
-🧰 Additional Libraries
+1) Clone mã nguồn
 
-Jakarta Mail – Email verification & password recovery
+```bash
+git clone <repo-url>
+cd Project_RideNow
+```
 
-Jackson Databind – JSON parsing
+2) Khởi tạo cơ sở dữ liệu
 
-Apache Commons FileUpload / IO – Image uploads
+- Mở SQL Server Management Studio (SSMS)
+- Chạy script `database/RideNow_DATABASE.sql` để tạo schema/đối tượng
+- Kiểm tra tên DB khớp với cấu hình trong code (mặc định: `MotorbikeRentalDB`)
 
-Flatpickr JS – Date picker for booking UI
+3) Cấu hình kết nối CSDL
 
-🧪 Testing & QA
-Tool	Purpose
-JUnit 5.10.0	Unit testing
-Mockito 5.5.0	Mocking dependencies
-AssertJ	Fluent assertions
-JaCoCo 0.8.10	Code coverage reports
-🧠 Key Features
-👤 Authentication & User Management
+- Sửa `src/main/java/utils/DBConnection.java` cho phù hợp môi trường:
 
-Secure login / registration with BCrypt password hashing
-
-Session management for role-based navigation
-
-Forgot password via email verification (OTP)
-
-Role-based access control (guest → customer / partner / admin)
-
-🛵 Motorbike Management
-
-Admin/Partner can add, edit, delete motorbikes
-
-Supports image upload and categorization by bike type (scooter, manual, big bike)
-
-License plate validation (e.g., 43E1-68932 format)
-
-Dynamic pricing & availability management
-
-📅 Booking & Rental Process
-
-Customers can search bikes by type, location, price
-
-Real-time booking calendar with start/end date validation
-
-Automatic cost calculation (per day × duration)
-
-Booking history (My Orders) with order status tracking
-
-💳 Payment & Wallet
-
-Payment gateway simulation via PayNow page
-
-Admin verifies transactions and updates status
-
-Option to send confirmation email upon admin approval
-
-Refund & late fee management handled by Admin
-
-🧾 Partner Management
-
-Partners can manage their listed bikes and view bookings
-
-Profit tracking per rental
-
-Admin oversight on partner activities
-
-🧭 Dashboard & Analytics
-
-Admin dashboard showing total bookings, revenue, bikes, and users
-
-Partner dashboard showing personal performance
-
-Visual analytics integrated with JSP
-
-🧩 Project Structure
-RideNow/
-├── src/
-│   ├── main/java/
-│   │   ├── controller/            # Servlets (BookingServlet, LoginServlet, etc.)
-│   │   ├── service/               # Business logic layer + interfaces
-│   │   ├── dao/                   # Data access layer (DAO interfaces + impl)
-│   │   ├── model/                 # Entity models (Account, Customer, Motorbike, etc.)
-│   │   ├── filter/                # Role-based access filters
-│   │   ├── utils/                 # Helpers (DBConnection, EmailUtil, ValidationUtil)
-│   │   └── ai/                    # AIService & Gemini integration (optional feature)
-│   ├── main/webapp/
-│   │   ├── auth/                  # login.jsp, register.jsp, forgot.jsp
-│   │   ├── customer/              # booking.jsp, myorders.jsp, profile.jsp
-│   │   ├── admin/                 # dashboard.jsp, bikes.jsp, payments.jsp
-│   │   ├── partner/               # partner-dashboard.jsp, manage-bikes.jsp
-│   │   ├── css/                   # admin.css, homeStyle.css, global.css
-│   │   ├── js/                    # validation.js, flatpickr.js
-│   │   ├── includes/              # header.jsp, footer.jsp
-│   │   └── WEB-INF/web.xml        # Servlet configuration
-│   └── test/java/com/ridenow/     # JUnit + Mockito test cases
-├── database/
-│   ├── RideNow_Schema.sql         # Database structure
-│   ├── RideNow_Data.sql           # Sample seed data
-│   └── RideNow_TestData.sql       # Test dataset for unit tests
-├── target/
-│   ├── RideNow.war                # Deployable WAR file
-│   └── site/jacoco/               # Coverage reports
-├── pom.xml                        # Maven configuration
-└── README.md                      # This file
-
-🚀 How to Run
-Prerequisites
-
-Ensure you have:
-
-JDK 17+
-
-Apache Maven 3.9+
-
-Microsoft SQL Server 2019+
-
-Apache Tomcat 10.1+
-
-Git (for cloning)
-
-Step 1: Clone the Repository
-git clone https://github.com/your-username/RideNow.git
-cd RideNow
-
-Step 2: Set Up the Database
-
-Open SQL Server Management Studio (SSMS)
-
-Run the schema and data scripts:
-
-source database/RideNow_Schema.sql;
-source database/RideNow_Data.sql;
-
-
-Configure the database connection inside DBConnection.java:
-
-private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=RideNow;encrypt=false";
+```java
+private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=MotorbikeRentalDB;encrypt=false;trustServerCertificate=true";
 private static final String USER = "sa";
-private static final String PASSWORD = "your_password";
+private static final String PASS = "<your_password>";
+```
 
-Step 3: Build the Project
-mvn clean install
+- Lưu ý bảo mật: không để mật khẩu cứng trong mã khi triển khai thật.
 
+4) Cấu hình Email SMTP (tùy chọn cho verify/OTP)
 
-Expected Output:
+- Sửa `src/main/java/utils/EmailUtil.java`:
+  - `SMTP_USER` (gmail), `SMTP_PASS` (App Password của Gmail)
+- Bật App Password (2FA) trong Google Account; dùng `session.setDebug(true)` để theo dõi log khi cần.
 
-[INFO] BUILD SUCCESS
+5) Cấu hình Đăng nhập Google (tùy chọn)
 
-Step 4: Deploy to Tomcat
+- Sửa `src/main/java/utils/GoogleConstants.java`:
+  - `CLIENT_ID`, `CLIENT_SECRET` từ Google Cloud Console
+  - `REDIRECT_URI` trỏ về `http://localhost:8080/Project_RideNow/logingoogle` (hoặc context bạn dùng)
+- Cập nhật Authorized redirect URI trong Google Cloud cho khớp.
 
-Copy target/RideNow.war to Tomcat/webapps/
+6) Cấu hình AI Gemini (tùy chọn)
 
-Start Tomcat and open:
-👉 http://localhost:8080/RideNow
+- Đặt API key trong:
+  - `src/main/java/utils/AI/GeminiClient.java`
+  - `src/main/java/utils/AI/GeminiToolClient.java`
+- Khuyến nghị đọc key từ biến môi trường/secret manager khi triển khai thật.
 
-Default Test Accounts
-Role	Username	Password
-Admin	admin1	1
-Partner	partner1	partner123
-Customer	customer1	customer123
-Guest	—	Browsing only
-Step 5: Run Unit Tests
-mvn test
+7) Build dự án
 
+```bash
+mvn clean package
+```
 
-Generate coverage:
+- WAR sẽ ở: `target/Project_RideNow-1.0-SNAPSHOT.war`
 
-mvn jacoco:report
+8) Triển khai lên Tomcat
 
+- Copy WAR vào `TOMCAT_HOME/webapps/`
+- Khởi động Tomcat, truy cập:
+  - `http://localhost:8080/Project_RideNow-1.0-SNAPSHOT/` (hoặc context do Tomcat cấu hình)
+- Ứng dụng khai báo `home.jsp` là trang welcome.
 
-View report at:
-target/site/jacoco/index.html
+## URL quan trọng
 
-🧑‍💻 Development Team (FPT University SWP391 - Fall 2025)
-Member	Student ID	Role	Responsibilities
-Lê Vĩnh Tiến	SE190123	Project Lead & Backend Developer	Architecture, servlet, service & DAO design
+- Đăng nhập: `/login`
+- Đăng ký: `/register`
+- Quên mật khẩu: `/forgot`
+- Tìm kiếm xe: `/motorbikesearch`
+- Chi tiết xe: `/motorbikedetail?id=...`
+- Giỏ/Thanh toán: `/cart`, `/checkout`
+- Hồ sơ khách: `/customer/profile`
+- Đối tác: quản lý qua `/motorbikes/manage` và dashboard liên quan
+- Quản trị: `/admin/*` (dashboard, quản lý xe/khách/đối tác/đơn/lịch/kiểm định/hoàn trả…)
+- AI Chat: `/ai/chat` (nếu bật)
 
-📞 Contact & Support
+Lưu ý: Truy cập `/admin/*` yêu cầu vai trò admin (lọc bởi `AdminOnlyFilter`).
 
-GitHub Repository: RideNow Project
+## Kiểm thử & coverage
 
-Email: ridenow.team@fpt.edu.vn
+- Chạy test: `mvn test`
+- Báo cáo JaCoCo: mở `target/site/jacoco/index.html`
+- Kế hoạch coverage: `TEST_COVERAGE_PLAN.md`
 
-Instructor: traltb@fe.edu.vn
- (Course Supervisor – SWP391)
+## Gợi ý tài khoản mẫu
 
-🧾 License
+- Nếu script DB có seed, sử dụng tài khoản sẵn có trong `database/RideNow_DATABASE.sql`.
+- Hoặc đăng ký mới ở `/register` (cần cấu hình SMTP để xác minh email).
 
-Educational Use Only
-Developed as part of FPT University’s SWP391 Course.
+## Ghi chú bảo mật & triển khai
 
-✅ Free for academic and learning purposes
-❌ Not for commercial distribution
+- Không commit khóa API, mật khẩu DB/SMTP vào repo.
+- Dùng biến môi trường/secret manager thay vì hằng số trong code.
+- Bật HTTPS cho môi trường production.
+- Cấu hình CORS và headers bảo mật nếu tích hợp frontend/bên thứ ba.
 
-🙏 Acknowledgments
+## Khắc phục lỗi thường gặp
 
-FPT University for guidance and infrastructure
+- Không kết nối DB: kiểm tra `utils/DBConnection.java`, SQL Server (port 1433), `encrypt=false`/`trustServerCertificate=true` cho môi trường dev.
+- Lỗi Google OAuth: kiểm tra `REDIRECT_URI` trùng với cấu hình Google Cloud.
+- Không gửi được email: dùng App Password, kiểm tra log debug trong `EmailUtil`.
+- Lỗi AI: kiểm tra API key Gemini, quyền mạng và hạn mức.
 
-Mentor Team (SWP391) for valuable feedback
+## Bản quyền & giấy phép
 
-Open Source Community for libraries & documentation
+Dự án học thuật SWP391 — sử dụng cho mục đích học tập/trình diễn nếu không ghi khác.
 
-AI Assistant (ChatGPT) for documentation and code generation support
-
-📚 Additional Documents
-
-📖 [API Documentation (JavaDoc)]
-
-🧪 [Test Plan (ISTQB format)]
-
-🗄️ [Database ERD & Schema]
-
-🎨 [UI/UX Screens & Design Tokens]
-
-📝 [Development Logs & AI Prompts]
-
-🔄 Version History
-Version	Date	Changes
-1.0.0	Nov 2025	Final release with booking, payment, dashboard
-0.9.0	Oct 2025	Added wallet & return management
-0.8.0	Sep 2025	Completed customer booking flow
-🌟 Roadmap
-
-✅ Completed:
-
-Authentication & Roles
-
-Motorbike CRUD + Partner management
-
-Booking & Payment workflow
-
-Dashboard analytics
-
-🚧 In Progress:
-
-Email confirmation for verified payments
-
-AI Chatbox integration for customer support
-
-
-
-PDF invoice generation
-
-Made with ❤️ by the RideNow Team – FPT University (SWP391)
-⭐ Star this repository if you find it helpful!

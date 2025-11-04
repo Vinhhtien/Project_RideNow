@@ -27,12 +27,10 @@ dao\NotificationDaoTest.class
 controller\RegisterServletTest.class
 controller\partner\StatusServletTest.class
 controller\Authetication\ForgotPasswordServletTest.class
-controller\MyOrdersServletTest.class
 controller\Authetication\LogoutServletTest.class
 service\OrderServiceTest.class
 controller\admin\AdminOrderDetailServletTest.class
 controller\PayNowServletTest.class
 controller\CustomerProfileServletTest.class
-controller\MotorbikeDetailServletTest.class
 testutil\MockFactory.class
 dao\MotorbikeDaoTest.class
