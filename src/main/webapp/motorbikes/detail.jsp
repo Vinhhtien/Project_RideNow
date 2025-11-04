@@ -28,7 +28,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
 
-  <!-- Gallery CSS -->
+  <!-- Gallery & Reviews CSS -->
   <style>
     .gallery { display:grid; gap:12px; }
     .gallery-main{ position:relative; border-radius:12px; overflow:hidden; background:#0b1224; border:1px solid #334155; }
@@ -42,6 +42,325 @@
     .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
     .thumb.active, .thumb:hover{ border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
     @media (max-width:768px){ .gallery-main img{ height:300px; } .thumbs{ grid-template-columns:repeat(4,1fr); } }
+  
+    /* === Review Section - Compact & Beautiful Design === */
+    .reviews-section {
+      margin-top: 1.5rem;
+    }
+
+    .review-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .review-card:hover {
+      border-color: #4b5563;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+      gap: 0.75rem;
+    }
+
+    .reviewer-name {
+      font-weight: 600;
+      color: #e2e8f0;
+      font-size: 0.875rem;
+      line-height: 1.2;
+    }
+
+    .review-rating {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .review-rating .star-filled {
+      color: #fbbf24;
+      font-size: 13px;
+    }
+
+    .review-rating .star-empty {
+      color: #475569;
+      font-size: 13px;
+    }
+
+    .review-content {
+      margin-bottom: 0.375rem;
+    }
+
+    .review-comment {
+      color: #cbd5e1;
+      line-height: 1.4;
+      font-size: 0.8125rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .review-date {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-align: right;
+    }
+
+    .no-reviews {
+      text-align: center;
+      color: #64748b;
+      padding: 2rem 1rem;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+
+    .no-reviews i {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      color: #475569;
+      opacity: 0.7;
+    }
+
+    .no-reviews p {
+      margin: 0.25rem 0;
+      font-size: 0.875rem;
+    }
+
+    /* Review Stats - Compact Layout */
+    .review-stats {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+      padding: 1rem 1.25rem;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+
+    .average-rating {
+      text-align: center;
+      min-width: 70px;
+    }
+
+    .average-score {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fbbf24;
+      display: block;
+      line-height: 1;
+    }
+
+    .rating-text {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+    }
+
+    .rating-breakdown {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .rating-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .rating-bar .stars {
+      width: 40px;
+      color: #fbbf24;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .rating-bar .bar {
+      flex: 1;
+      height: 6px;
+      background: #334155;
+      border-radius: 3px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .rating-bar .fill {
+      height: 100%;
+      background: #fbbf24;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .rating-bar .count {
+      width: 25px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .total-reviews {
+      text-align: center;
+      min-width: 60px;
+    }
+
+    .total-count {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      display: block;
+    }
+
+    .total-text {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    /* Animation */
+    .review-card {
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .review-stats {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+      
+      .rating-breakdown {
+        width: 100%;
+      }
+      
+      .average-rating, .total-reviews {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+      }
+      
+      .review-header {
+        flex-direction: row;
+        align-items: center;
+      }
+      
+      .review-comment {
+        -webkit-line-clamp: 3;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .review-card {
+        padding: 0.625rem 0.875rem;
+      }
+      
+      .review-stats {
+        gap: 0.875rem;
+        padding: 0.875rem;
+      }
+      
+      .rating-bar {
+        gap: 0.375rem;
+      }
+      
+      .rating-bar .stars {
+        width: 35px;
+      }
+      
+      .review-comment {
+        -webkit-line-clamp: 2;
+      }
+      
+      .average-score {
+        font-size: 1.5rem;
+      }
+      
+      .total-count {
+        font-size: 1rem;
+      }
+    }
+
+    /* Ultra Compact Mode for High Density */
+    .reviews-section.compact .review-card {
+      padding: 0.625rem 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .reviews-section.compact .review-header {
+      margin-bottom: 0.375rem;
+      gap: 0.5rem;
+    }
+
+    .reviews-section.compact .reviewer-name {
+      font-size: 0.8125rem;
+    }
+
+    .reviews-section.compact .review-rating .star-filled,
+    .reviews-section.compact .review-rating .star-empty {
+      font-size: 11px;
+    }
+
+    .reviews-section.compact .review-comment {
+      font-size: 0.75rem;
+      -webkit-line-clamp: 2;
+      margin-bottom: 0.125rem;
+    }
+
+    .reviews-section.compact .review-date {
+      font-size: 0.6875rem;
+    }
+
+    .reviews-section.compact .review-stats {
+      padding: 0.875rem;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .reviews-section.compact .average-score {
+      font-size: 1.5rem;
+    }
+
+    .reviews-section.compact .rating-bar {
+      margin-bottom: 0.25rem;
+    }
+
+    .reviews-section.compact .rating-bar .stars {
+      width: 35px;
+      font-size: 0.6875rem;
+    }
+
+    .reviews-section.compact .rating-bar .bar {
+      height: 4px;
+    }
+
+    .reviews-section.compact .total-count {
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -304,6 +623,84 @@
           </div>
         </section>
       </div>
+
+      <!-- Reviews Section - ĐÃ ĐƯỢC CẢI THIỆN -->
+      <section class="reviews-section">
+        <div class="card">
+          <h3 class="card-title">Đánh giá từ khách hàng</h3>
+          
+          <!-- Review Statistics - Sử dụng reviewDisplayStats từ servlet -->
+          <c:if test="${not empty reviewDisplayStats and reviewDisplayStats.totalReviews > 0}">
+            <div class="review-stats">
+              <div class="average-rating">
+                <span class="average-score"><fmt:formatNumber value="${reviewDisplayStats.averageRating}" pattern="0.0"/></span>
+                <div class="rating-text">/5</div>
+              </div>
+              <div class="rating-breakdown">
+                <!-- Sửa lỗi: step không thể âm, dùng biến currentRating để đảo ngược thứ tự -->
+                <c:forEach var="i" begin="1" end="5" step="1">
+                  <c:set var="currentRating" value="${6 - i}"/>
+                  <div class="rating-bar">
+                    <span class="stars">${currentRating} ★</span>
+                    <div class="bar">
+                      <div class="fill" style="width: ${reviewDisplayStats.ratingPercentages[currentRating] * 100}%"></div>
+                    </div>
+                    <span class="count">${reviewDisplayStats.ratingCounts[currentRating]}</span>
+                  </div>
+                </c:forEach>
+              </div>
+              <div class="total-reviews">
+                <span class="total-count">${reviewDisplayStats.totalReviews}</span>
+                <div class="total-text">đánh giá</div>
+              </div>
+            </div>
+          </c:if>
+
+          <!-- Reviews List - Sử dụng publicReviews từ servlet -->
+          <c:choose>
+            <c:when test="${not empty publicReviews}">
+              <c:forEach var="review" items="${publicReviews}">
+                <div class="review-card">
+                  <div class="review-header">
+                    <div class="reviewer-name">${fn:escapeXml(review.customerName)}</div>
+                    <div class="review-rating">
+                      <c:forEach begin="1" end="5" var="star">
+                        <c:choose>
+                          <c:when test="${star <= review.rating}">
+                            <span class="star-filled">★</span>
+                          </c:when>
+                          <c:otherwise>
+                            <span class="star-empty">★</span>
+                          </c:otherwise>
+                        </c:choose>
+                      </c:forEach>
+                    </div>
+                  </div>
+                  <div class="review-content">
+                    <div class="review-comment">
+                      ${fn:escapeXml(review.comment)}
+                    </div>
+                  </div>
+                  <div class="review-date">
+                    <!-- SỬA LỖI: Xử lý LocalDateTime -->
+                    <c:set var="dateTimeString" value="${review.createdAt}"/>
+                    <c:set var="datePart" value="${fn:substring(dateTimeString, 0, 10)}"/>
+                    <c:set var="timePart" value="${fn:substring(dateTimeString, 11, 16)}"/>
+                    ${datePart} ${timePart}
+                  </div>
+                </div>
+              </c:forEach>
+            </c:when>
+            <c:otherwise>
+              <div class="no-reviews">
+                <i class="fa-solid fa-comment-dots"></i>
+                <p>Chưa có đánh giá nào cho xe này.</p>
+                <p>Hãy là người đầu tiên đánh giá!</p>
+              </div>
+            </c:otherwise>
+          </c:choose>
+        </div>
+      </section>
     </c:otherwise>
   </c:choose>
 </main>

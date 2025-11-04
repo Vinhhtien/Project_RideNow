@@ -111,7 +111,7 @@
       padding:12px 16px;
       border-radius:var(--radius);
       border:1px solid var(--primary-light);
-      background:var(--primary);
+      background:#676772;
       color:var(--light);
       font-size:1rem;
       transition:var(--transition)
@@ -569,6 +569,11 @@ function checkDateValidity(newStart, newEnd) {
         return;
     }
     
+    if (newStart > newEnd) {
+        showWarning('Ngày nhận không thể sau ngày trả.', true);
+        return;
+    }
+    
     // Kiểm tra nếu ngày không thay đổi
     if (newStart.getTime() === originalStart.getTime() && 
         newEnd.getTime() === originalEnd.getTime()) {
@@ -631,7 +636,7 @@ function validateForm() {
         return false;
     }
     
-    if (startDate >= endDate) {
+    if (startDate > endDate) {
         alert('Ngày nhận phải trước ngày trả.');
         return false;
     }
