@@ -3,6 +3,7 @@ package service;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
+import model.RentalOrder;
 
 public interface IOrderService {
     int bookOneBike(int customerId, int bikeId, Date start, Date end) throws Exception;
@@ -38,4 +39,13 @@ public interface IOrderService {
             this.end = end;
         }
     }
+    
+    
+    
+    /**
+     * Lấy booking admin gần nhất (hoặc hiện tại) cho một xe.
+     * Dùng để prefill ngày thuê khi admin set status = "rented" trên form Motorbike.
+     */
+    RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLException;
+    
 }

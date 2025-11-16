@@ -476,7 +476,7 @@
 
                 <!-- Logo -->
                 <a href="${ctx}/" class="brand">
-                    <img src="images/ridenow_Logo.jpg" alt="RideNow Logo">
+                    <img src="images/ridenow_Logo1.jpg" alt="RideNow Logo">
                     <span class="brand-name">RideNow</span>
                 </a>
 

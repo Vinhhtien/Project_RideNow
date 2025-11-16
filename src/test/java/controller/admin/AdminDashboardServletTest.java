@@ -4,9 +4,7 @@ import controller.testsupport.TestUtils;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,42 +13,36 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import service.IAdminService;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AdminDashboardServletTest {
 
-    @BeforeAll
-    static void setUpEnv() {
-        Locale.setDefault(Locale.US);
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-    }
-
     @Mock HttpServletRequest req;
     @Mock HttpServletResponse resp;
-
-
+    @Mock IAdminService adminService;
 
     @Test
-    void get_service_throws_runtime_propagates() throws Exception {
-        Map<String, Object> sessionMap = TestUtils.createSessionMap();
-        HttpSession session = TestUtils.mockSession(sessionMap);
-        when(req.getSession()).thenReturn(session);
-        when(req.getContextPath()).thenReturn("/ctx");
-
-        IAdminService svc = mock(IAdminService.class);
-        when(svc.getKpiCards()).thenThrow(new RuntimeException("boom"));
-
+    @DisplayName("GET forwards to dashboard with attributes")
+    void get_forwards_dashboard() throws Exception {
         AdminDashboardServlet servlet = new AdminDashboardServlet();
-        TestUtils.forceSet(servlet, "adminService", svc);
+        TestUtils.forceSet(servlet, "adminService", adminService);
+        when(adminService.getKpiCards()).thenReturn(new HashMap<>());
+        when(adminService.getLatestOrders(anyInt())).thenReturn(Collections.emptyList());
+        when(adminService.getMaintenanceBikes(anyInt())).thenReturn(Collections.emptyList());
 
-        Assertions.assertThatThrownBy(() -> servlet.doGet(req, resp))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("boom");
+        RequestDispatcher rd = TestUtils.stubForward(req, "/admin/dashboard.jsp");
+
+        servlet.doGet(req, resp);
+
+        verify(rd).forward(req, resp);
+        verify(req).setAttribute(eq("kpi"), any());
+        verify(req).setAttribute(eq("latestOrders"), any());
+        verify(req).setAttribute(eq("maintenanceBikes"), any());
     }
 }
 

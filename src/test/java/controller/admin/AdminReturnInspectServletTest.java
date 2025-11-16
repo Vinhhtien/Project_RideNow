@@ -1,173 +1,151 @@
-//package controller.admin;
-//
-//import controller.testsupport.TestUtils;
-//import jakarta.servlet.RequestDispatcher;
-//import jakarta.servlet.http.HttpServletRequest;
-//import jakarta.servlet.http.HttpServletResponse;
-//import jakarta.servlet.http.HttpSession;
-//import org.junit.jupiter.api.BeforeAll;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.Mock;
-//import org.mockito.MockedStatic;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.mockito.junit.jupiter.MockitoSettings;
-//import org.mockito.quality.Strictness;
-//import utils.DBConnection;
-//
-//import java.math.BigDecimal;
-//import java.sql.*;
-//import java.util.Locale;
-//import java.util.TimeZone;
-//
-//import static org.mockito.ArgumentMatchers.*;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//@MockitoSettings(strictness = Strictness.LENIENT)
-//class AdminReturnInspectServletTest {
-//
-//    @BeforeAll
-//    static void initEnv() {
-//        Locale.setDefault(Locale.US);
-//        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-//    }
-//
-//    @Mock HttpServletRequest req;
-//    @Mock HttpServletResponse resp;
-//
-//    @Mock Connection con;
-//    @Mock PreparedStatement ps;
-//    @Mock PreparedStatement ps2;
-//    @Mock ResultSet rs;
-//
-//    @Test
-//    void ADMIN-RETURN-INSPECT-001_get_order_happy_forwards() throws Exception {
-//        RequestDispatcher rd = TestUtils.mockDispatcher(req);
-//        when(req.getContextPath()).thenReturn("/ctx");
-//        when(req.getParameter("orderId")).thenReturn("77");
-//
-//        try (MockedStatic<DBConnection> db = mockStatic(DBConnection.class)) {
-//            db.when(DBConnection::getConnection).thenReturn(con);
-//            when(con.prepareStatement(anyString())).thenReturn(ps);
-//            when(ps.executeQuery()).thenReturn(rs);
-//            when(rs.next()).thenReturn(true);
-//            when(rs.getInt("order_id")).thenReturn(77);
-//            when(rs.getString("full_name")).thenReturn("C");
-//            when(rs.getString("phone")).thenReturn("P");
-//            when(rs.getString("bike_name")).thenReturn("B");
-//            when(rs.getBigDecimal("deposit_amount")).thenReturn(new BigDecimal("100.00"));
-//            when(rs.getTimestamp("returned_at")).thenReturn(new Timestamp(0));
-//
-//            new AdminReturnInspectServlet().doGet(req, resp);
-//            verify(req).setAttribute(eq("order"), any());
-//            verify(rd).forward(req, resp);
-//        }
-//    }
-//
-//    @Test
-//    void ADMIN-RETURN-INSPECT-002_get_invalid_id_redirects() throws Exception {
-//        when(req.getContextPath()).thenReturn("/ctx");
-//        when(req.getParameter("orderId")).thenReturn("abc");
-//        new AdminReturnInspectServlet().doGet(req, resp);
-//        verify(resp).sendRedirect("/ctx/adminreturns");
-//    }
-//
-//    @Test
-//    void ADMIN-RETURN-INSPECT-003_post_passed_commits_and_redirects() throws Exception {
-//        var sm = TestUtils.createSessionMap();
-//        HttpSession session = TestUtils.mockSession(sm);
-//        when(req.getSession()).thenReturn(session);
-//        when(req.getContextPath()).thenReturn("/ctx");
-//        when(req.getParameter("orderId")).thenReturn("88");
-//        when(req.getParameter("bikeCondition")).thenReturn("excellent");
-//        when(req.getParameter("refundMethod")).thenReturn("wallet");
-//
-//        try (MockedStatic<DBConnection> db = mockStatic(DBConnection.class)) {
-//            db.when(DBConnection::getConnection).thenReturn(con);
-//            when(con.prepareStatement(startsWith("SELECT deposit_amount"))).thenReturn(ps);
-//            when(ps.executeQuery()).thenReturn(rs);
-//            when(rs.next()).thenReturn(true);
-//            when(rs.getBigDecimal("deposit_amount")).thenReturn(new BigDecimal("100.00"));
-//
-//            // processInspection sequence
-//            Connection con2 = mock(Connection.class);
-//            PreparedStatement ins = mock(PreparedStatement.class);
-//            PreparedStatement upd = mock(PreparedStatement.class);
-//            db.when(DBConnection::getConnection).thenReturn(con).thenReturn(con2);
-//            when(con2.prepareStatement(startsWith("INSERT INTO RefundInspections"))).thenReturn(ins);
-//            when(con2.prepareStatement(startsWith("UPDATE RentalOrders SET deposit_status"))).thenReturn(upd);
-//
-//            new AdminReturnInspectServlet().doPost(req, resp);
-//
-//            verify(con2).setAutoCommit(false);
-//            verify(ins).setInt(1, 88);
-//            verify(ins).setInt(2, 1); // default adminId
-//            verify(ins).setString(3, "excellent");
-//            verify(upd).setInt(1, 88);
-//            verify(con2).commit();
-//            verify(con2).setAutoCommit(true);
-//            verify(resp).sendRedirect("/ctx/adminreturns");
-//        }
-//    }
-//
-//    @Test
-//    void ADMIN-RETURN-INSPECT-004_post_damaged_with_fee_commits() throws Exception {
-//        var sm = TestUtils.createSessionMap();
-//        HttpSession session = TestUtils.mockSession(sm);
-//        when(req.getSession()).thenReturn(session);
-//        when(req.getContextPath()).thenReturn("/ctx");
-//        when(req.getParameter("orderId")).thenReturn("99");
-//        when(req.getParameter("bikeCondition")).thenReturn("damaged");
-//        when(req.getParameter("damageFee")).thenReturn("30");
-//        when(req.getParameter("refundMethod")).thenReturn("cash");
-//
-//        try (MockedStatic<DBConnection> db = mockStatic(DBConnection.class)) {
-//            db.when(DBConnection::getConnection).thenReturn(con);
-//            when(con.prepareStatement(startsWith("SELECT deposit_amount"))).thenReturn(ps);
-//            when(ps.executeQuery()).thenReturn(rs);
-//            when(rs.next()).thenReturn(true);
-//            when(rs.getBigDecimal("deposit_amount")).thenReturn(new BigDecimal("100.00"));
-//
-//            Connection con2 = mock(Connection.class);
-//            PreparedStatement ins = mock(PreparedStatement.class);
-//            PreparedStatement upd = mock(PreparedStatement.class);
-//            db.when(DBConnection::getConnection).thenReturn(con).thenReturn(con2);
-//            when(con2.prepareStatement(startsWith("INSERT INTO RefundInspections"))).thenReturn(ins);
-//            when(con2.prepareStatement(startsWith("UPDATE RentalOrders SET deposit_status"))).thenReturn(upd);
-//
-//            new AdminReturnInspectServlet().doPost(req, resp);
-//
-//            verify(ins).setBigDecimal(eq(5), eq(new BigDecimal("30")));
-//            verify(con2).commit();
-//            verify(resp).sendRedirect("/ctx/adminreturns");
-//        }
-//    }
-//
-//    @Test
-//    void ADMIN-RETURN-INSPECT-005_post_sql_exception_rolls_back() throws Exception {
-//        var sm = TestUtils.createSessionMap();
-//        HttpSession session = TestUtils.mockSession(sm);
-//        when(req.getSession()).thenReturn(session);
-//        when(req.getContextPath()).thenReturn("/ctx");
-//        when(req.getParameter("orderId")).thenReturn("77");
-//        when(req.getParameter("bikeCondition")).thenReturn("good");
-//
-//        try (MockedStatic<DBConnection> db = mockStatic(DBConnection.class)) {
-//            // deposit amount
-//            db.when(DBConnection::getConnection).thenReturn(con);
-//            when(con.prepareStatement(anyString())).thenReturn(ps);
-//            when(ps.executeQuery()).thenReturn(rs);
-//            when(rs.next()).thenReturn(true);
-//            when(rs.getBigDecimal(anyString())).thenReturn(new BigDecimal("50.00"));
-//
-//            // processInspection throws on getConnection
-//            db.when(DBConnection::getConnection).thenThrow(new SQLException("boom"));
-//
-//            new AdminReturnInspectServlet().doPost(req, resp);
-//            org.assertj.core.api.Assertions.assertThat(sm.get("flash")).isNotNull();
-//            verify(resp).sendRedirect("/ctx/adminreturns");
-//        }
-//    }
-//}
-//
+package controller.admin;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class AdminReturnInspectServletTest {
+
+    @Mock HttpServletRequest req;
+    @Mock HttpServletResponse resp;
+    @Mock HttpSession session;
+
+    @Test
+    @DisplayName("GET missing orderId redirects to /adminreturns")
+    void get_missing_orderId_redirects() throws Exception {
+        AdminReturnInspectServlet servlet = new AdminReturnInspectServlet();
+        when(req.getParameter("orderId")).thenReturn(null);
+        when(req.getContextPath()).thenReturn("/ctx");
+
+        servlet.doGet(req, resp);
+
+        verify(resp).sendRedirect("/ctx/adminreturns");
+    }
+
+    @Test
+    @DisplayName("POST missing orderId sets flash and redirects")
+    void post_missing_orderId_redirects() throws Exception {
+        AdminReturnInspectServlet servlet = new AdminReturnInspectServlet();
+        when(req.getSession()).thenReturn(session);
+        when(req.getParameter("orderId")).thenReturn("");
+        when(req.getContextPath()).thenReturn("/ctx");
+
+        servlet.doPost(req, resp);
+
+        verify(session).setAttribute(eq("flash"), contains("orderId"));
+        verify(resp).sendRedirect("/ctx/adminreturns");
+    }
+
+    @Test
+    @DisplayName("GET invalid orderId format -> flash + redirect")
+    void get_invalid_orderId_redirects() throws Exception {
+        AdminReturnInspectServlet servlet = new AdminReturnInspectServlet();
+        when(req.getSession()).thenReturn(session);
+        when(req.getParameter("orderId")).thenReturn("abc");
+        when(req.getContextPath()).thenReturn("/ctx");
+
+        servlet.doGet(req, resp);
+
+        verify(session).setAttribute(eq("flash"), anyString());
+        verify(resp).sendRedirect("/ctx/adminreturns");
+    }
+
+    @Test
+    @DisplayName("GET order found -> forward to inspect JSP")
+    void get_order_found_forwards() throws Exception {
+        AdminReturnInspectServlet servlet = new AdminReturnInspectServlet();
+
+        // Mock DB for getOrderForInspection to return one row
+        java.sql.Connection con = mock(java.sql.Connection.class);
+        java.sql.PreparedStatement ps = mock(java.sql.PreparedStatement.class);
+        java.sql.ResultSet rs = mock(java.sql.ResultSet.class);
+        when(rs.next()).thenReturn(true);
+        when(rs.getInt("order_id")).thenReturn(1);
+        when(rs.getString("customer_name")).thenReturn("A");
+        when(rs.getString("customer_phone")).thenReturn("090");
+        when(rs.getString("bike_name")).thenReturn("B");
+        when(rs.getBigDecimal("deposit_amount")).thenReturn(new java.math.BigDecimal("100"));
+        when(rs.getTimestamp("returned_at")).thenReturn(new java.sql.Timestamp(System.currentTimeMillis()));
+        when(ps.executeQuery()).thenReturn(rs);
+        when(con.prepareStatement(anyString())).thenReturn(ps);
+
+        try (org.mockito.MockedStatic<utils.DBConnection> mocked = org.mockito.Mockito.mockStatic(utils.DBConnection.class)) {
+            mocked.when(utils.DBConnection::getConnection).thenReturn(con);
+            when(req.getParameter("orderId")).thenReturn("1");
+            jakarta.servlet.RequestDispatcher rd = controller.testsupport.TestUtils.stubForward(req, "/admin/admin-return-inspect.jsp");
+
+            servlet.doGet(req, resp);
+
+            verify(rd).forward(req, resp);
+            verify(req).setAttribute(eq("order"), any());
+        }
+    }
+
+    @Test
+    @DisplayName("POST invalid bikeCondition -> flash + redirect")
+    void post_invalid_condition_redirects() throws Exception {
+        AdminReturnInspectServlet servlet = new AdminReturnInspectServlet();
+        when(req.getSession()).thenReturn(session);
+        when(req.getParameter("orderId")).thenReturn("2");
+        when(req.getParameter("bikeCondition")).thenReturn("bad_value");
+        when(req.getParameter("refundMethod")).thenReturn("wallet");
+        when(req.getContextPath()).thenReturn("/ctx");
+
+        servlet.doPost(req, resp);
+
+        verify(session).setAttribute(eq("flash"), anyString());
+        verify(resp).sendRedirect("/ctx/adminreturns");
+    }
+
+    @Test
+    @DisplayName("POST valid inputs -> processInspection success and redirect")
+    void post_valid_inputs_success() throws Exception {
+        AdminReturnInspectServlet servlet = new AdminReturnInspectServlet();
+        when(req.getSession()).thenReturn(session);
+        when(session.getAttribute("admin_id")).thenReturn(5);
+
+        when(req.getParameter("orderId")).thenReturn("3");
+        when(req.getParameter("bikeCondition")).thenReturn("good");
+        when(req.getParameter("damageFee")).thenReturn("200"); // will be clamped to deposit
+        when(req.getParameter("refundMethod")).thenReturn("invalid"); // defaults to cash
+        when(req.getParameter("damageNotes")).thenReturn("notes");
+        when(req.getContextPath()).thenReturn("/ctx");
+
+        // Mock DB sequence: getDepositAmount -> 100, then processInspection (two updates) returns true
+        java.sql.Connection con1 = mock(java.sql.Connection.class);
+        java.sql.PreparedStatement psDep = mock(java.sql.PreparedStatement.class);
+        java.sql.ResultSet rsDep = mock(java.sql.ResultSet.class);
+        when(rsDep.next()).thenReturn(true);
+        when(rsDep.getBigDecimal("deposit_amount")).thenReturn(new java.math.BigDecimal("100"));
+        when(psDep.executeQuery()).thenReturn(rsDep);
+        when(con1.prepareStatement(anyString())).thenReturn(psDep);
+
+        java.sql.Connection con2 = mock(java.sql.Connection.class);
+        java.sql.PreparedStatement psIns = mock(java.sql.PreparedStatement.class);
+        when(psIns.executeUpdate()).thenReturn(1);
+        java.sql.PreparedStatement psUpd = mock(java.sql.PreparedStatement.class);
+        when(psUpd.executeUpdate()).thenReturn(1);
+        when(con2.prepareStatement(org.mockito.ArgumentMatchers.startsWith("\n                        INSERT INTO RefundInspections"))).thenReturn(psIns);
+        when(con2.prepareStatement(org.mockito.ArgumentMatchers.startsWith("UPDATE RentalOrders SET deposit_status"))).thenReturn(psUpd);
+
+        try (org.mockito.MockedStatic<utils.DBConnection> mocked = org.mockito.Mockito.mockStatic(utils.DBConnection.class)) {
+            mocked.when(utils.DBConnection::getConnection).thenReturn(con1, con2);
+
+            servlet.doPost(req, resp);
+
+            verify(resp).sendRedirect("/ctx/adminreturns");
+        }
+    }
+}

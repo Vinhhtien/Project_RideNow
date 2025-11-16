@@ -387,31 +387,31 @@
             body {
                 padding: 16px;
             }
-            
+
             .toolbar {
                 flex-direction: column;
                 gap: 15px;
                 align-items: flex-start;
             }
-            
+
             .header h1 {
                 font-size: 1.8rem;
             }
-            
+
             .review-form,
             .reviews-section {
                 padding: 20px;
             }
-            
+
             .review-header {
                 flex-direction: column;
                 gap: 12px;
             }
-            
+
             .stars {
                 gap: 4px;
             }
-            
+
             .star {
                 font-size: 28px;
             }
@@ -441,14 +441,13 @@
         </div>
 
         <!-- Flash Messages -->
-        <c:if test="${not empty sessionScope.message}">
+        <c:if test="${not empty message}">
             <div class="alert alert-success">
                 <i class="fas fa-check-circle"></i>
-                ${sessionScope.message}
+                ${message}
             </div>
-            <c:remove var="message" scope="session"/>
         </c:if>
-        
+
         <c:if test="${not empty error}">
             <div class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i>
@@ -466,7 +465,8 @@
             <form method="post" action="${pageContext.request.contextPath}/review" onsubmit="return validateReviewForm()">
                 <input type="hidden" name="orderId" value="${orderId}">
                 <input type="hidden" name="bikeId" value="${bikeId}">
-                <input type="hidden" name="rating" id="ratingValue" value="0">
+                <input type="hidden" name="rating" id="ratingValue"
+                       value="${myReview != null ? myReview.rating : 0}">
 
                 <div class="rating-section">
                     <label class="rating-label">Đánh giá sao:</label>
@@ -482,12 +482,23 @@
 
                 <div class="comment-section">
                     <label class="comment-label">Nhận xét:</label>
-                    <textarea name="comment" maxlength="500" placeholder="Hãy chia sẻ trải nghiệm của bạn với chiếc xe này..." id="commentField"></textarea>
+                    <textarea name="comment"
+                              maxlength="500"
+                              placeholder="Hãy chia sẻ trải nghiệm của bạn với chiếc xe này..."
+                              id="commentField">${myReview != null ? myReview.comment : ''}</textarea>
                     <div class="char-count"><span id="charCount">0</span>/500 ký tự</div>
                 </div>
 
                 <button type="submit" class="submit-btn" id="submitBtn">
-                    <i class="fas fa-paper-plane"></i> Gửi đánh giá
+                    <i class="fas fa-paper-plane"></i>
+                    <c:choose>
+                        <c:when test="${myReview != null}">
+                            Cập nhật đánh giá
+                        </c:when>
+                        <c:otherwise>
+                            Gửi đánh giá
+                        </c:otherwise>
+                    </c:choose>
                 </button>
             </form>
         </div>
@@ -519,8 +530,7 @@
                                     <div>
                                         <div class="reviewer-name"><c:out value="${rwc.customerName}" /></div>
                                         <div class="review-date">
-                                            <i class="far fa-clock"></i> 
-                                            <!-- Sửa lỗi: Xử lý LocalDateTime trực tiếp -->
+                                            <i class="far fa-clock"></i>
                                             <c:set var="createdAt" value="${rwc.review.createdAt}" />
                                             <c:set var="datePart" value="${fn:substring(createdAt, 0, 10)}" />
                                             <c:set var="timePart" value="${fn:substring(createdAt, 11, 16)}" />
@@ -565,32 +575,56 @@
 
         let currentRating = 0;
 
+        // Rating ban đầu từ server (nếu có myReview)
+        const initialRating = ${myReview != null ? myReview.rating : 0};
+
+        function getRatingColor(rating) {
+            const colors = {
+                1: "var(--error)",
+                2: "#f97316",
+                3: "#eab308",
+                4: "#84cc16",
+                5: "var(--success)"
+            };
+            return colors[rating] || "var(--warning)";
+        }
+
+        function applyRating(value) {
+            currentRating = value;
+            ratingInput.value = value;
+
+            // Cập nhật appearance của sao
+            stars.forEach((s, index) => {
+                if (index < value) {
+                    s.classList.add("active");
+                    s.style.color = ""; // dùng CSS .star.active
+                } else {
+                    s.classList.remove("active");
+                    s.style.color = "var(--gray-dark)";
+                }
+            });
+
+            const ratingTexts = [
+                "",
+                "Rất tệ",
+                "Tệ",
+                "Bình thường",
+                "Tốt",
+                "Tuyệt vời"
+            ];
+
+            if (value > 0) {
+                ratingDisplay.textContent = `${value} sao • ${ratingTexts[value]}`;
+                ratingDisplay.style.color = getRatingColor(value);
+            } else {
+                ratingDisplay.textContent = "";
+            }
+        }
+
         stars.forEach(star => {
             star.addEventListener("click", () => {
                 const value = parseInt(star.dataset.value);
-                currentRating = value;
-                ratingInput.value = value;
-
-                // Update star appearance
-                stars.forEach((s, index) => {
-                    if (index < value) {
-                        s.classList.add("active");
-                    } else {
-                        s.classList.remove("active");
-                    }
-                });
-
-                // Update rating text
-                const ratingTexts = [
-                    "",
-                    "Rất tệ",
-                    "Tệ",
-                    "Bình thường",
-                    "Tốt",
-                    "Tuyệt vời"
-                ];
-                ratingDisplay.textContent = `${value} sao • ${ratingTexts[value]}`;
-                ratingDisplay.style.color = getRatingColor(value);
+                applyRating(value);
             });
 
             star.addEventListener("mouseenter", () => {
@@ -611,22 +645,16 @@
             });
         });
 
-        function getRatingColor(rating) {
-            const colors = {
-                1: "var(--error)",
-                2: "#f97316",
-                3: "#eab308",
-                4: "#84cc16",
-                5: "var(--success)"
-            };
-            return colors[rating] || "var(--warning)";
+        // Nếu server có gửi myReview.rating > 0 thì init sẵn
+        if (initialRating > 0) {
+            applyRating(initialRating);
         }
 
         // Character counter
         commentField.addEventListener("input", () => {
             const count = commentField.value.length;
             charCount.textContent = count;
-            
+
             if (count > 450) {
                 charCount.style.color = "var(--warning)";
             } else {
@@ -637,7 +665,7 @@
         // Form validation
         function validateReviewForm() {
             const rating = parseInt(ratingInput.value);
-            
+
             if (isNaN(rating) || rating < 1 || rating > 5) {
                 alert("Vui lòng chọn số sao từ 1 đến 5.");
                 return false;

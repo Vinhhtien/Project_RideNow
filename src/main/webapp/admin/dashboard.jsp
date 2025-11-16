@@ -435,7 +435,7 @@
             </div>
         </section>
 
-        <section class="panel">
+<!--        <section class="panel">
             <div class="panel-header">
                 <h2>Bikes Under Maintenance</h2>
                 <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/bikes?status=maintenance">Manage
@@ -462,7 +462,7 @@
                     </c:if>
                 </div>
             </div>
-        </section>
+        </section>-->
 
         <section class="panel">
             <div class="panel-header">
@@ -499,7 +499,7 @@
             </div>
         </section>
 
-        <section class="panel full-width">
+<!--        <section class="panel full-width">
             <div class="panel-header">
                 <h2>Revenue Overview</h2>
                 <div class="time-filter">
@@ -513,7 +513,7 @@
                 <div class="chart-placeholder"><i class="fas fa-chart-line"></i>
                     <p>Revenue chart will be displayed here</p></div>
             </div>
-        </section>
+        </section>-->
     </div>
 </main>
 

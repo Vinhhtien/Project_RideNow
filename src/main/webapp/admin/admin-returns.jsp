@@ -171,6 +171,9 @@
                 <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item"><i
                         class="fas fa-motorcycle"></i><span>Motorbikes</span></a>
                 <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item"><i class="fas fa-clipboard-list"></i><span>Orders</span></a>
+                <a href="${pageContext.request.contextPath}/admin/schedule" class="nav-item">
+                    <i class="fas fa-calendar-alt"></i><span>View Schedule</span>
+                </a>
                 <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item"><i
                         class="fas fa-shipping-fast"></i><span>Vehicle Pickup</span></a>
                 <a href="${pageContext.request.contextPath}/adminreturn" class="nav-item"><i class="fas fa-undo-alt"></i><span>Vehicle Return</span></a>

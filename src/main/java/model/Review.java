@@ -6,26 +6,43 @@ public class Review {
     private int reviewId;
     private int customerId;
     private int bikeId;
+    private int orderId;           // 👈 NEW: gắn với đơn hàng
     private int rating;
     private String comment;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt; // 👈 NEW: lần chỉnh sửa cuối
 
     public Review() {
     }
 
-    public Review(int reviewId, int customerId, int bikeId, int rating, String comment, LocalDateTime createdAt) {
+    // Full constructor (dùng khi map từ DB)
+    public Review(int reviewId,
+                  int customerId,
+                  int bikeId,
+                  int orderId,
+                  int rating,
+                  String comment,
+                  LocalDateTime createdAt,
+                  LocalDateTime updatedAt) {
         this.reviewId = reviewId;
         this.customerId = customerId;
         this.bikeId = bikeId;
+        this.orderId = orderId;
         this.rating = rating;
         this.comment = comment;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
-    // Constructor cho insert (DB tự sinh reviewId và createdAt)
-    public Review(int customerId, int bikeId, int rating, String comment) {
+    // Constructor cho insert (DB tự sinh reviewId, createdAt, updatedAt)
+    public Review(int customerId,
+                  int bikeId,
+                  int orderId,
+                  int rating,
+                  String comment) {
         this.customerId = customerId;
         this.bikeId = bikeId;
+        this.orderId = orderId;
         this.rating = rating;
         this.comment = comment;
     }
@@ -55,6 +72,14 @@ public class Review {
         this.bikeId = bikeId;
     }
 
+    public int getOrderId() {        // 👈 NEW
+        return orderId;
+    }
+
+    public void setOrderId(int orderId) {   // 👈 NEW
+        this.orderId = orderId;
+    }
+
     public int getRating() {
         return rating;
     }
@@ -79,16 +104,25 @@ public class Review {
         this.createdAt = createdAt;
     }
 
+    public LocalDateTime getUpdatedAt() {   // 👈 NEW
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {  // 👈 NEW
+        this.updatedAt = updatedAt;
+    }
+
     @Override
     public String toString() {
         return "Review{" +
                 "reviewId=" + reviewId +
                 ", customerId=" + customerId +
                 ", bikeId=" + bikeId +
+                ", orderId=" + orderId +
                 ", rating=" + rating +
                 ", comment='" + comment + '\'' +
                 ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
                 '}';
     }
 }
-

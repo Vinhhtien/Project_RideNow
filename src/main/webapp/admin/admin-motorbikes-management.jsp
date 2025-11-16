@@ -12,13 +12,12 @@
     <title>Quản lý Xe Máy | RideNow Admin</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-    <!-- Giữ admin.css và thêm css riêng cho trang motor, không trùng selector -->
     <link rel="stylesheet" href="${ctx}/css/admin.css">
     <link rel="stylesheet" href="${ctx}/css/admin-motorbikes.css">
 </head>
 
 <body class="admin motor-page">
-<!-- SIDEBAR (giống dashboard) -->
+<!-- SIDEBAR -->
 <aside class="sidebar">
     <div class="brand">
         <div class="brand-logo"><i class="fa-solid fa-motorcycle"></i></div>
@@ -30,6 +29,9 @@
         <a href="${ctx}/admin/customers" class="nav-item"><i class="fa-solid fa-users"></i>Customers</a>
         <a href="${ctx}/admin/bikes" class="nav-item active"><i class="fa-solid fa-motorcycle"></i>Motorbikes</a>
         <a href="${ctx}/admin/orders" class="nav-item"><i class="fa-solid fa-receipt"></i>Orders</a>
+        <a href="${pageContext.request.contextPath}/admin/schedule" class="nav-item">
+            <i class="fas fa-calendar-alt"></i><span>View Schedule</span>
+        </a>
         <a href="${ctx}/adminpickup" class="nav-item"><i class="fa-solid fa-truck"></i>Vehicle Pickup</a>
         <a href="${ctx}/adminreturn" class="nav-item"><i class="fa-solid fa-rotate-left"></i>Vehicle Return</a>
         <a href="${ctx}/adminreturns" class="nav-item"><i class="fa-solid fa-clipboard-check"></i>Verify & Refund</a>
@@ -53,18 +55,86 @@
             <span>Administrator</span>
         </div>
     </header>
-    <c:if test="${not empty param.error}">
-        <div class="alert alert-danger">
-            <c:choose>
-                <c:when test="${param.reason == 'has_orders'}">
-                    ❌ Cannot delete motorbike: This bike has existing orders in the system.
-                </c:when>
-                <c:otherwise>
-                    ❌ Failed to delete motorbike. Please try again.
-                </c:otherwise>
-            </c:choose>
+
+    <!-- TOAST NOTIFICATION -->
+    <c:if test="${not empty param.error or not empty param.success}">
+        <div class="toast-container">
+            <!-- ERROR TOAST -->
+            <c:if test="${not empty param.error}">
+                <div class="toast toast--error">
+                    <div class="toast__header">
+                        <div class="toast__icon">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </div>
+                        <div class="toast__title">Thao tác thất bại</div>
+                        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="toast__message">
+                        <c:choose>
+                            <c:when test="${param.error eq 'delete_failed' and param.reason eq 'has_orders'}">
+                                <strong>Không thể xóa xe</strong> - Xe này đang có đơn hàng trong hệ thống. Vui lòng kiểm tra lịch sử thuê trước khi xóa.
+                            </c:when>
+                            <c:when test="${param.error eq 'delete_failed'}">
+                                <strong>Xóa xe thất bại</strong> - Vui lòng thử lại sau.
+                            </c:when>
+                            <c:when test="${param.error eq 'create_failed'}">
+                                <strong>Tạo xe mới thất bại</strong> - Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.
+                            </c:when>
+                            <c:when test="${param.error eq 'update_failed'}">
+                                <strong>Cập nhật thông tin thất bại</strong> - Vui lòng thử lại sau.
+                            </c:when>
+                            <c:when test="${param.error eq 'not_found'}">
+                                <strong>Không tìm thấy xe</strong> - Có thể xe đã bị xóa hoặc không tồn tại.
+                            </c:when>
+                            <c:otherwise>
+                                <strong>Có lỗi xảy ra</strong> - Vui lòng thử lại.
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="toast__progress">
+                        <div class="toast__progress-bar"></div>
+                    </div>
+                </div>
+            </c:if>
+
+            <!-- SUCCESS TOAST -->
+            <c:if test="${not empty param.success}">
+                <div class="toast toast--success">
+                    <div class="toast__header">
+                        <div class="toast__icon">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div class="toast__title">Thao tác thành công</div>
+                        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="toast__message">
+                        <c:choose>
+                            <c:when test="${param.success eq 'created'}">
+                                <strong>Đã thêm xe mới</strong> - Xe đã được thêm vào hệ thống thành công.
+                            </c:when>
+                            <c:when test="${param.success eq 'updated'}">
+                                <strong>Đã cập nhật thông tin</strong> - Thông tin xe đã được cập nhật thành công.
+                            </c:when>
+                            <c:when test="${param.success eq 'deleted'}">
+                                <strong>Đã xóa xe</strong> - Xe đã được xóa khỏi hệ thống.
+                            </c:when>
+                            <c:otherwise>
+                                <strong>Thao tác thành công</strong> - Thao tác đã được thực hiện thành công.
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="toast__progress">
+                        <div class="toast__progress-bar"></div>
+                    </div>
+                </div>
+            </c:if>
         </div>
     </c:if>
+
     <fmt:setLocale value="vi_VN"/>
 
     <!-- TÍNH KPI TỪ DANH SÁCH motorbikes -->
@@ -83,7 +153,7 @@
         <c:if test="${b.ownerType == 'Admin'}"><c:set var="adminCount" value="${adminCount + 1}"/></c:if>
     </c:forEach>
 
-    <!-- KPI GRID (scope .motor-page để không trùng css global) -->
+    <!-- KPI GRID -->
     <section class="motor-kpi-grid">
         <div class="motor-kpi-card total">
             <div class="kpi-icon"><i class="fa-solid fa-list"></i></div>
@@ -199,10 +269,12 @@
                             <a class="btn btn-secondary btn-sm" href="${ctx}/admin/bikes?action=edit&id=${bike.bikeId}">
                                 <i class="fa-solid fa-pen"></i> Sửa
                             </a>
-                            <a class="btn btn-danger btn-sm" href="${ctx}/admin/bikes?action=delete&id=${bike.bikeId}"
-                               onclick="return confirm('Xóa xe ${bike.bikeName} (${bike.licensePlate})?')">
+                            <button class="btn btn-danger btn-sm delete-btn" 
+                                    data-bike-id="${bike.bikeId}"
+                                    data-bike-name="${bike.bikeName}"
+                                    data-license-plate="${bike.licensePlate}">
                                 <i class="fa-solid fa-trash"></i> Xóa
-                            </a>
+                            </button>
                         </td>
                     </tr>
                 </c:forEach>
@@ -220,6 +292,26 @@
             </table>
         </div>
     </section>
+
+    <!-- Modal Confirm Delete -->
+    <div id="deleteModal" class="modal">
+        <div class="modal__content">
+            <div class="modal__header">
+                <div class="modal__icon modal__icon--warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="modal__title">Xác nhận xóa</h3>
+            </div>
+            <div class="modal__body">
+                <p>Bạn có chắc chắn muốn xóa xe <strong id="bikeNameToDelete"></strong> (<span id="licensePlateToDelete"></span>) không?</p>
+                <p class="modal__warning"><i class="fa-solid fa-circle-info"></i> Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" id="cancelDelete">Hủy bỏ</button>
+                <a href="#" class="btn btn-danger" id="confirmDelete">Xóa xe</a>
+            </div>
+        </div>
+    </div>
 </main>
 
 <script>
@@ -239,6 +331,72 @@
         if (q.get('ownerType')) document.getElementById('owner').value = q.get('ownerType');
         if (q.get('status')) document.getElementById('status').value = q.get('status');
     })();
+
+    // Tự động đóng toast sau 6 giây
+    document.addEventListener('DOMContentLoaded', function() {
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            const progressBar = toast.querySelector('.toast__progress-bar');
+            if (progressBar) {
+                progressBar.style.animation = 'progress 6s linear forwards';
+            }
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 6000);
+        });
+
+        // Xử lý modal xóa
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        const bikeNameElement = document.getElementById('bikeNameToDelete');
+        const licensePlateElement = document.getElementById('licensePlateToDelete');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        const cancelDeleteBtn = document.getElementById('cancelDelete');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const bikeId = this.getAttribute('data-bike-id');
+                const bikeName = this.getAttribute('data-bike-name');
+                const licensePlate = this.getAttribute('data-license-plate');
+                
+                // Cập nhật thông tin trong modal
+                bikeNameElement.textContent = bikeName;
+                licensePlateElement.textContent = licensePlate;
+                
+                // Cập nhật link xóa
+                confirmDeleteBtn.href = '${ctx}/admin/bikes?action=delete&id=' + bikeId;
+                
+                // Hiển thị modal
+                deleteModal.style.display = 'block';
+            });
+        });
+
+        // Đóng modal khi click hủy
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'none';
+        });
+
+        // Đóng modal khi click bên ngoài
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === deleteModal) {
+                deleteModal.style.display = 'none';
+            }
+        });
+
+        // Đóng modal với phím ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && deleteModal.style.display === 'block') {
+                deleteModal.style.display = 'none';
+            }
+        });
+    });
 </script>
 </body>
 </html>

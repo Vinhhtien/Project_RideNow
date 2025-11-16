@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -518,7 +519,6 @@
 <script>
     // --- set selected cho type & status an toàn ---
     (function initSelectDefaults() {
-        // typeId
         <%-- nếu có motorbike thì gán selected bằng JS (tránh truy cập motorbike.typeId khi null) --%>
         <c:if test="${not empty motorbike}">
         const typeSel = document.getElementById('typeId');
@@ -557,6 +557,9 @@
         <a href="${pageContext.request.contextPath}/admin/bikes" class="nav-item active"><i
                 class="fas fa-motorcycle"></i><span>Motorbikes</span></a>
         <a href="${pageContext.request.contextPath}/admin/orders" class="nav-item"><i class="fas fa-clipboard-list"></i><span>Orders</span></a>
+        <a href="${pageContext.request.contextPath}/admin/schedule" class="nav-item">
+            <i class="fas fa-calendar-alt"></i><span>View Schedule</span>
+        </a>
         <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item"><i
                 class="fas fa-shipping-fast"></i><span>Vehicle Pickup</span></a>
         <a href="${pageContext.request.contextPath}/adminreturn" class="nav-item"><i class="fas fa-undo-alt"></i><span>Vehicle Return</span></a>
@@ -665,11 +668,37 @@
         <div class="mb-form-panel">
             <div class="mb-form-header"><h2>Thông tin Xe Máy</h2></div>
             <div class="mb-form-body">
+                <c:if test="${not empty formError}">
+                    <div style="
+                        margin-bottom:16px;
+                        padding:12px 14px;
+                        border-radius:8px;
+                        border:1px solid var(--mb-danger);
+                        background: var(--mb-danger-50);
+                        color:#b91c1c;
+                        font-size:14px;
+                        display:flex;
+                        align-items:center;
+                        gap:8px;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>${formError}</span>
+                    </div>
+                </c:if>
+
+                <!-- Prefill date từ booking admin -->
+                <c:if test="${not empty motorbike}">
+                    <fmt:formatDate value="${adminRentalStart}" pattern="yyyy-MM-dd" var="adminRentalStartStr"/>
+                    <fmt:formatDate value="${adminRentalEnd}" pattern="yyyy-MM-dd" var="adminRentalEndStr"/>
+                    <c:set var="isRentedBike" value="${motorbike.status eq 'rented'}"/>
+                </c:if>
+
                 <form method="post" id="mainForm"
                       action="${pageContext.request.contextPath}/admin/bikes?action=${empty motorbike ? 'create' : 'update'}"
                       enctype="multipart/form-data">
                     <c:if test="${not empty motorbike}">
                         <input type="hidden" name="bikeId" value="${motorbike.bikeId}">
+                        <input type="hidden" id="originalStatus" name="originalStatus" value="${motorbike.status}">
+ 
                     </c:if>
                     <input type="hidden" name="deletedImages" id="deletedImages" value="">
 
@@ -723,61 +752,129 @@
                         </div>
 
                         <div class="mb-form-group">
-                            <label for="status" class="mb-label required">Trạng thái</label>
-                            <select id="status" name="status" class="mb-select" required>
-                                <c:choose>
-                                    <c:when test="${empty motorbike}">
-                                        <!-- Thêm mới: chỉ cho phép available -->
-                                        <option value="available" selected>Có sẵn</option>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <!-- Chỉnh sửa: cho phép tất cả trạng thái -->
-                                        <option value="available"
-                                                <c:if test="${motorbike.status == 'available'}">selected</c:if>>Có sẵn
-                                        </option>
-                                        <option value="rented"
-                                                <c:if test="${motorbike.status == 'rented'}">selected</c:if>>Đã thuê
-                                        </option>
-                                        <option value="maintenance"
-                                                <c:if test="${motorbike.status == 'maintenance'}">selected</c:if>>Bảo
-                                            trì
-                                        </option>
-                                    </c:otherwise>
-                                </c:choose>
-                            </select>
-                            <c:if test="${empty motorbike}">
-                                <div class="mb-hint">Xe mới luôn ở trạng thái "Có sẵn"</div>
-                            </c:if>
-                        </div>
+    <label for="status" class="mb-label required">Trạng thái</label>
+    <select id="status" name="status" class="mb-select" required>
+        <c:choose>
+            <c:when test="${empty motorbike}">
+                <option value="available" selected>Có sẵn</option>
+            </c:when>
+            <c:otherwise>
+                <!-- Nếu KHÔNG phải đang rented thì mới cho chọn 'Có sẵn' -->
+                <c:if test="${motorbike.status ne 'rented'}">
+                    <option value="available"
+                            <c:if test="${motorbike.status == 'available'}">selected</c:if>>
+                        Có sẵn
+                    </option>
+                </c:if>
+
+                <option value="rented"
+                        <c:if test="${motorbike.status == 'rented'}">selected</c:if>>
+                    Đã thuê
+                </option>
+
+                <option value="maintenance"
+                        <c:if test="${motorbike.status == 'maintenance'}">selected</c:if>>
+                    Bảo trì
+                </option>
+            </c:otherwise>
+        </c:choose>
+    </select>
+    <c:if test="${empty motorbike}">
+        <div class="mb-hint">Xe mới luôn ở trạng thái "Có sẵn"</div>
+    </c:if>
+</div>
+
 
                         <!-- Section ngày thuê (chỉ hiện khi chọn trạng thái "rented" và chỉ trong chỉnh sửa) -->
+                        <!-- Section ngày thuê (chỉ hiện khi chọn trạng thái "rented" và chỉ trong chỉnh sửa) -->
+<!-- Section ngày thuê (chỉ hiện khi chọn trạng thái "rented" và chỉ trong chỉnh sửa) -->
                         <c:if test="${not empty motorbike}">
                             <div class="mb-form-group full">
                                 <div id="rentalDatesSection" class="rental-dates">
-                                    <h4 style="margin:0 0 16px 0; color: #b45309;"><i class="fas fa-calendar-alt"></i>
-                                        Thông tin thuê xe</h4>
+                                    <h4 style="margin:0 0 16px 0; color: #b45309;">
+                                        <i class="fas fa-calendar-alt"></i> Thông tin thuê xe
+                                    </h4>
+
                                     <div class="mb-form-grid">
                                         <div class="mb-form-group">
-                                            <label for="rentalStartDate" class="mb-label required">Ngày bắt đầu
-                                                thuê</label>
+                                            <label for="rentalStartDate" class="mb-label required">Ngày bắt đầu thuê</label>
                                             <input type="date" id="rentalStartDate" name="rentalStartDate"
-                                                   class="mb-input">
+                                                   class="mb-input"
+                                                   value="${adminRentalStartStr}"
+                                                   <c:if test="${isRentedBike}">
+                                                       readonly="readonly"
+                                                       style="background:#f3f4f6;cursor:not-allowed;"
+                                                   </c:if>>
                                             <div class="mb-hint">Ngày bắt đầu thuê xe</div>
                                         </div>
+
                                         <div class="mb-form-group">
-                                            <label for="rentalEndDate" class="mb-label required">Ngày kết thúc
-                                                thuê</label>
-                                            <input type="date" id="rentalEndDate" name="rentalEndDate" class="mb-input">
+                                            <label for="rentalEndDate" class="mb-label required">Ngày kết thúc thuê</label>
+                                            <input type="date" id="rentalEndDate" name="rentalEndDate"
+                                                   class="mb-input"
+                                                   value="${adminRentalEndStr}"
+                                                   <c:if test="${isRentedBike}">
+                                                       readonly="readonly"
+                                                       style="background:#f3f4f6;cursor:not-allowed;"
+                                                   </c:if>>
                                             <div class="mb-hint">Ngày trả xe dự kiến</div>
                                         </div>
                                     </div>
+
                                     <div class="mb-hint" style="color: #b45309;">
-                                        <i class="fas fa-info-circle"></i> Khi đặt trạng thái "Đã thuê", vui lòng chọn
-                                        ngày thuê để hệ thống có thể quản lý lịch trình xe.
+                                        <i class="fas fa-info-circle"></i>
+                                        <c:choose>
+                                            <c:when test="${isRentedBike}">
+                                                Đây là lịch thuê hiện tại, chỉ dùng để xem – không thể chỉnh sửa từ màn hình này.
+                                            </c:when>
+                                            <c:otherwise>
+                                                Khi đặt trạng thái "Đã thuê", vui lòng chọn ngày thuê để hệ thống có thể quản lý lịch trình xe.
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                 </div>
                             </div>
                         </c:if>
+
+
+                        <c:if test="${not empty motorbike}">
+                            <div class="mb-form-group full" id="refundSection" style="display:none; margin-top:16px;">
+                                <div style="padding:16px;border-radius:8px;border:1px solid #22c55e;background:#ecfdf5;">
+                                    <h4 style="margin:0 0 12px 0;color:#166534;">
+                                        <i class="fas fa-wallet"></i> Xác nhận hoàn tiền cho khách
+                                    </h4>
+
+                                    <div class="mb-form-grid">
+                                        <div class="mb-form-group">
+                                            <label for="refundAmount" class="mb-label required">Số tiền hoàn lại</label>
+                                            <input type="number"
+                                                   id="refundAmount"
+                                                   name="refundAmount"
+                                                   class="mb-input"
+                                                   min="0"
+                                                   step="1000"
+                                                   placeholder="Tiền cọc + tiền thuê hoàn lại">
+                                            <div class="mb-hint">
+                                                Tổng số tiền sẽ hoàn lại cho khách (tiền cọc + phần tiền thuê cần hoàn).
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-form-group">
+                                            <label for="refundMethod" class="mb-label required">Hình thức hoàn</label>
+                                            <select id="refundMethod" name="refundMethod" class="mb-select">
+                                                <option value="">Chọn hình thức</option>
+                                                <option value="wallet">Hoàn vào ví khách</option>
+                                                <option value="cash">Tiền mặt / chuyển khoản ngoài hệ thống</option>
+                                            </select>
+                                            <div class="mb-hint">
+                                                Nếu chọn "Hoàn vào ví", hệ thống sẽ cộng tiền vào Wallet của khách.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:if>
+
 
                         <!-- Chủ sở hữu: chỉ khi thêm mới -->
                         <c:if test="${empty motorbike}">
@@ -805,7 +902,7 @@
                                         <c:forEach var="partner" items="${partners}">
                                             <option value="${partner.partnerId}"
                                                 ${prefill_partnerId eq partner.partnerId ? 'selected' : ''}>
-                                                    ${partner.fullname} <!-- GIỮ NGUYÊN fullname -->
+                                                    ${partner.fullname}
                                             </option>
                                         </c:forEach>
                                     </select>
@@ -890,51 +987,120 @@
         }
 
         // Toggle section ngày thuê khi trạng thái thay đổi (chỉ trong chỉnh sửa)
-        const statusSelect = document.getElementById('status');
+        // Toggle ngày thuê + hoàn tiền khi đổi trạng thái
+        const statusSelect       = document.getElementById('status');
         const rentalDatesSection = document.getElementById('rentalDatesSection');
+        const rentalStartInput   = document.getElementById('rentalStartDate');
+        const rentalEndInput     = document.getElementById('rentalEndDate');
 
-        if (statusSelect && rentalDatesSection) {
-            function toggleRentalDates() {
-                if (statusSelect.value === 'rented') {
-                    rentalDatesSection.classList.add('active');
-                    // Set min date cho ngày bắt đầu là hôm nay
-                    const today = new Date().toISOString().split('T')[0];
-                    document.getElementById('rentalStartDate').min = today;
-                    document.getElementById('rentalEndDate').min = today;
-                } else {
-                    rentalDatesSection.classList.remove('active');
+        const originalStatusInput = document.getElementById('originalStatus');
+        const refundSection       = document.getElementById('refundSection');
+        const refundAmountInput   = document.getElementById('refundAmount');
+        const refundMethodSelect  = document.getElementById('refundMethod');
+
+        if (statusSelect) {
+            function toggleSections() {
+                const newStatus      = statusSelect.value;
+                const originalStatus = originalStatusInput ? originalStatusInput.value : null;
+
+                // 1) Ngày thuê: chỉ hiện khi chọn 'rented'
+                if (rentalDatesSection) {
+                    if (newStatus === 'rented') {
+                        rentalDatesSection.classList.add('active');
+
+                        const today = new Date().toISOString().split('T')[0];
+                        if (rentalStartInput && !rentalStartInput.value) {
+                            rentalStartInput.min = today;
+                        }
+                        if (rentalEndInput && !rentalEndInput.value) {
+                            rentalEndInput.min = today;
+                        }
+                    } else {
+                        rentalDatesSection.classList.remove('active');
+                    }
+                }
+
+                // 2) Hoàn tiền: chỉ khi từ rented -> maintenance
+                if (refundSection) {
+                    const shouldShowRefund =
+                        (originalStatus === 'rented' && newStatus === 'maintenance');
+
+                    refundSection.style.display = shouldShowRefund ? 'block' : 'none';
+
+                    if (refundAmountInput) {
+                        refundAmountInput.required = shouldShowRefund;
+                        if (!shouldShowRefund) refundAmountInput.value = '';
+                    }
+                    if (refundMethodSelect) {
+                        refundMethodSelect.required = shouldShowRefund;
+                        if (!shouldShowRefund) refundMethodSelect.value = '';
+                    }
                 }
             }
 
-            statusSelect.addEventListener('change', toggleRentalDates);
-            // Khởi tạo trạng thái ban đầu
-            toggleRentalDates();
+            statusSelect.addEventListener('change', toggleSections);
+            // Khởi tạo lúc load form
+            toggleSections();
         }
+
 
         // Validate form trước khi submit
         const mainForm = document.getElementById('mainForm');
         if (mainForm) {
             mainForm.addEventListener('submit', function (e) {
-                const status = document.getElementById('status')?.value;
-                const rentalStartDate = document.getElementById('rentalStartDate')?.value;
-                const rentalEndDate = document.getElementById('rentalEndDate')?.value;
+                e.preventDefault();
 
-                // Nếu trạng thái là "rented" thì phải có ngày thuê
-                if (status === 'rented' && rentalDatesSection) {
-                    if (!rentalStartDate || !rentalEndDate) {
-                        e.preventDefault();
-                        alert('Vui lòng chọn ngày bắt đầu và kết thúc thuê xe khi đặt trạng thái "Đã thuê".');
+                // 1) Check pattern biển số phía client (dùng HTML5)
+                const plateInput = document.getElementById('licensePlate');
+                const plateError = document.getElementById('plateError');
+                if (plateInput) {
+                    if (!plateInput.checkValidity()) {
+                        if (plateError) plateError.style.display = 'inline';
+                        plateInput.focus();
                         return;
-                    }
-
-                    // Kiểm tra ngày kết thúc phải sau ngày bắt đầu
-                    if (new Date(rentalEndDate) <= new Date(rentalStartDate)) {
-                        e.preventDefault();
-                        alert('Ngày kết thúc thuê phải sau ngày bắt đầu thuê.');
-                        return;
+                    } else if (plateError) {
+                        plateError.style.display = 'none';
                     }
                 }
+
+                // 2) Gom formData từ form (bao gồm cả hidden / radio / select)
+                const formData = new FormData(mainForm);
+
+                // Thêm file ảnh
+                uploadedFiles.forEach(fd => formData.append('images', fd.file));
+                // Khi sửa thì gửi danh sách ảnh xoá
+                <c:if test="${not empty motorbike}">
+                if (deletedImageIndexes.length > 0) {
+                    formData.set('deletedImages', deletedImageIndexes.join(','));
+                }
+                </c:if>
+
+                const action = '${empty motorbike ? "create" : "update"}';
+                formData.set('action', action);
+
+                // 3) Gửi fetch
+                fetch(mainForm.action, { method: 'POST', body: formData })
+                    .then(res => {
+                        if (res.ok) {
+                            // ✅ Thành công: quay về list + param success
+                            window.location.href =
+                                '${pageContext.request.contextPath}/admin/bikes?success=' + action;
+                        } else {
+                            // ❌ Lỗi (ví dụ: biển số trùng, server trả 400/409 + forward JSP)
+                            return res.text().then(html => {
+                                // Render lại HTML từ server (trong đó đã có formError)
+                                document.open();
+                                document.write(html);
+                                document.close();
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Có lỗi xảy ra khi lưu thông tin xe!');
+                    });
             });
+
         }
 
         <c:if test="${not empty motorbike}">initGallery();
@@ -943,105 +1109,85 @@
     });
 
     // ===== Upload Handler =====
-    function initUploadHandler() {
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const uploadPreview = document.getElementById('uploadPreview');
-        const mainForm = document.getElementById('mainForm');
+    // ===== Upload Handler =====
+function initUploadHandler() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadPreview = document.getElementById('uploadPreview');
 
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    if (!uploadArea || !fileInput || !uploadPreview) return;
 
-        function handleFiles(files) {
-            const maxFiles = 6;
-            const totalSlots = maxFiles - deletedImageIndexes.length;
-            const remainingSlots = totalSlots - uploadedFiles.length;
-            if (files.length > remainingSlots) {
-                alert(`Chỉ có thể upload tối đa ${maxFiles} ảnh. Bạn đã chọn ${files.length} ảnh nhưng chỉ còn ${remainingSlots} slot trống.`);
-                return;
-            }
-            for (let file of files) {
-                if (!file.type.startsWith('image/jpeg') && !file.name.toLowerCase().endsWith('.jpg')) {
-                    alert('Chỉ chấp nhận file ảnh JPG!');
-                    continue;
-                }
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File ảnh không được vượt quá 5MB!');
-                    continue;
-                }
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    uploadedFiles.push({
-                        file,
-                        url: e.target.result,
-                        name: file.name,
-                        size: (file.size / 1024 / 1024).toFixed(2) + ' MB'
-                    });
-                    updatePreview();
-                };
-                reader.readAsDataURL(file);
-            }
-            fileInput.value = '';
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleFiles(files) {
+        const maxFiles = 6;
+        const totalSlots = maxFiles - deletedImageIndexes.length;
+        const remainingSlots = totalSlots - uploadedFiles.length;
+        if (files.length > remainingSlots) {
+            alert(`Chỉ có thể upload tối đa ${maxFiles} ảnh. Bạn đã chọn ${files.length} ảnh nhưng chỉ còn ${remainingSlots} slot trống.`);
+            return;
         }
-
-        function updatePreview() {
-            uploadPreview.innerHTML = '';
-            uploadedFiles.forEach((fileData, index) => {
-                const el = document.createElement('div');
-                el.className = 'upload-preview-item';
-                el.innerHTML = `
-          <img src="${fileData.url}" alt="Preview">
-          <button type="button" class="upload-preview-remove" data-index="${index}"><i class="fas fa-times"></i></button>
-          <div class="upload-preview-info"><div>${fileData.name}</div><div>${fileData.size}</div></div>`;
-                uploadPreview.appendChild(el);
-            });
-            document.querySelectorAll('.upload-preview-remove').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-                    uploadedFiles.splice(idx, 1);
-                    updatePreview();
-                });
-            });
-        }
-
-        mainForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData();
-            for (let element of mainForm.elements) {
-                if (element.name && element.type !== 'file') {
-                    if ((element.type === 'checkbox' || element.type === 'radio')) {
-                        if (element.checked) formData.append(element.name, element.value);
-                    } else {
-                        formData.append(element.name, element.value);
-                    }
-                }
+        for (let file of files) {
+            if (!file.type.startsWith('image/jpeg') && !file.name.toLowerCase().endsWith('.jpg')) {
+                alert('Chỉ chấp nhận file ảnh JPG!');
+                continue;
             }
-            uploadedFiles.forEach(fd => formData.append('images', fd.file));
-            <c:if test="${not empty motorbike}">formData.append('deletedImages', deletedImageIndexes.join(','));
-            </c:if>
-            const action = '${empty motorbike ? "create" : "update"}';
-            formData.append('action', action);
-
-            fetch(mainForm.action, {method: 'POST', body: formData})
-                .then(res => {
-                    if (res.ok) window.location.href = '${pageContext.request.contextPath}/admin/bikes?success=' + action; else alert('Có lỗi xảy ra khi lưu thông tin xe!');
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Có lỗi xảy ra khi lưu thông tin xe!');
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File ảnh không được vượt quá 5MB!');
+                continue;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedFiles.push({
+                    file,
+                    url: e.target.result,
+                    name: file.name,
+                    size: (file.size / 1024 / 1024).toFixed(2) + ' MB'
                 });
+                updatePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+        fileInput.value = '';
+    }
+
+    function updatePreview() {
+        uploadPreview.innerHTML = '';
+        uploadedFiles.forEach((fileData, index) => {
+            const el = document.createElement('div');
+            el.className = 'upload-preview-item';
+            el.innerHTML = `
+                <img src="${fileData.url}" alt="Preview">
+                <button type="button" class="upload-preview-remove" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="upload-preview-info">
+                    <div>${fileData.name}</div>
+                    <div>${fileData.size}</div>
+                </div>`;
+            uploadPreview.appendChild(el);
+        });
+        document.querySelectorAll('.upload-preview-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+                uploadedFiles.splice(idx, 1);
+                updatePreview();
+            });
         });
     }
+}
+
 
     // ===== Gallery (khi sửa) =====
     function initGallery() {

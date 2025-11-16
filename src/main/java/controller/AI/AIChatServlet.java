@@ -29,7 +29,8 @@ public class AIChatServlet extends HttpServlet {
                 "danh sách", "liệt kê", "có những", "nào", "gì", "bao nhiêu", "tìm", "kiếm",
                 "wave", "future", "sirius", "jupiter", "exciter", "winner", "vision", "air blade",
                 "vario", "sh", "lead", "ninja", "cbr", "gsx", "r15", "r3", "r1", "honda", "yamaha", "suzuki",
-                "biển số", "giấy tờ", "thuê", "cho thuê", "cửa hàng", "đối tác", "admin"
+                "biển số", "giấy tờ", "thuê", "cho thuê", "cửa hàng", "đối tác", "admin",
+                "xe ", "motor", "motorbike", "rent", "rental"
         };
         for (String k : dbHints) {
             if (t.contains(k)) return "db";
@@ -76,10 +77,10 @@ public class AIChatServlet extends HttpServlet {
 
         // Fix encoding issues trước khi xử lý
         String fixedQuestion = fixEncoding(question);
-        System.out.println("AIChatServlet: Processing question: " + fixedQuestion);
+        System.out.println("[AIChatServlet] Question: " + fixedQuestion);
 
         String mode = inferMode(fixedQuestion);
-        System.out.println("AIChatServlet: mode=" + mode);
+        System.out.println("[AIChatServlet] Inferred mode=" + mode);
 
         try {
             String answer;
@@ -89,7 +90,6 @@ public class AIChatServlet extends HttpServlet {
                 answer = aiService.smallTalk(fixedQuestion);
             }
 
-            // Đảm bảo answer không null
             if (answer == null || answer.isBlank()) {
                 answer = "⚠️ Không có phản hồi, hãy thử lại sau.";
             }
@@ -112,28 +112,21 @@ public class AIChatServlet extends HttpServlet {
         if (text == null) return null;
 
         try {
-            // Kiểm tra xem có phải là text bị lỗi encoding không
             if (text.matches(".*[�].*") || containsEncodingIssues(text)) {
-                System.out.println("DEBUG: Detected encoding issues in: " + text);
-
-                // Thử fix common encoding issues
+                System.out.println("[AIChatServlet] Detected encoding issues in: " + text);
                 byte[] bytes = text.getBytes("ISO-8859-1");
                 String fixed = new String(bytes, "UTF-8");
-                System.out.println("DEBUG: After encoding fix: " + fixed);
+                System.out.println("[AIChatServlet] After encoding fix: " + fixed);
                 return fixed;
             }
         } catch (Exception e) {
-            System.out.println("DEBUG: Encoding fix failed: " + e.getMessage());
+            System.out.println("[AIChatServlet] Encoding fix failed: " + e.getMessage());
         }
 
         return text;
     }
 
-    /**
-     * Kiểm tra xem text có bị lỗi encoding không
-     */
     private boolean containsEncodingIssues(String text) {
-        // Các pattern thường gặp khi lỗi encoding Vietnamese
         String[] issuePatterns = {
                 "Nh?ng", "m?u", "xe s?", "c?a", "b?n", "l�", "g�"
         };

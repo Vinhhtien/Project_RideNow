@@ -1,3 +1,4 @@
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminOrderDetailServletModelsTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\service\OrderServiceTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\testsupport\Fixtures.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\dao\OrderQueryDaoTest.java
@@ -6,6 +7,7 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\MotorbikeDe
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\filter\RoleFilterTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\Authetication\CheckoutServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\PayNowServletTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminCustomersServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminOrdersServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\partner\StatusServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminPickupServletTest.java
@@ -14,6 +16,7 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\service\MotorbikeServi
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\dao\PaymentDaoTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\BookingServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\dao\NotificationDaoTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminReturnsServletModelsTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\filter\AdminOnlyFilterTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminReturnServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\dao\CustomerDaoTest.java
@@ -23,6 +26,8 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\Admin
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\testutil\MockFactory.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminMotorbikesServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\Authetication\GoogleLoginServletTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminScheduleServletTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminCustomerDetailServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\partner\MotorbikeManageListServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\DashboardServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\dao\OrderDaoTest.java
@@ -30,9 +35,12 @@ D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\AdminAvaila
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\MotorbikeSearchServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\RegisterServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\test\testTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminReportServletTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminFeedbackServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminPaymentsServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\CartServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminBroadcastNotificationServletTest.java
+D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\model\ModelBeanReflectionTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\Authetication\LoginServletTest.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\testsupport\TestUtils.java
 D:\Ky_5\SWP391\Code_Project\Project_RideNow\src\test\java\controller\admin\AdminDashboardServletTest.java

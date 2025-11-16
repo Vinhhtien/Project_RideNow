@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import model.RentalOrder;
 
 public class OrderService implements IOrderService {
     private final IOrderDao orderDao = new OrderDao();
@@ -260,107 +261,137 @@ public class OrderService implements IOrderService {
     // ===== API cho admin: check trùng lịch (loại trừ booking admin) =====
     @Override
     public boolean isBikeAvailableForAdmin(int bikeId, Date start, Date end) throws SQLException {
+        // Điều kiện giao nhau giữa 2 khoảng ngày:
+        // [start, end] giao với [o.start_date, o.end_date] khi:
+        //   o.end_date >= start  AND  o.start_date <= end
+        //
+        // Ta chỉ chặn các đơn KHÔNG bị hủy (pending, confirmed, completed).
+        // Nếu em muốn thêm trạng thái khác thì đưa vào IN (...)
         String sql = """
-                    SELECT COUNT(*) AS cnt
-                    FROM RentalOrders r
-                    JOIN OrderDetails d ON d.order_id = r.order_id
-                    JOIN Customers c ON r.customer_id = c.customer_id
-                    WHERE d.bike_id = ?
-                      AND r.status = 'confirmed'
-                      AND c.email != 'admin_booking@system.com'  -- Loại trừ các booking admin
-                      AND NOT (r.end_date < ? OR r.start_date > ?)
-                """;
+            SELECT COUNT(*) AS cnt
+            FROM OrderDetails od
+            JOIN RentalOrders r ON r.order_id = od.order_id
+            WHERE od.bike_id = ?
+              AND r.status IN ('pending', 'confirmed', 'completed')
+              AND r.end_date >= ?    -- newStart
+              AND r.start_date <= ?  -- newEnd
+        """;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
+
             ps.setInt(1, bikeId);
-            ps.setDate(2, start);
-            ps.setDate(3, end);
+            ps.setDate(2, start); // newStart
+            ps.setDate(3, end);   // newEnd
+
             try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                return rs.getInt("cnt") == 0; // 0 = không đụng lịch với đơn thực tế
+                if (rs.next()) {
+                    int cnt = rs.getInt("cnt");
+                    // Nếu không có đơn nào giao ngày => xe rảnh
+                    return cnt == 0;
+                }
             }
         }
+        // lỗi SQL hoặc không có row => coi như không rảnh (an toàn)
+        return false;
     }
 
     // ===== Tạo booking admin để đánh dấu xe đã được thuê =====
     @Override
     public boolean createAdminBooking(int bikeId, Date startDate, Date endDate, String note) throws SQLException {
+        System.out.println("[OrderService] createAdminBooking for bike " + bikeId +
+                " from " + startDate + " to " + endDate);
+
         Connection con = null;
         try {
             con = DBConnection.getConnection();
             con.setAutoCommit(false);
 
-            // 1. Tìm hoặc tạo customer đặc biệt cho admin bookings
+            // 1. Tìm / tạo customer đặc biệt cho admin
             int adminCustomerId = findOrCreateAdminCustomer(con);
 
             // 2. Lấy giá xe
             BigDecimal pricePerDay = getBikePrice(bikeId, con);
             if (pricePerDay == null) {
-                throw new SQLException("Không tìm thấy thông tin giá xe");
+                throw new SQLException("Không tìm thấy giá xe cho bike_id=" + bikeId);
             }
 
-            // 3. Tính tổng số ngày và tổng tiền
-            long days = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) + 1;
-            BigDecimal totalPrice = pricePerDay.multiply(new BigDecimal(days));
-
-            // 4. Tạo đơn hàng
-            String insertOrderSQL = "INSERT INTO RentalOrders (customer_id, start_date, end_date, total_price, status) VALUES (?, ?, ?, ?, 'confirmed')";
-            PreparedStatement orderStmt = con.prepareStatement(insertOrderSQL, PreparedStatement.RETURN_GENERATED_KEYS);
-            orderStmt.setInt(1, adminCustomerId);
-            orderStmt.setDate(2, startDate);
-            orderStmt.setDate(3, endDate);
-            orderStmt.setBigDecimal(4, totalPrice);
-            orderStmt.executeUpdate();
-
-            // 5. Lấy order_id vừa tạo
-            ResultSet rs = orderStmt.getGeneratedKeys();
-            int orderId = 0;
-            if (rs.next()) {
-                orderId = rs.getInt(1);
+            // 3. Tính số ngày + tiền
+            long days = (endDate.toLocalDate().toEpochDay() - startDate.toLocalDate().toEpochDay()) + 1;
+            if (days <= 0) {
+                throw new SQLException("Khoảng ngày không hợp lệ");
             }
 
-            // 6. Tạo order details
-            String insertDetailSQL = "INSERT INTO OrderDetails (order_id, bike_id, price_per_day, quantity, line_total) VALUES (?, ?, ?, 1, ?)";
-            PreparedStatement detailStmt = con.prepareStatement(insertDetailSQL);
-            detailStmt.setInt(1, orderId);
-            detailStmt.setInt(2, bikeId);
-            detailStmt.setBigDecimal(3, pricePerDay);
-            detailStmt.setBigDecimal(4, totalPrice);
-            detailStmt.executeUpdate();
+            BigDecimal lineTotal = pricePerDay.multiply(BigDecimal.valueOf(days));
+            BigDecimal orderTotal = lineTotal;
 
-            // 7. Tạo payment (đánh dấu đã thanh toán)
-            String insertPaymentSQL = "INSERT INTO Payments (order_id, amount, method, status) VALUES (?, ?, 'cash', 'paid')";
-            PreparedStatement paymentStmt = con.prepareStatement(insertPaymentSQL);
-            paymentStmt.setInt(1, orderId);
-            paymentStmt.setBigDecimal(2, totalPrice);
-            paymentStmt.executeUpdate();
+            // 4. Đặt cọc = 0 (vì là booking hệ thống)
+            BigDecimal deposit = BigDecimal.ZERO;
+
+            // 5. Tạo order (DÙNG CÙNG CỘT VỚI createPendingOrder)
+            String insertOrderSQL = """
+                INSERT INTO RentalOrders(
+                    customer_id, start_date, end_date, total_price,
+                    status, created_at, deposit_amount, deposit_status
+                )
+                OUTPUT INSERTED.order_id
+                VALUES (?, ?, ?, ?, 'confirmed', GETDATE(), ?, 'none')
+                """;
+
+            int orderId;
+            try (PreparedStatement ps = con.prepareStatement(insertOrderSQL)) {
+                ps.setInt(1, adminCustomerId);
+                ps.setDate(2, startDate);
+                ps.setDate(3, endDate);
+                ps.setBigDecimal(4, orderTotal);
+                ps.setBigDecimal(5, deposit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) throw new SQLException("Không lấy được order_id cho admin booking");
+                    orderId = rs.getInt(1);
+                }
+            }
+
+            // 6. OrderDetails
+            String insertDetailSQL = """
+                INSERT INTO OrderDetails(order_id, bike_id, price_per_day, quantity, line_total)
+                VALUES (?, ?, ?, 1, ?)
+                """;
+            try (PreparedStatement ps = con.prepareStatement(insertDetailSQL)) {
+                ps.setInt(1, orderId);
+                ps.setInt(2, bikeId);
+                ps.setBigDecimal(3, pricePerDay);
+                ps.setBigDecimal(4, lineTotal);
+                ps.executeUpdate();
+            }
+
+            // 7. Payment (đánh dấu đã trả)
+            String insertPaymentSQL = """
+                INSERT INTO Payments(order_id, amount, method, status)
+                VALUES (?, ?, 'cash', 'paid')
+                """;
+            try (PreparedStatement ps = con.prepareStatement(insertPaymentSQL)) {
+                ps.setInt(1, orderId);
+                ps.setBigDecimal(2, orderTotal);
+                ps.executeUpdate();
+            }
 
             con.commit();
-            System.out.println("✅ Admin booking created successfully - Order #" + orderId + " for bike " + bikeId + " from " + startDate + " to " + endDate);
+            System.out.println("✅ Admin booking created successfully - Order #" + orderId);
             return true;
 
         } catch (SQLException e) {
             if (con != null) {
-                try {
-                    con.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
+                try { con.rollback(); } catch (SQLException ignored) {}
             }
             System.err.println("❌ Error creating admin booking: " + e.getMessage());
-            throw e; // Re-throw để servlet có thể xử lý
+            throw e;
         } finally {
             if (con != null) {
-                try {
-                    con.setAutoCommit(true);
-                    con.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                try { con.setAutoCommit(true); con.close(); } catch (SQLException ignored) {}
             }
         }
     }
+
 
     private int findOrCreateAdminCustomer(Connection con) throws SQLException {
         // Tìm customer admin đã tồn tại
@@ -420,4 +451,13 @@ public class OrderService implements IOrderService {
         }
         return null;
     }
+    
+    
+    @Override
+    public RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLException {
+        // Ủy quyền xuống DAO, không đụng tới SQL ở đây
+        return orderDao.findCurrentAdminBookingForBike(bikeId);
+    }
+
+    
 }

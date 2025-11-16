@@ -394,4 +394,50 @@ public class OrderDao implements IOrderDao {
         }
         return results;
     }
+    
+    
+    @Override
+public RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLException {
+    // Lấy đơn THUÊ GẦN NHẤT cho xe này, không phân biệt là admin hay customer.
+    String sql = """
+            SELECT TOP 1 r.*
+            FROM RentalOrders r
+            JOIN OrderDetails d ON d.order_id = r.order_id
+            WHERE d.bike_id = ?
+              AND r.status IN ('pending','confirmed')   -- đơn còn hiệu lực
+              AND r.end_date >= CAST(GETDATE() AS DATE) -- chưa kết thúc
+            ORDER BY r.start_date ASC                   -- lấy đơn đang/ sắp thuê gần nhất
+            """;
+
+    System.out.println("[OrderDao] findCurrentAdminBookingForBike, bikeId=" + bikeId);
+
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, bikeId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                RentalOrder order = new RentalOrder();
+                order.setOrderId(rs.getInt("order_id"));
+                order.setCustomerId(rs.getInt("customer_id"));
+                order.setStartDate(rs.getDate("start_date"));
+                order.setEndDate(rs.getDate("end_date"));
+                order.setTotalPrice(rs.getBigDecimal("total_price"));
+                order.setStatus(rs.getString("status"));
+
+                System.out.println("[OrderDao] FOUND booking: orderId="
+                        + order.getOrderId() + ", start=" + order.getStartDate()
+                        + ", end=" + order.getEndDate());
+                return order;
+            } else {
+                System.out.println("[OrderDao] No booking for bike " + bikeId);
+            }
+        }
+    }
+    return null;
+}
+
+
+
 }

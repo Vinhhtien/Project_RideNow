@@ -453,6 +453,10 @@
       <a href="${ctx}/adminpickup" class="nav-item"><i class="fas fa-shipping-fast"></i><span>Vehicle Pickup</span></a>
       <a href="${ctx}/adminreturn" class="nav-item"><i class="fas fa-undo-alt"></i><span>Vehicle Return</span></a>
       <a href="${ctx}/adminreturns" class="nav-item"><i class="fas fa-clipboard-check"></i><span>Verify & Refund</span></a>
+      <a href="${pageContext.request.contextPath}/admin/reports" class="nav-item"><i
+              class="fas fa-chart-bar"></i><span>Reports</span></a>
+      <a href="${pageContext.request.contextPath}/admin/feedback" class="nav-item"><i
+              class="fas fa-comment-alt"></i><span>Feedback</span></a>
       <a href="${ctx}/logout" class="nav-item logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
     </nav>
   </aside>

@@ -101,6 +101,9 @@
                     <i class="fas fa-clipboard-list"></i>
                     <span>Orders</span>
                 </a>
+                <a href="${pageContext.request.contextPath}/admin/schedule" class="nav-item">
+                    <i class="fas fa-calendar-alt"></i><span>View Schedule</span>
+                </a>
                 <a href="${ctx}/adminpickup" class="nav-item active">
                     <i class="fas fa-shipping-fast"></i>
                     <span>Vehicle Pickup</span>

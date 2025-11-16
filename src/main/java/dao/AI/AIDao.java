@@ -146,11 +146,46 @@ public class AIDao {
         return select(sql.toString(), params);
     }
 
+    /**
+     * Top N xe rẻ nhất (status = available)
+     */
+    public List<Map<String, Object>> findCheapestBikes(int limit) {
+        int n = Math.max(1, Math.min(limit, 20));
+        String sql =
+                "SELECT TOP " + n + " " +
+                        "M.bike_id, M.bike_name, M.price_per_day, M.description, " +
+                        "M.license_plate, M.status, BT.type_name " +
+                        "FROM Motorbikes M " +
+                        "JOIN BikeTypes BT ON M.type_id = BT.type_id " +
+                        "WHERE M.status = 'available' " +
+                        "ORDER BY M.price_per_day ASC";
+
+        System.out.println("DEBUG: findCheapestBikes SQL: " + sql);
+        return select(sql, Collections.emptyList());
+    }
+
+    /**
+     * Top N xe đắt nhất (status = available)
+     */
+    public List<Map<String, Object>> findMostExpensiveBikes(int limit) {
+        int n = Math.max(1, Math.min(limit, 20));
+        String sql =
+                "SELECT TOP " + n + " " +
+                        "M.bike_id, M.bike_name, M.price_per_day, M.description, " +
+                        "M.license_plate, M.status, BT.type_name " +
+                        "FROM Motorbikes M " +
+                        "JOIN BikeTypes BT ON M.type_id = BT.type_id " +
+                        "WHERE M.status = 'available' " +
+                        "ORDER BY M.price_per_day DESC";
+
+        System.out.println("DEBUG: findMostExpensiveBikes SQL: " + sql);
+        return select(sql, Collections.emptyList());
+    }
+
     // ======== Schema doc ========
     public String buildSchemaDoc() {
         StringBuilder sb = new StringBuilder("Database Schema:\n\n");
 
-        // Lấy thông tin tables và columns
         String sql = """
                     SELECT 
                         t.TABLE_NAME, 
@@ -197,7 +232,6 @@ public class AIDao {
                 sb.append("- ").append(currentTable).append(": ").append(String.join(", ", columns)).append("\n");
             }
 
-            // Thêm dữ liệu mẫu quan trọng
             sb.append("\nSample Data:\n");
             sb.append("- BikeTypes: Xe số, Xe ga, Phân khối lớn\n");
             sb.append("- Motorbikes status: available, rented, maintenance\n");

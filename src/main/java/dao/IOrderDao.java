@@ -43,4 +43,6 @@ public interface IOrderDao {
 
     // Statistics method
     Object[] getOrderStatsByCustomerId(int customerId) throws SQLException;
+    
+    RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLException;
 }

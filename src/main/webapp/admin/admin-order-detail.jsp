@@ -576,6 +576,9 @@
         <a href="${ctx}/admin/customers" class="nav-item"><i class="fa-solid fa-users"></i>Customers</a>
         <a href="${ctx}/admin/bikes" class="nav-item"><i class="fa-solid fa-motorcycle"></i>Motorbikes</a>
         <a href="${ctx}/admin/orders" class="nav-item active"><i class="fa-solid fa-receipt"></i>Orders</a>
+        <a href="${pageContext.request.contextPath}/admin/schedule" class="nav-item">
+            <i class="fas fa-calendar-alt"></i><span>View Schedule</span>
+        </a>
         <a href="${ctx}/adminpickup" class="nav-item"><i class="fa-solid fa-truck"></i>Vehicle Pickup</a>
         <a href="${ctx}/adminreturn" class="nav-item"><i class="fa-solid fa-rotate-left"></i>Vehicle Return</a>
         <a href="${ctx}/adminreturns" class="nav-item"><i class="fa-solid fa-clipboard-check"></i>Verify & Refund</a>

@@ -14,11 +14,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
+import model.RentalOrder;
+import model.Account;
+import utils.DBConnection;
 import model.Motorbike;
 import model.BikeType;
 import model.Partner;
@@ -44,7 +52,45 @@ public class AdminMotorbikesServlet extends HttpServlet {
     }
 
     /* ------------------------ Helpers ------------------------ */
+    
+    
+    private BigDecimal bigDecimalOrNull(HttpServletRequest req, String name) {
+        try {
+            String v = str(req, name);
+            if (v == null || v.isBlank()) return null;
+            return new BigDecimal(v);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
+    
+    /**
+    * Prefill ngày thuê từ booking admin (nếu có)
+    * - Không throw ra ngoài, chỉ log lỗi và set attribute nếu tìm được
+    */
+   private void prefillAdminRentalDates(HttpServletRequest request, int bikeId) {
+       try {
+           RentalOrder adminBooking = orderService.findCurrentAdminBookingForBike(bikeId);
+           if (adminBooking != null) {
+               System.out.println("[AdminMotorbikesServlet] Found admin booking for bike "
+                       + bikeId + " from " + adminBooking.getStartDate()
+                       + " to " + adminBooking.getEndDate());
+
+               // Gửi sang JSP để prefill input type="date"
+               request.setAttribute("adminRentalStart", adminBooking.getStartDate());
+               request.setAttribute("adminRentalEnd", adminBooking.getEndDate());
+           } else {
+               System.out.println("[AdminMotorbikesServlet] No admin booking for bike " + bikeId);
+           }
+       } catch (SQLException e) {
+           System.err.println("[AdminMotorbikesServlet] prefillAdminRentalDates failed for bike "
+                   + bikeId + ": " + e.getMessage());
+       }
+   }
+
+    
+    
     private String str(HttpServletRequest req, String name) {
         String v = req.getParameter(name);
         return v == null ? null : v.trim();
@@ -158,6 +204,8 @@ public class AdminMotorbikesServlet extends HttpServlet {
             } else {
                 listMotorbikes(request, response);
             }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminMotorbikesServlet.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             System.out.println("=== DEBUG doPost END ===");
         }
@@ -229,9 +277,14 @@ public class AdminMotorbikesServlet extends HttpServlet {
         request.setAttribute("motorbike", motorbike);
         request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
         request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+        // 🌟 MỚI: Prefill ngày thuê từ booking admin nếu có
+        prefillAdminRentalDates(request, id);
+
         request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
         System.out.println("=== DEBUG showEditForm END ===");
     }
+
 
     /* ------------------------ Create/Update/Delete ------------------------ */
 
@@ -276,9 +329,14 @@ public class AdminMotorbikesServlet extends HttpServlet {
                     request.setAttribute("formError", "Vui lòng chọn Đối tác cho chủ sở hữu = Đối tác.");
                     request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
                     request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+                    // ⚠ để JS fetch hiểu là lỗi, KHÔNG redirect
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
                     request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
                     return;
                 }
+
             } else {
                 storeId = 1; // default store
                 System.out.println("  storeId: " + storeId);
@@ -288,6 +346,7 @@ public class AdminMotorbikesServlet extends HttpServlet {
             System.out.println("=== CHECKING LICENSE PLATE: " + licensePlate + " ===");
             if (licensePlateExists(licensePlate)) {
                 System.err.println("ERROR: Duplicate license plate: " + licensePlate);
+
                 request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
                 request.setAttribute("prefill_ownerType", ownerType);
                 request.setAttribute("prefill_partnerId", partnerId);
@@ -302,9 +361,14 @@ public class AdminMotorbikesServlet extends HttpServlet {
                 ));
                 request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
                 request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+                // 🔴 QUAN TRỌNG: set HTTP status != 2xx để JS không redirect
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
+
                 request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
                 return;
             }
+
 
             // Tạo motorbike object
             Motorbike nb = new Motorbike();
@@ -351,90 +415,167 @@ public class AdminMotorbikesServlet extends HttpServlet {
     }
 
     private void updateMotorbike(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
-        System.out.println("=== DEBUG updateMotorbike START ===");
+        throws IOException, ServletException, SQLException {
+    System.out.println("=== DEBUG updateMotorbike START ===");
 
-        int bikeId = intRequired(request, "bikeId");
-        String bikeName = str(request, "bikeName");
-        String licensePlate = str(request, "licensePlate");
-        BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
-        String status = str(request, "status");
-        String description = str(request, "description");
-        int typeId = intRequired(request, "typeId");
+    int bikeId = intRequired(request, "bikeId");
+    String bikeName = str(request, "bikeName");
+    String licensePlate = str(request, "licensePlate");
+    BigDecimal pricePerDay = bigDecimalRequired(request, "pricePerDay");
+    String status = str(request, "status");
+    String description = str(request, "description");
+    int typeId = intRequired(request, "typeId");
 
-        // 🔒 YÊU CẦU 2: Nếu status là "rented", phải có ngày thuê
-        Date rentalStartDate = parseDateOrNull(str(request, "rentalStartDate"));
-        Date rentalEndDate = parseDateOrNull(str(request, "rentalEndDate"));
+    Motorbike existing = motorbikeAdminService.getMotorbikeById(bikeId);
+    if (existing == null) {
+        response.sendRedirect(request.getContextPath() + "/admin/bikes?error=not_found");
+        System.out.println("=== DEBUG updateMotorbike END (not found) ===");
+        return;
+    }
 
-        System.out.println("=== RENTAL DATES ===");
+    boolean wasRented        = "rented".equalsIgnoreCase(existing.getStatus());
+    boolean willBeRented     = "rented".equalsIgnoreCase(status);
+    boolean willBeMaintenance = "maintenance".equalsIgnoreCase(status);
+    boolean rentedToMaintenance = wasRented && willBeMaintenance;
+
+    Date rentalStartDate = null;
+    Date rentalEndDate   = null;
+    BigDecimal refundAmount = null;
+    String refundMethod = null;
+
+    // ========== 1) Validate ngày thuê khi chuyển sang rented ==========
+    if (!wasRented && willBeRented) {
+        rentalStartDate = parseDateOrNull(str(request, "rentalStartDate"));
+        rentalEndDate   = parseDateOrNull(str(request, "rentalEndDate"));
+
+        System.out.println("=== RENTAL DATES (new admin rental) ===");
         System.out.println("  Status: " + status);
         System.out.println("  Rental Start: " + rentalStartDate);
         System.out.println("  Rental End: " + rentalEndDate);
 
-        Motorbike existing = motorbikeAdminService.getMotorbikeById(bikeId);
-        if (existing == null) {
-            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=not_found");
-            System.out.println("=== DEBUG updateMotorbike END (not found) ===");
-            return;
-        }
-
-        // Kiểm tra nếu status là "rented" thì phải có ngày thuê
-        if ("rented".equals(status)) {
-            if (rentalStartDate == null || rentalEndDate == null) {
-                request.setAttribute("formError", "Khi đặt trạng thái 'Đã thuê', vui lòng chọn ngày bắt đầu và kết thúc thuê.");
-                request.setAttribute("motorbike", existing);
-                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
-                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
-                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-                System.out.println("=== DEBUG updateMotorbike END (missing dates) ===");
-                return;
-            }
-
-            // Kiểm tra ngày kết thúc phải sau ngày bắt đầu
-            if (!rentalEndDate.after(rentalStartDate)) {
-                request.setAttribute("formError", "Ngày kết thúc thuê phải sau ngày bắt đầu thuê.");
-                request.setAttribute("motorbike", existing);
-                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
-                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
-                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-                System.out.println("=== DEBUG updateMotorbike END (invalid dates) ===");
-                return;
-            }
-
-            // 🔥 QUAN TRỌNG: Kiểm tra xe có khả dụng trong khoảng thời gian này không (loại trừ booking admin)
-            try {
-                boolean isAvailable = orderService.isBikeAvailableForAdmin(bikeId, rentalStartDate, rentalEndDate);
-                if (!isAvailable) {
-                    request.setAttribute("formError", "Xe không khả dụng trong khoảng thời gian đã chọn. Có thể đã có đơn hàng khác trong khoảng thời gian này.");
-                    request.setAttribute("motorbike", existing);
-                    request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
-                    request.setAttribute("partners", motorbikeAdminService.getAllPartners());
-                    request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-                    System.out.println("=== DEBUG updateMotorbike END (not available) ===");
-                    return;
-                }
-            } catch (SQLException e) {
-                System.err.println("Error checking bike availability: " + e.getMessage());
-                request.setAttribute("formError", "Lỗi hệ thống khi kiểm tra tính khả dụng của xe.");
-                request.setAttribute("motorbike", existing);
-                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
-                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
-                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-                return;
-            }
-        }
-
-        // nếu đổi biển số, kiểm tra trùng với xe khác
-        if (licensePlate != null && !licensePlate.equalsIgnoreCase(existing.getLicensePlate())
-                && licensePlateExists(licensePlate)) {
-            request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
+        if (rentalStartDate == null || rentalEndDate == null) {
+            request.setAttribute("formError",
+                    "Khi đặt trạng thái 'Đã thuê', vui lòng chọn ngày bắt đầu và kết thúc thuê.");
             request.setAttribute("motorbike", existing);
             request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
             request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
-            System.out.println("=== DEBUG updateMotorbike END (duplicate) ===");
+            System.out.println("=== DEBUG updateMotorbike END (missing dates) ===");
             return;
         }
+
+        // Ngày kết thúc phải SAU HOẶC BẰNG ngày bắt đầu
+        if (rentalEndDate.before(rentalStartDate)) {
+            request.setAttribute("formError",
+                    "Ngày kết thúc thuê phải sau hoặc bằng ngày bắt đầu thuê.");
+            request.setAttribute("motorbike", existing);
+            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+            System.out.println("=== DEBUG updateMotorbike END (invalid dates) ===");
+            return;
+        }
+
+
+        try {
+            boolean isAvailable = orderService.isBikeAvailableForAdmin(bikeId, rentalStartDate, rentalEndDate);
+            if (!isAvailable) {
+                request.setAttribute("formError",
+                        "Xe không khả dụng trong khoảng thời gian đã chọn. " +
+                        "Có thể đã có đơn hàng khác trong khoảng thời gian này.");
+
+                request.setAttribute("motorbike", existing);
+                request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+                request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
+                request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+                System.out.println("=== DEBUG updateMotorbike END (not available) ===");
+                return;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking bike availability: " + e.getMessage());
+
+            request.setAttribute("formError", "Lỗi hệ thống khi kiểm tra tính khả dụng của xe.");
+            request.setAttribute("motorbike", existing);
+            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+            System.out.println("=== DEBUG updateMotorbike END (availability check error) ===");
+            return;
+        }
+    } else {
+        System.out.println("No rental date change (wasRented=" + wasRented +
+                ", willBeRented=" + willBeRented + ")");
+    }
+
+    // ========== 2) Validate REFUND khi chuyển rented -> maintenance ==========
+    if (rentedToMaintenance) {
+        refundAmount = bigDecimalOrNull(request, "refundAmount");
+        refundMethod = str(request, "refundMethod");
+
+        if (refundAmount == null || refundAmount.compareTo(BigDecimal.ZERO) < 0) {
+            request.setAttribute("formError", "Vui lòng nhập số tiền hoàn hợp lệ (>= 0).");
+
+            existing.setBikeName(bikeName);
+            existing.setLicensePlate(licensePlate);
+            existing.setPricePerDay(pricePerDay);
+            existing.setStatus(status);
+            existing.setDescription(description);
+            existing.setTypeId(typeId);
+
+            request.setAttribute("motorbike", existing);
+            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+            prefillAdminRentalDates(request, bikeId);
+
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+            System.out.println("=== DEBUG updateMotorbike END (invalid refundAmount) ===");
+            return;
+        }
+
+        if (refundMethod == null ||
+                !(refundMethod.equalsIgnoreCase("wallet") || refundMethod.equalsIgnoreCase("cash"))) {
+
+            request.setAttribute("formError", "Vui lòng chọn hình thức hoàn tiền hợp lệ (ví hoặc tiền mặt).");
+
+            existing.setBikeName(bikeName);
+            existing.setLicensePlate(licensePlate);
+            existing.setPricePerDay(pricePerDay);
+            existing.setStatus(status);
+            existing.setDescription(description);
+            existing.setTypeId(typeId);
+
+            request.setAttribute("motorbike", existing);
+            request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+            request.setAttribute("partners", motorbikeAdminService.getAllPartners());
+            prefillAdminRentalDates(request, bikeId);
+
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+            System.out.println("=== DEBUG updateMotorbike END (invalid refundMethod) ===");
+            return;
+        }
+
+        System.out.println("=== REFUND INFO ===");
+        System.out.println("  rented -> maintenance");
+        System.out.println("  refundAmount = " + refundAmount);
+        System.out.println("  refundMethod = " + refundMethod);
+    }
+
+    // ========== 3) Check trùng biển số ==========
+    if (licensePlate != null
+            && !licensePlate.equalsIgnoreCase(existing.getLicensePlate())
+            && licensePlateExists(licensePlate)) {
+
+        request.setAttribute("formError", "Biển số đã tồn tại: " + licensePlate);
 
         existing.setBikeName(bikeName);
         existing.setLicensePlate(licensePlate);
@@ -443,46 +584,66 @@ public class AdminMotorbikesServlet extends HttpServlet {
         existing.setDescription(description);
         existing.setTypeId(typeId);
 
-        boolean ok = motorbikeAdminService.updateMotorbike(existing);
-        System.out.println("Service result: " + ok);
+        request.setAttribute("motorbike", existing);
+        request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
+        request.setAttribute("partners", motorbikeAdminService.getAllPartners());
 
-        if (!ok) {
-            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=update_failed");
-            System.out.println("=== DEBUG updateMotorbike END (service failed) ===");
-            return;
-        }
-
-        // 🔒 Nếu status là "rented", tạo đơn hàng admin để block thời gian
-        if ("rented".equals(status) && rentalStartDate != null && rentalEndDate != null) {
-            try {
-                // Tạo một đơn hàng admin để đánh dấu xe đã được thuê trong khoảng thời gian này
-                boolean bookingCreated = orderService.createAdminBooking(
-                        bikeId, rentalStartDate, rentalEndDate, "Admin set status to rented"
-                );
-                System.out.println("Admin booking created: " + bookingCreated);
-
-                if (!bookingCreated) {
-                    // Nếu không tạo được booking, vẫn thành công update status nhưng log lỗi
-                    System.err.println("⚠️ Failed to create admin booking for bike " + bikeId);
-                }
-            } catch (SQLException e) {
-                System.err.println("❌ Error creating admin booking: " + e.getMessage());
-                // Không rollback việc update motorbike vì trạng thái đã được set
-                // Chỉ log lỗi và tiếp tục
-            }
-        }
-
-        // ảnh
-        try {
-            handleImageUpdate(request, bikeId, typeId);
-        } catch (Exception e) {
-            System.err.println("Image update error: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        response.sendRedirect(request.getContextPath() + "/admin/bikes?success=updated");
-        System.out.println("=== DEBUG updateMotorbike END ===");
+        response.setStatus(HttpServletResponse.SC_CONFLICT);
+        request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
+        System.out.println("=== DEBUG updateMotorbike END (duplicate plate) ===");
+        return;
     }
+
+    // ========== 4) Cập nhật motorbike ==========
+    existing.setBikeName(bikeName);
+    existing.setLicensePlate(licensePlate);
+    existing.setPricePerDay(pricePerDay);
+    existing.setStatus(status);
+    existing.setDescription(description);
+    existing.setTypeId(typeId);
+
+    boolean ok = motorbikeAdminService.updateMotorbike(existing);
+    System.out.println("Service result: " + ok);
+
+    if (!ok) {
+        response.sendRedirect(request.getContextPath() + "/admin/bikes?error=update_failed");
+        System.out.println("=== DEBUG updateMotorbike END (service failed) ===");
+        return;
+    }
+
+    // ========== 5) Nếu rented -> maintenance: xử lý hoàn tiền ==========
+    if (rentedToMaintenance && refundAmount != null && refundMethod != null) {
+        processRefundForBikeMaintenance(request, bikeId, refundAmount, refundMethod);
+    }
+
+    // ========== 6) Nếu chuyển sang rented lần đầu: tạo admin booking ==========
+    if (!wasRented && willBeRented && rentalStartDate != null && rentalEndDate != null) {
+        try {
+            boolean bookingCreated = orderService.createAdminBooking(
+                    bikeId, rentalStartDate, rentalEndDate, "Admin set status to rented"
+            );
+            System.out.println("Admin booking created: " + bookingCreated);
+            if (!bookingCreated) {
+                System.err.println("⚠️ Failed to create admin booking for bike " + bikeId);
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error creating admin booking: " + e.getMessage());
+        }
+    }
+
+    // ========== 7) Xử lý ảnh (giữ nguyên như cũ) ==========
+    try {
+        handleImageUpdate(request, bikeId, typeId);
+    } catch (Exception e) {
+        System.err.println("Image update error: " + e.getMessage());
+        e.printStackTrace();
+    }
+
+    response.sendRedirect(request.getContextPath() + "/admin/bikes?success=updated");
+    System.out.println("=== DEBUG updateMotorbike END ===");
+}
+
+
 
     //    private void deleteMotorbike(HttpServletRequest request, HttpServletResponse response)
 //            throws IOException {
@@ -517,7 +678,150 @@ public class AdminMotorbikesServlet extends HttpServlet {
                 response.sendRedirect("bikes?error=delete_failed");
             }
         }
+    }   
+    
+    
+    
+    
+    // ====== REFUND HELPERS ======
+
+private Integer getAdminIdByAccount(int accountId) throws SQLException {
+    String sql = "SELECT admin_id FROM Admins WHERE account_id = ?";
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, accountId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("admin_id");
+            }
+            return null;
+        }
     }
+}
+
+private static class OrderInfo {
+    int orderId;
+    int customerId;
+}
+
+private OrderInfo findLatestOrderForBike(Connection con, int bikeId) throws SQLException {
+    String sql = "SELECT TOP 1 r.order_id, r.customer_id " +
+                 "FROM RentalOrders r " +
+                 "JOIN OrderDetails d ON r.order_id = d.order_id " +
+                 "WHERE d.bike_id = ? AND r.status IN ('pending','confirmed','completed') " +
+                 "ORDER BY r.created_at DESC";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, bikeId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                OrderInfo info = new OrderInfo();
+                info.orderId = rs.getInt("order_id");
+                info.customerId = rs.getInt("customer_id");
+                return info;
+            }
+        }
+    }
+    return null;
+}
+
+private void processRefundForBikeMaintenance(HttpServletRequest request,
+                                             int bikeId,
+                                             BigDecimal refundAmount,
+                                             String refundMethod) throws SQLException {
+
+    Account acc = (Account) request.getSession().getAttribute("account");
+    if (acc == null) {
+        throw new SQLException("No logged-in account in session");
+    }
+
+    Integer adminId = getAdminIdByAccount(acc.getAccountId());
+    if (adminId == null) {
+        throw new SQLException("Admin not found for account " + acc.getAccountId());
+    }
+
+    try (Connection con = DBConnection.getConnection()) {
+        con.setAutoCommit(false);
+
+        OrderInfo orderInfo = findLatestOrderForBike(con, bikeId);
+        if (orderInfo == null) {
+            throw new SQLException("No related RentalOrder found for bike " + bikeId);
+        }
+
+        int orderId = orderInfo.orderId;
+        int customerId = orderInfo.customerId;
+
+        // 1) Nếu hoàn vào ví
+        if ("wallet".equalsIgnoreCase(refundMethod)) {
+
+            int walletId = -1;
+
+            String sqlFindWallet = "SELECT wallet_id FROM Wallets WHERE customer_id = ?";
+            try (PreparedStatement ps = con.prepareStatement(sqlFindWallet)) {
+                ps.setInt(1, customerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        walletId = rs.getInt("wallet_id");
+                    }
+                }
+            }
+
+            if (walletId == -1) {
+                String sqlCreateWallet = "INSERT INTO Wallets(customer_id, balance) VALUES(?, 0)";
+                try (PreparedStatement ps = con.prepareStatement(sqlCreateWallet, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, customerId);
+                    ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            walletId = rs.getInt(1);
+                        }
+                    }
+                }
+            }
+
+            String sqlUpdateBalance = "UPDATE Wallets SET balance = balance + ? WHERE wallet_id = ?";
+            try (PreparedStatement ps = con.prepareStatement(sqlUpdateBalance)) {
+                ps.setBigDecimal(1, refundAmount);
+                ps.setInt(2, walletId);
+                ps.executeUpdate();
+            }
+
+            String sqlInsertTx = "INSERT INTO Wallet_Transactions(wallet_id, amount, type, description, order_id) " +
+                    "VALUES(?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = con.prepareStatement(sqlInsertTx)) {
+                ps.setInt(1, walletId);
+                ps.setBigDecimal(2, refundAmount);
+                ps.setString(3, "refund");
+                ps.setString(4, "Refund order #" + orderId + " when bike set to maintenance");
+                ps.setInt(5, orderId);
+                ps.executeUpdate();
+            }
+        }
+
+        // 2) Ghi RefundInspections (trigger sẽ set order completed nếu status phù hợp)
+        String sqlInsertRefund = "INSERT INTO RefundInspections(" +
+                "order_id, admin_id, bike_condition, damage_notes, damage_fee, " +
+                "refund_amount, refund_method, refund_status, admin_notes, updated_at) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME())";
+
+        try (PreparedStatement ps = con.prepareStatement(sqlInsertRefund)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, adminId);
+            ps.setString(3, "good");
+            ps.setString(4, null);
+            ps.setBigDecimal(5, BigDecimal.ZERO);
+            ps.setBigDecimal(6, refundAmount);
+            ps.setString(7, refundMethod.toLowerCase());
+            ps.setString(8, "completed"); // cho trigger hoạt động
+            ps.setString(9, "Refund from motorbike form (rented -> maintenance)");
+            ps.executeUpdate();
+        }
+
+        con.commit();
+    }
+}
+
+    
 
     /* ------------------------ Image Handling ------------------------ */
 
