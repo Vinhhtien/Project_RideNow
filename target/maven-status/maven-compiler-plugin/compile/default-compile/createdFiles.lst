@@ -164,6 +164,7 @@ service\IPartnerAdminService.class
 model\adminfeedback\AdminFeedbackSummary.class
 controller\admin\AdminMotorbikesServlet.class
 com\mycompany\project_ridenow\resources\JakartaEE10Resource.class
+controller\admin\AdminMotorbikesServlet$OrderInfo.class
 utils\AI\GeminiToolClient.class
 model\Partner.class
 service\PaymentVerifyService.class

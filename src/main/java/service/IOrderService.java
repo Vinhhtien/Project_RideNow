@@ -48,4 +48,8 @@ public interface IOrderService {
      */
     RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLException;
     
+    
+    boolean reopenChangeWindowByAdmin(int orderId, int adminId);
+
+    
 }

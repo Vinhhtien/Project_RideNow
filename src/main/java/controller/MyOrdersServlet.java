@@ -50,6 +50,17 @@ public class MyOrdersServlet extends HttpServlet {
         // đã review đơn này chưa
         private boolean hasReview;
 
+        private boolean allowCustomerCancel;    
+            
+        
+        public boolean isAllowCustomerCancel() {
+            return allowCustomerCancel;
+        }
+
+        public void setAllowCustomerCancel(boolean allowCustomerCancel) {
+            this.allowCustomerCancel = allowCustomerCancel;
+        }
+        
         public int getOrderId() { return orderId; }
         public void setOrderId(int orderId) { this.orderId = orderId; }
 
@@ -94,20 +105,46 @@ public class MyOrdersServlet extends HttpServlet {
         }
 
         public boolean isCanCancel() {
-            return "pending".equalsIgnoreCase(status);
+            // 1) Hủy bình thường khi còn pending
+            if ("pending".equalsIgnoreCase(status)) {
+                return true;
+            }
+
+            // 2) Nếu admin cho phép khách hủy (cờ allow_customer_cancel = 1)
+            //    → cho hủy miễn là đơn chưa cancelled / completed
+            if (allowCustomerCancel) {
+                if (!"cancelled".equalsIgnoreCase(status)
+                        && !"completed".equalsIgnoreCase(status)) {
+                    return true;
+                }
+            }
+
+            // 3) Luồng cũ: hủy trong 30' sau khi confirmed
+            return "confirmed".equalsIgnoreCase(status)
+                    && confirmedAt != null
+                    && changeRemainingMin != null
+                    && changeRemainingMin > 0;
         }
+
 
         public boolean isCanReview() {
             return "completed".equalsIgnoreCase(status) && bikeId > 0;
         }
-
-        // điều kiện hiển thị nút "Đổi đơn"
+        
         public boolean isCanChange() {
             return "confirmed".equalsIgnoreCase(status)
                     && confirmedAt != null
                     && changeRemainingMin != null
                     && changeRemainingMin > 0;
         }
+        
+//        // điều kiện hiển thị nút "Đổi đơn"
+//        public boolean isCanChange() {
+//            return "confirmed".equalsIgnoreCase(status)
+//                    && confirmedAt != null
+//                    && changeRemainingMin != null
+//                    && changeRemainingMin > 0;
+//        }
     }
 
     @Override
@@ -173,7 +210,14 @@ public class MyOrdersServlet extends HttpServlet {
                     vm.setChangeRemainingMin(null);
                 }
 
-                // 🔹 Kiểm tra đã review đơn này chưa (theo customer + order)
+                // 🔹 NEW: allow_customer_cancel (index 12)
+                if (r.length > 12 && r[12] != null) {
+                    vm.setAllowCustomerCancel(parseBoolean(r[12]));
+                } else {
+                    vm.setAllowCustomerCancel(false);
+                }
+
+                // 🔹 Kiểm tra đã review đơn này chưa (theo customer + order) – giữ nguyên
                 boolean hasReview = false;
                 try {
                     if (vm.isCanReview()) {
@@ -190,6 +234,7 @@ public class MyOrdersServlet extends HttpServlet {
 
                 ordersVm.add(vm);
             }
+
 
             req.setAttribute("ordersVm", ordersVm);
 

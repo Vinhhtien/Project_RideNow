@@ -59,7 +59,7 @@ public class EmailUtil {
             Session session = Session.getInstance(props, new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
-                    System.out.println("🔐 SMTP Authentication: " + SMTP_USER);
+                    System.out.println("SMTP Authentication: " + SMTP_USER);
                     return new PasswordAuthentication(SMTP_USER, SMTP_PASS);
                 }
             });
@@ -72,12 +72,12 @@ public class EmailUtil {
             msg.setSubject(subject, "UTF-8");
             msg.setContent(html, "text/html; charset=UTF-8");
 
-            System.out.println("🚀 Attempting to send HTML email to: " + to);
+            System.out.println(" Attempting to send HTML email to: " + to);
             Transport.send(msg);
-            System.out.println("✅ HTML email sent successfully to: " + to);
+            System.out.println(" HTML email sent successfully to: " + to);
 
         } catch (Exception e) {
-            System.err.println("❌ HTML email sending failed: " + e.getMessage());
+            System.err.println(" HTML email sending failed: " + e.getMessage());
             e.printStackTrace();
         }
     }

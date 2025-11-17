@@ -365,14 +365,8 @@
                                 <td>
                                     <span class="badge ${o.status}">${o.status}</span>
                                 </td>
+                                
                                 <td>
-                                    <!-- Hủy đơn (pending) -->
-                                    <c:if test="${canCancel}">
-                                        <button type="button" class="btn btn-danger" onclick="confirmCancel(${o.orderId})">
-                                            <i class="fas fa-ban"></i> Hủy
-                                        </button>
-                                    </c:if>
-
                                     <!-- Đổi đơn: chỉ hiển thị khi còn trong 30' (isCanChange = true) -->
                                     <c:if test="${o.canChange}">
                                         <a class="btn" href="${ctx}/change-order?orderId=${o.orderId}">
@@ -386,26 +380,34 @@
                                         </a>
                                     </c:if>
 
-                                    <!-- Đánh giá: 1 đơn chỉ 1 review / customer, nhưng có thể sửa -->
-                                    <!-- Đánh giá: nếu chưa có review thì hiện "Đánh giá", nếu đã có thì "Chỉnh sửa đánh giá" -->
-                                        <c:if test="${o.canReview}">
-                                            <c:choose>
-                                                <c:when test="${!o.hasReview}">
-                                                    <a class="btn btn-primary"
-                                                       href="${ctx}/review?orderId=${o.orderId}&bikeId=${o.bikeId}">
-                                                        <i class="fas fa-star"></i> Đánh giá
-                                                    </a>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <a class="btn"
-                                                       href="${ctx}/review?orderId=${o.orderId}&bikeId=${o.bikeId}">
-                                                        <i class="fas fa-pen"></i> Chỉnh sửa đánh giá
-                                                    </a>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:if>
+                                    <!-- HỦY ĐƠN: dùng logic isCanCancel() trong OrderVM -->
+                                    <!<!-- comment  <c:if test="${canCancel}">
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                onclick="confirmCancel(${o.orderId})">
+                                            <i class="fas fa-xmark"></i> Hủy đơn
+                                        </button>
+                                    </c:if>-->
 
+                                    <!-- Đánh giá -->
+                                    <c:if test="${o.canReview}">
+                                        <c:choose>
+                                            <c:when test="${!o.hasReview}">
+                                                <a class="btn btn-primary"
+                                                   href="${ctx}/review?orderId=${o.orderId}&bikeId=${o.bikeId}">
+                                                    <i class="fas fa-star"></i> Đánh giá
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a class="btn"
+                                                   href="${ctx}/review?orderId=${o.orderId}&bikeId=${o.bikeId}">
+                                                    <i class="fas fa-pen"></i> Chỉnh sửa đánh giá
+                                                </a>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:if>
                                 </td>
+
                             </tr>
                         </c:forEach>
                         </tbody>

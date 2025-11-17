@@ -506,7 +506,16 @@
 
         <div class="table-wrapper">
             <table class="order-table">
-                <thead> ... <!-- giữ nguyên head --> </thead>
+                <thead> <tr>
+        <th>Mã đơn</th>
+        <th>Khách hàng</th>
+        <th>Trạng thái</th>
+        <th>Tổng đơn</th>
+        <th>Đã thanh toán</th>
+        <th>Còn phải thu</th>
+        <th>Ngày tạo</th>
+        <th>Thao tác</th>
+    </tr> </thead>
                 <tbody>
                 <c:forEach var="o" items="${orders}">
                     <!-- giữ nguyên row như của bạn -->

@@ -30,9 +30,9 @@ public class DBConnection {
     public static void main(String[] args) {
         try (Connection con = getConnection()) {
             if (con != null) {
-                System.out.println("✅ Kết nối thành công tới MotorbikeRentalDB");
+                System.out.println(" Kết nối thành công tới MotorbikeRentalDB");
             } else {
-                System.out.println("❌ Kết nối thất bại");
+                System.out.println(" Kết nối thất bại");
             }
         } catch (SQLException ex) {
             Logger.getLogger(DBConnection.class.getName()).log(Level.SEVERE, null, ex);

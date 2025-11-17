@@ -244,7 +244,7 @@
       <c:if test="${totalPages > 1}">
         <div class="pagination">
           <c:forEach var="p" begin="1" end="${totalPages}">
-            <c:url var="pageUrl" value="${ctx}/motorbikesearch">
+            <c:url var="pageUrl" value="/motorbikesearch">
               <c:param name="type_id" value="${type_id}" />
               <c:param name="start_date" value="${start_date}" />
               <c:param name="end_date" value="${end_date}" />

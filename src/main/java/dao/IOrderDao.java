@@ -45,4 +45,8 @@ public interface IOrderDao {
     Object[] getOrderStatsByCustomerId(int customerId) throws SQLException;
     
     RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLException;
+    
+    boolean reopenChangeWindow(int orderId) throws SQLException;
+
+    
 }

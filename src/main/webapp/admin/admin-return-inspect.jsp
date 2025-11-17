@@ -176,6 +176,59 @@
                 flex-direction: column
             }
         }
+
+        /* Toast styles */
+        .toast-container {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.25rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .toast {
+            min-width: 260px;
+            max-width: 360px;
+            background: #111827;
+            color: #f9fafb;
+            padding: .75rem 1rem;
+            border-radius: .5rem;
+            box-shadow: 0 10px 15px rgba(0,0,0,.2);
+            font-size: .85rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: .75rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity .2s ease, transform .2s ease;
+            border-left: 4px solid #f97316;
+        }
+
+        .toast--error {
+            border-left-color: #f97373;
+        }
+
+        .toast--show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast__message {
+            flex: 1;
+        }
+
+        .toast__close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0;
+        }
     </style>
 </head>
 <body class="admin">
@@ -374,6 +427,44 @@
 </main>
 
 <script>
+    // ===== Toast helper =====
+    function ensureToastContainer() {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
+    function showToast(message, type) {
+        const container = ensureToastContainer();
+        const toast = document.createElement('div');
+        toast.className = 'toast toast--show' + (type ? (' toast--' + type) : '');
+        toast.innerHTML =
+            '<div class="toast__message">' + message + '</div>' +
+            '<button type="button" class="toast__close">&times;</button>';
+
+        container.appendChild(toast);
+
+        const closeBtn = toast.querySelector('.toast__close');
+
+        function close() {
+            toast.classList.remove('toast--show');
+            setTimeout(function () {
+                toast.remove();
+            }, 200);
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', close);
+        }
+
+        setTimeout(close, 4000);
+    }
+
     // ===== Helpers =====
     const depositAmount = Number('${order.depositAmount}');
     const damageSection = document.getElementById('damageSection');
@@ -386,7 +477,9 @@
     const fmt = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'});
 
     function setSelected(containerSelector, labelEl) {
-        document.querySelectorAll(containerSelector).forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll(containerSelector).forEach(function (el) {
+            el.classList.remove('selected');
+        });
         labelEl.classList.add('selected');
     }
 
@@ -424,9 +517,9 @@
 
     // ===== UI bindings =====
     // Highlight for condition cards
-    document.querySelectorAll('.inspection-item').forEach(label => {
+    document.querySelectorAll('.inspection-item').forEach(function (label) {
         const radio = label.querySelector('input[type="radio"]');
-        label.addEventListener('click', () => {
+        label.addEventListener('click', function () {
             radio.checked = true;
             setSelected('.inspection-item', label);
             toggleSectionsByCondition(radio.value);
@@ -434,9 +527,9 @@
     });
 
     // Highlight for refund method cards
-    document.querySelectorAll('.refund-option').forEach(label => {
+    document.querySelectorAll('.refund-option').forEach(function (label) {
         const radio = label.querySelector('input[type="radio"]');
-        label.addEventListener('click', () => {
+        label.addEventListener('click', function () {
             radio.checked = true;
             setSelected('.refund-option', label);
         });
@@ -456,11 +549,11 @@
         const conditionChecked = document.querySelector('input[name="bikeCondition"]:checked');
         const methodChecked = document.querySelector('input[name="refundMethod"]:checked');
         if (!conditionChecked) {
-            alert('Vui lòng chọn tình trạng xe.');
+            showToast('Vui lòng chọn tình trạng xe.', 'error');
             return false;
         }
         if (!methodChecked) {
-            alert('Vui lòng chọn phương thức hoàn cọc.');
+            showToast('Vui lòng chọn phương thức hoàn cọc.', 'error');
             return false;
         }
 
@@ -468,11 +561,11 @@
         if (conditionChecked.value === 'damaged' && feeInput) {
             const feeVal = Number(feeInput.value || 0);
             if (feeVal > depositAmount) {
-                alert('Phí hư hỏng không được vượt quá tiền cọc.');
+                showToast('Phí hư hỏng không được vượt quá tiền cọc.', 'error');
                 return false;
             }
             if (feeVal < 0) {
-                alert('Phí hư hỏng không hợp lệ.');
+                showToast('Phí hư hỏng không hợp lệ.', 'error');
                 return false;
             }
         }

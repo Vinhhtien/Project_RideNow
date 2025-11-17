@@ -43,7 +43,6 @@ controller\admin\AdminOrderDetailServletModelsTest.class
 controller\testsupport\TestUtils.class
 dao\OrderQueryDaoTest.class
 model\ModelBeanReflectionTest.class
-controller\admin\AdminMotorbikesServletTest.class
 controller\admin\AdminPartnerCreateServletTest.class
 controller\admin\PartnersManagementServletTest.class
 controller\admin\AdminFeedbackServletTest.class

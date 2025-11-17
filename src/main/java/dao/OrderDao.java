@@ -323,14 +323,27 @@ public class OrderDao implements IOrderDao {
 
     @Override
     public boolean updateOrderStatus(int orderId, String newStatus) throws SQLException {
-        String sql = "UPDATE RentalOrders SET status = ? WHERE order_id = ?";
+        String sql = """
+            UPDATE RentalOrders
+            SET status = ?,
+                confirmed_at = CASE
+                    WHEN ? = 'confirmed' AND confirmed_at IS NULL THEN GETDATE()
+                    ELSE confirmed_at
+                END
+            WHERE order_id = ?
+        """;
+
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
-            ps.setInt(2, orderId);
+
+            ps.setString(1, newStatus);  // SET status = newStatus
+            ps.setString(2, newStatus);  // dùng trong CASE WHEN ? = 'confirmed'
+            ps.setInt(3, orderId);       // WHERE order_id = ?
+
             return ps.executeUpdate() > 0;
         }
     }
+
 
     @Override
     public boolean markOrderPickedUp(int orderId, int adminId) throws SQLException {
@@ -438,6 +451,26 @@ public RentalOrder findCurrentAdminBookingForBike(int bikeId) throws SQLExceptio
     return null;
 }
 
+    @Override
+public boolean reopenChangeWindow(int orderId) throws SQLException {
+    String sql = """
+        UPDATE RentalOrders
+        SET 
+            confirmed_at = GETDATE(),                   -- mở lại 30p tính từ bây giờ
+            change_count = ISNULL(change_count, 0) + 1  -- tăng số lần mở cửa sổ đổi đơn
+        WHERE order_id = ?
+          AND status = 'confirmed'
+    """;
+
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, orderId);
+        int affected = ps.executeUpdate();
+        System.out.println("[OrderDao] reopenChangeWindow, orderId=" + orderId + ", affected=" + affected);
+        return affected > 0;
+    }
+}
 
 
 }

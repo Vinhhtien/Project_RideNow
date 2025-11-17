@@ -80,6 +80,7 @@ public class AdminMotorbikesServlet extends HttpServlet {
                // Gửi sang JSP để prefill input type="date"
                request.setAttribute("adminRentalStart", adminBooking.getStartDate());
                request.setAttribute("adminRentalEnd", adminBooking.getEndDate());
+               request.setAttribute("adminRentalOrderId", adminBooking.getOrderId());
            } else {
                System.out.println("[AdminMotorbikesServlet] No admin booking for bike " + bikeId);
            }
@@ -179,40 +180,128 @@ public class AdminMotorbikesServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
+protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    request.setCharacterEncoding("UTF-8");
+    response.setCharacterEncoding("UTF-8");
+    response.setContentType("text/html; charset=UTF-8");
 
-        System.out.println("=== DEBUG doPost START ===");
-        System.out.println("Content-Type: " + request.getContentType());
-        System.out.println("Request URL: " + request.getRequestURL());
-        System.out.println("Query String: " + request.getQueryString());
+    System.out.println("=== DEBUG doPost START ===");
+    System.out.println("Content-Type: " + request.getContentType());
+    System.out.println("Request URL: " + request.getRequestURL());
+    System.out.println("Query String: " + request.getQueryString());
 
-        // log params
-        request.getParameterMap().forEach((k, v) -> System.out.println("  " + k + ": " + String.join(", ", v)));
+    request.getParameterMap().forEach((k, v) ->
+            System.out.println("  " + k + ": " + String.join(", ", v)));
 
-        String action = request.getParameter("action");
-        System.out.println("Action parameter: " + action);
+    String action = request.getParameter("action");
+    System.out.println("Action parameter: " + action);
 
-        try {
-            if ("create".equals(action)) {
-                createMotorbike(request, response);
-            } else if ("update".equals(action)) {
-                updateMotorbike(request, response);
-            } else {
-                listMotorbikes(request, response);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(AdminMotorbikesServlet.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            System.out.println("=== DEBUG doPost END ===");
+    try {
+        if ("create".equals(action)) {
+            createMotorbike(request, response);
+        } else if ("update".equals(action)) {
+            updateMotorbike(request, response);
+        } else if ("reopenChangeWindow".equals(action)) {
+            reopenChangeWindowForCustomer(request, response);
+        } else {
+            listMotorbikes(request, response);
         }
+    } catch (Exception ex) {
+        Logger.getLogger(AdminMotorbikesServlet.class.getName())
+              .log(Level.SEVERE, "Error in doPost(action=" + action + ")", ex);
+
+        // Không cho rơi ra trang 400/500 Tomcat nữa
+        if (!response.isCommitted()) {
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=server_error");
+        }
+    } finally {
+        System.out.println("=== DEBUG doPost END ===");
     }
+}
+
+
 
     /* ------------------------ Pages ------------------------ */
 
+    
+    private void reopenChangeWindowForCustomer(HttpServletRequest request,
+                                           HttpServletResponse response)
+        throws IOException, ServletException, SQLException {
+    System.out.println("=== DEBUG reopenChangeWindowForCustomer START ===");
+
+    // 1) Check đã login & có quyền admin chưa
+    Account acc = (Account) request.getSession().getAttribute("account");
+    if (acc == null) {
+        System.out.println("No account in session -> redirect to login");
+        // Tùy app của bạn, nếu login là servlet /login thì đổi lại cho đúng
+        response.sendRedirect(request.getContextPath() + "/login");
+        return;
+    }
+    if (!"admin".equalsIgnoreCase(acc.getRole())) {
+        System.out.println("Account is not admin -> 403");
+        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        return;
+    }
+
+    // 2) Đổi từ account_id -> admin_id
+    Integer adminId = getAdminIdByAccount(acc.getAccountId());
+    if (adminId == null) {
+        System.err.println("Admin not found for account " + acc.getAccountId());
+        request.getSession().setAttribute("flash",
+                "Không tìm thấy thông tin admin. Không thể mở lại 30 phút đổi đơn.");
+        response.sendRedirect(request.getContextPath() + "/admin/bikes");
+        return;
+    }
+
+    // 3) Lấy orderId & bikeId từ form
+    String orderIdStr = str(request, "orderId");
+    String bikeIdStr  = str(request, "bikeId"); // để redirect lại đúng xe
+
+    if (orderIdStr == null || orderIdStr.isBlank()) {
+        request.getSession().setAttribute("flash",
+                "Thiếu mã đơn hàng. Không thể mở lại 30 phút đổi đơn.");
+        response.sendRedirect(request.getContextPath() + "/admin/bikes");
+        return;
+    }
+
+    int orderId;
+    try {
+        orderId = Integer.parseInt(orderIdStr);
+    } catch (NumberFormatException ex) {
+        request.getSession().setAttribute("flash",
+                "Mã đơn hàng không hợp lệ.");
+        response.sendRedirect(request.getContextPath() + "/admin/bikes");
+        return;
+    }
+
+    // 4) Gọi service
+    boolean ok = orderService.reopenChangeWindowByAdmin(orderId, adminId);
+
+    if (ok) {
+        request.getSession().setAttribute("flash",
+                "Đã mở lại cửa sổ 30 phút cho khách đổi / hủy đơn #" + orderId + ".");
+    } else {
+        // Lý do phổ biến: đơn KHÔNG ở trạng thái confirmed
+        request.getSession().setAttribute("flash",
+                "Không thể mở lại 30 phút đổi / hủy cho đơn #" + orderId
+                        + ". Đơn phải đang ở trạng thái 'confirmed'.");
+    }
+
+    // 5) Redirect: nếu biết bikeId thì quay lại form edit, không thì về list
+    if (bikeIdStr != null && !bikeIdStr.isBlank()) {
+        response.sendRedirect(request.getContextPath()
+                + "/admin/bikes?action=edit&id=" + bikeIdStr);
+    } else {
+        response.sendRedirect(request.getContextPath() + "/admin/bikes");
+    }
+
+    System.out.println("=== DEBUG reopenChangeWindowForCustomer END ===");
+}
+
+
+    
+    
     private void listMotorbikes(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("=== DEBUG listMotorbikes START ===");
@@ -265,25 +354,46 @@ public class AdminMotorbikesServlet extends HttpServlet {
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         System.out.println("=== DEBUG showEditForm START ===");
-        int id = intRequired(request, "id");
-        Motorbike motorbike = motorbikeAdminService.getMotorbikeById(id);
-        if (motorbike == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+
+        String idStr = request.getParameter("id");
+        System.out.println("Raw id param = " + idStr);
+
+        int id;
+        try {
+            if (idStr == null || idStr.isBlank()) {
+                throw new NumberFormatException("id is null/blank");
+            }
+            id = Integer.parseInt(idStr.trim());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid or missing id param: " + idStr);
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=invalid_id");
+            System.out.println("=== DEBUG showEditForm END (invalid id) ===");
             return;
         }
+
+        Motorbike motorbike = motorbikeAdminService.getMotorbikeById(id);
+        if (motorbike == null) {
+            System.out.println("Motorbike not found with id = " + id);
+            response.sendRedirect(request.getContextPath() + "/admin/bikes?error=not_found");
+            System.out.println("=== DEBUG showEditForm END (not found) ===");
+            return;
+        }
+
         System.out.println("Editing motorbike ID: " + id + " (" + motorbike.getBikeName() + ")");
+
         request.setAttribute("motorbike", motorbike);
         request.setAttribute("bikeTypes", motorbikeAdminService.getAllBikeTypes());
         request.setAttribute("partners", motorbikeAdminService.getAllPartners());
 
-        // 🌟 MỚI: Prefill ngày thuê từ booking admin nếu có
+        // Prefill booking admin nếu có
         prefillAdminRentalDates(request, id);
 
         request.getRequestDispatcher("/admin/admin-motorbike-form.jsp").forward(request, response);
         System.out.println("=== DEBUG showEditForm END ===");
     }
+
 
 
     /* ------------------------ Create/Update/Delete ------------------------ */
@@ -887,42 +997,85 @@ private void processRefundForBikeMaintenance(HttpServletRequest request,
         System.out.println("=== DEBUG handleImageUpdate END ===");
     }
 
+//    private void handleImageDeletion(HttpServletRequest request, int bikeId, int typeId) {
+//        System.out.println("=== DEBUG handleImageDeletion START ===");
+//        String[] arr = request.getParameterValues("deletedImages");
+//        if (arr == null || arr.length == 0) {
+//            System.out.println("No deletedImages parameter");
+//            System.out.println("=== DEBUG handleImageDeletion END ===");
+//            return;
+//        }
+//        List<String> indexes = new ArrayList<>();
+//        for (String s : arr) {
+//            if (s != null && !s.isBlank()) {
+//                for (String p : s.split(",")) {
+//                    String t = p.trim();
+//                    if (!t.isEmpty()) indexes.add(t);
+//                }
+//            }
+//        }
+//        if (indexes.isEmpty()) {
+//            System.out.println("No indexes to delete");
+//            System.out.println("=== DEBUG handleImageDeletion END ===");
+//            return;
+//        }
+//
+//        String typeFolder = getTypeFolder(typeId);
+//        String path = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike"
+//                + File.separator + typeFolder + File.separator + bikeId;
+//        for (String idx : indexes) {
+//            File f = new File(path, idx + ".jpg");
+//            if (f.exists()) {
+//                boolean ok = f.delete();
+//                System.out.println("Delete " + f.getName() + ": " + ok);
+//            }
+//        }
+//        System.out.println("=== DEBUG handleImageDeletion END ===");
+//    }
+    
+    
     private void handleImageDeletion(HttpServletRequest request, int bikeId, int typeId) {
-        System.out.println("=== DEBUG handleImageDeletion START ===");
-        String[] arr = request.getParameterValues("deletedImages");
-        if (arr == null || arr.length == 0) {
-            System.out.println("No deletedImages parameter");
-            System.out.println("=== DEBUG handleImageDeletion END ===");
-            return;
-        }
-        List<String> indexes = new ArrayList<>();
-        for (String s : arr) {
-            if (s != null && !s.isBlank()) {
-                for (String p : s.split(",")) {
-                    String t = p.trim();
-                    if (!t.isEmpty()) indexes.add(t);
-                }
-            }
-        }
-        if (indexes.isEmpty()) {
-            System.out.println("No indexes to delete");
-            System.out.println("=== DEBUG handleImageDeletion END ===");
-            return;
-        }
+    System.out.println("=== DEBUG handleImageDeletion START ===");
 
-        String typeFolder = getTypeFolder(typeId);
-        String path = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike"
-                + File.separator + typeFolder + File.separator + bikeId;
-        for (String idx : indexes) {
-            File f = new File(path, idx + ".jpg");
-            if (f.exists()) {
-                boolean ok = f.delete();
-                System.out.println("Delete " + f.getName() + ": " + ok);
-            }
-        }
+    // deletedImages nhận dạng: "2,4" hoặc null/"" nếu không có
+    String deleted = str(request, "deletedImages");
+    if (deleted == null || deleted.isBlank()) {
+        System.out.println("No deletedImages parameter or empty");
         System.out.println("=== DEBUG handleImageDeletion END ===");
+        return;
     }
 
+    List<String> indexes = new ArrayList<>();
+    for (String p : deleted.split(",")) {
+        String t = p.trim();
+        if (!t.isEmpty()) {
+            indexes.add(t);
+        }
+    }
+
+    if (indexes.isEmpty()) {
+        System.out.println("No indexes to delete");
+        System.out.println("=== DEBUG handleImageDeletion END ===");
+        return;
+    }
+
+    String typeFolder = getTypeFolder(typeId);
+    String path = getSourceImageBasePath() + File.separator + "images" + File.separator + "bike"
+            + File.separator + typeFolder + File.separator + bikeId;
+
+    for (String idx : indexes) {
+        File f = new File(path, idx + ".jpg");
+        if (f.exists()) {
+            boolean ok = f.delete();
+            System.out.println("Delete " + f.getName() + ": " + ok);
+        }
+    }
+
+    System.out.println("=== DEBUG handleImageDeletion END ===");
+}
+
+
+    
     private void reorganizeImages(int bikeId, int typeId) {
         System.out.println("=== DEBUG reorganizeImages START ===");
         String typeFolder = getTypeFolder(typeId);

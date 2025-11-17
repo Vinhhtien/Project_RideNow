@@ -21,7 +21,7 @@ public class AIService implements IAIService {
     private static long cachedAt = 0;
     private static final long SCHEMA_TTL_MS = 30 * 60 * 1000L;
 
-    @Override
+        @Override
     public String smallTalk(String question) {
         if (question == null || question.isBlank()) return "❌ Bạn chưa nhập câu hỏi nào.";
 
@@ -53,11 +53,63 @@ public class AIService implements IAIService {
                     """;
         }
 
-        // Smalltalk khác → dùng LLM
-        return chatClient.ask(fixedQuestion);
+        // ====== USER HỎI VỀ Ô TÔ → TỪ CHỐI NHẸ NHÀNG ======
+        if (normalized.contains("oto") || normalized.contains("o to")
+                || normalized.contains("ô tô") || normalized.contains("xe hoi")
+                || normalized.contains("sedan") || normalized.contains("suv")
+                || normalized.contains("pickup") || normalized.contains("ban tai")) {
+
+            return """
+                    Hiện tại mình chỉ là <b>trợ lý AI cho hệ thống thuê xe máy RideNow</b> 🛵<br/>
+                    Mình không tư vấn chi tiết về ô tô, nhưng có thể giúp bạn:<br/>
+                    • Gợi ý xe số, xe ga, xe phân khối lớn trong hệ thống RideNow<br/>
+                    • Tìm xe theo giá, loại, trạng thái còn trống<br/><br/>
+                    Bạn có thể hỏi ví dụ:<br/>
+                    • <i>Xe ga nào dưới 180.000đ/ngày?</i><br/>
+                    • <i>Top xe phân khối lớn đắt nhất</i><br/>
+                    • <i>Xe số nào đang còn available?</i>
+                    """;
+        }
+
+        // ====== CÂU KIỂU "XE NGON NHẤT" MƠ HỒ → TRẢ LỜI GỢI Ý THEO RIDENOW ======
+        if (normalized.contains("xe ngon nhat")
+                || normalized.contains("xe nao ngon")
+                || normalized.contains("xe nao tot")
+                || normalized.contains("xe tot nhat")) {
+
+            return """
+                    Câu hỏi <b>\"xe ngon nhất\"</b> hơi rộng vì còn phụ thuộc vào:<br/>
+                    • Bạn thích <b>xe số, xe ga hay phân khối lớn</b><br/>
+                    • <b>Ngân sách</b> thuê mỗi ngày (ví dụ: dưới 150k, 150k–200k, trên 200k)<br/>
+                    • Bạn ưu tiên <b>tiết kiệm, êm, mạnh hay nhìn ngầu</b> 😄<br/><br/>
+                    Trong hệ thống <b>RideNow</b>, mình có thể giúp bạn tìm:<br/>
+                    • <b>Xe rẻ nhất</b> → hãy thử hỏi: <i>\"xe rẻ nhất\"</i><br/>
+                    • <b>Xe đắt nhất / xịn nhất</b> theo giá → hỏi: <i>\"xe đắt nhất\"</i><br/>
+                    • Hoặc cụ thể hơn, ví dụ:<br/>
+                    &nbsp;&nbsp;• <i>\"Xe ga dưới 180000\"</i><br/>
+                    &nbsp;&nbsp;• <i>\"Top 5 xe phân khối lớn\"</i><br/><br/>
+                    Bạn thử mô tả rõ hơn nhu cầu (loại xe + tầm giá), mình sẽ gợi ý sát hơn với dữ liệu trong hệ thống nhé 🛵
+                    """;
+        }
+
+        // ====== CÁC SMALLTALK KHÁC → GỌI LLM NHƯNG CÓ NGỮ CẢNH RIDENOW ======
+        String systemPrompt = """
+                Bạn đang đóng vai trò là <b>trợ lý AI của hệ thống thuê xe máy RideNow</b>.
+                Nguyên tắc:
+                - Luôn trả lời bằng tiếng Việt (có thể thêm emoji nhẹ nhàng).
+                - Chỉ tư vấn trong bối cảnh thuê <b>xe máy</b> (xe số, xe ga, xe phân khối lớn) và dịch vụ RideNow.
+                - Không tư vấn chi tiết, so sánh hay quảng cáo về ô tô, siêu xe, xe không liên quan đến hệ thống.
+                - Nếu câu hỏi vượt quá phạm vi (ví dụ: hỏi mua ô tô, chính trị, y tế...), hãy lịch sự nói rằng bạn chỉ hỗ trợ về thuê xe máy RideNow.
+                - Luôn trả lời ngắn gọn, thân thiện, gợi ý user hỏi cụ thể hơn nếu cần.
+                """;
+
+        String finalPrompt = systemPrompt + "\n\nCâu hỏi của khách: " + fixedQuestion;
+
+        return chatClient.ask(finalPrompt);
     }
 
-    @Override
+
+        @Override
     public String answerFromDatabase(String question) {
         try {
             String fixedQuestion = fixEncoding(question);
@@ -97,15 +149,22 @@ public class AIService implements IAIService {
                     """;
 
             // 4) Nhờ Gemini sinh SQL an toàn
-            ToolCall t1 = toolClient.turn1_buildSql(fixedQuestion, schemaDoc, policyDoc);
+            ToolCall t1;
+            try {
+                t1 = toolClient.turn1_buildSql(fixedQuestion, schemaDoc, policyDoc);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // Tool client lỗi → fallback smallTalk cho user vẫn có câu trả lời
+                return smallTalk(question);
+            }
 
             if (!t1.isToolCall()) {
-                // Không sinh được SQL → không fallback smalltalk
+                // Không sinh được tool call hợp lệ → hướng dẫn user hỏi rõ hơn
                 return "⚠️ Tôi chưa hiểu rõ câu hỏi liên quan đến dữ liệu hệ thống.<br/>" +
-                       "Bạn hãy thử hỏi cụ thể hơn, ví dụ:<br/>" +
-                       "• \"Top 5 xe ga dưới 180000\"<br/>" +
-                       "• \"Danh sách xe số còn available\"<br/>" +
-                       "• \"Liệt kê tất cả xe PKL\"";
+                        "Bạn hãy thử hỏi cụ thể hơn, ví dụ:<br/>" +
+                        "• \"Top 5 xe ga dưới 180000\"<br/>" +
+                        "• \"Danh sách xe số còn available\"<br/>" +
+                        "• \"Liệt kê tất cả xe PKL\"";
             }
 
             // 5) Query DB
@@ -135,28 +194,44 @@ public class AIService implements IAIService {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "❌ Đã xảy ra lỗi khi xử lý yêu cầu dữ liệu: " + e.getMessage();
+            // Không in message raw ra cho user nếu không cần
+            return "❌ Đã xảy ra lỗi khi xử lý yêu cầu dữ liệu. Bạn hãy thử lại sau hoặc nhập câu hỏi cụ thể hơn.";
         }
     }
 
-    @Override
+
+        @Override
     public Map<String, Object> debugDatabaseAnswer(String question) {
         Map<String, Object> debug = new LinkedHashMap<>();
         String fixedQuestion = fixEncoding(question);
         String schemaDoc = getSchemaDoc();
         String policyDoc = "- Chỉ SELECT, có ? placeholders.";
-        ToolCall t1 = toolClient.turn1_buildSql(fixedQuestion, schemaDoc, policyDoc);
-        debug.put("toolCall", t1);
 
-        if (t1.isToolCall()) {
-            List<Map<String, Object>> rows = dao.select(t1.getSql(), t1.getParams());
-            debug.put("rows", rows);
-            debug.put("explain", toolClient.turn2_explainFromRows(fixedQuestion, rows));
-        } else {
-            debug.put("error", t1.getText());
+        try {
+            ToolCall t1 = toolClient.turn1_buildSql(fixedQuestion, schemaDoc, policyDoc);
+            debug.put("toolCall", t1);
+
+            if (t1.isToolCall()) {
+                List<Map<String, Object>> rows = dao.select(t1.getSql(), t1.getParams());
+                debug.put("rows", rows);
+
+                try {
+                    debug.put("explain", toolClient.turn2_explainFromRows(fixedQuestion, rows));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    debug.put("explainError", ex.getMessage());
+                }
+            } else {
+                debug.put("error", t1.getText());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            debug.put("exception", ex.getMessage());
         }
+
         return debug;
     }
+
 
     // ========= Helpers =========
 

@@ -460,4 +460,28 @@ public class OrderService implements IOrderService {
     }
 
     
+    @Override
+public boolean reopenChangeWindowByAdmin(int orderId, int adminId) {
+    try {
+        boolean ok = orderDao.reopenChangeWindow(orderId);
+
+        if (ok) {
+            // Ghi lịch sử trạng thái cho đẹp
+            OrderStatusHistory h = new OrderStatusHistory();
+            h.setOrderId(orderId);
+            h.setStatus("confirmed"); // vẫn là confirmed
+            h.setAdminId(adminId);
+            h.setNotes("Admin reopened 30-minute change window for customer");
+            orderDao.addStatusHistory(h);
+        }
+
+        return ok;
+    } catch (SQLException e) {
+        System.err.println("[OrderService] reopenChangeWindowByAdmin failed: " + e.getMessage());
+        return false;
+    }
+}
+
+
+    
 }
