@@ -166,7 +166,11 @@
       color:#ef4444;
       background:var(--dark-light)
     }
-    .btn-danger:hover{
+    .btn-danger[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+    .btn-danger:hover:not([disabled]){
       background:rgba(239,68,68,.12);
       border-color:#ef4444
     }
@@ -299,6 +303,93 @@
     .hint i{
       color:var(--accent);
       font-size:1.1rem
+    }
+
+    /* ===== MODAL XÁC NHẬN (ĐỔI / HỦY) ===== */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.85);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease-out;
+      font-family:'Inter','Segoe UI',Tahoma,sans-serif;
+    }
+    .modal-backdrop.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .modal-card{
+      width:min(420px,90vw);
+      background:var(--dark-light);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--primary-light);
+      box-shadow:var(--shadow-md);
+      padding:20px 22px 16px;
+    }
+    .modal-title{
+      font-size:1.1rem;
+      font-weight:700;
+      margin-bottom:8px;
+      color:var(--accent-light);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .modal-text{
+      font-size:.95rem;
+      color:var(--gray-light);
+      margin-bottom:16px;
+    }
+    .modal-text p{
+      margin:4px 0;
+    }
+    .modal-text strong{
+      color:var(--accent-light);
+    }
+    .modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      margin-top:6px;
+    }
+    .modal-btn{
+      border-radius:var(--radius);
+      border:1px solid var(--primary-light);
+      background:var(--secondary);
+      color:var(--light);
+      padding:8px 14px;
+      cursor:pointer;
+      font-size:.9rem;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      transition:var(--transition);
+    }
+    .modal-btn:hover{
+      background:var(--primary-light);
+    }
+    .modal-btn-primary{
+      background:var(--accent);
+      border-color:var(--accent);
+      color:#fff;
+    }
+    .modal-btn-primary:hover{
+      background:var(--accent-dark);
+      border-color:var(--accent-dark);
+    }
+    .modal-btn-danger{
+      background:rgba(239,68,68,.12);
+      border-color:#ef4444;
+      color:#fca5a5;
+    }
+    .modal-btn-danger:hover{
+      background:#ef4444;
+      color:#fff;
     }
 
     @media (max-width:768px){
@@ -552,7 +643,7 @@
 
     <form method="post"
           action="${ctx}/change-order"
-          onsubmit="return confirmCancel()">
+          onsubmit="return confirmCancel(event)">
       <input type="hidden" name="orderId" value="${vm.orderId}"/>
       <input type="hidden" name="action" value="cancel"/>
 
@@ -565,6 +656,61 @@
   </div>
 </div>
 
+<!-- ===== MODAL XÁC NHẬN ĐỔI ĐƠN ===== -->
+<div id="updateConfirmModal" class="modal-backdrop" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="updateConfirmTitle">
+    <div class="modal-title" id="updateConfirmTitle">
+      <i class="fas fa-calendar-check"></i> Xác nhận đổi đơn
+    </div>
+    <div class="modal-text">
+      <p id="updateConfirmText"></p>
+      <p>Hệ thống sẽ kiểm tra trùng lịch cho xe hiện tại. Nếu khoảng thời gian mới đã có người đặt, yêu cầu sẽ bị từ chối.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn" id="updateConfirmNo">
+        <i class="fas fa-times"></i> Hủy
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" id="updateConfirmYes">
+        <i class="fas fa-check"></i> Xác nhận
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL XÁC NHẬN HỦY ĐƠN ===== -->
+<div id="cancelConfirmModal" class="modal-backdrop" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle">
+    <div class="modal-title" id="cancelConfirmTitle">
+      <i class="fas fa-ban"></i> Xác nhận hủy đơn #${vm.orderId}
+    </div>
+    <div class="modal-text">
+      <p>Sau khi hủy, số tiền
+        <strong><fmt:formatNumber value="${vm.refundAmount}" type="number"/> đ</strong>
+        (cọc + 30% tổng tiền thuê) sẽ được hoàn vào ví RideNow của bạn.</p>
+      <c:choose>
+        <c:when test="${cancelCount >= 2}">
+          <p style="color:#f97373;font-weight:600;">
+            LƯU Ý QUAN TRỌNG: Đây có thể là <b>lần hủy thứ 3</b>. Sau khi hủy lần này,
+            tài khoản của bạn sẽ bị <u>KHÓA</u> và bạn sẽ bị đăng xuất khỏi hệ thống.
+          </p>
+        </c:when>
+        <c:otherwise>
+          <p>Nếu bạn hủy <b>từ 3 lần trở lên</b> trong thời gian ngắn, tài khoản sẽ bị khóa theo chính sách RideNow.</p>
+        </c:otherwise>
+      </c:choose>
+      <p>Hành động này <b>không thể hoàn tác</b>. Bạn chắc chắn muốn tiếp tục?</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn" id="cancelConfirmNo">
+        <i class="fas fa-arrow-left"></i> Không, quay lại
+      </button>
+      <button type="button" class="modal-btn modal-btn-danger" id="cancelConfirmYes">
+        <i class="fas fa-ban"></i> Hủy đơn
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ====== DỮ LIỆU TỪ SERVER ======
 const originalStart     = new Date('${vm.start}');
@@ -572,8 +718,11 @@ const originalEnd       = new Date('${vm.end}');
 const rentalDays        = ${vm.originalRentalDays};
 const remainingMinutes  = ${vm.remainingMinutes};
 const changeCount       = ${vm.changeCount};
-// dùng c:out để luôn có số (nếu null -> 0) => tránh lỗi JS
 const cancelCount       = <c:out value="${cancelCount}" default="0"/>;
+const orderId           = '${vm.orderId}';
+
+let pendingCancelForm = null;
+let updateFormRef     = null;
 
 // ====== INIT ======
 document.addEventListener('DOMContentLoaded', function() {
@@ -582,8 +731,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const newEndInput   = document.getElementById('newEnd');
   const submitBtn     = document.getElementById('submitBtn');
   const daysInfo      = document.getElementById('daysInfo');
+  const updateForm    = document.getElementById('updateForm');
+  const cancelBtn     = document.getElementById('cancelBtn');
 
-  daysInfo.textContent = `(${rentalDays} ngày)`;
+  const updateConfirmText = document.getElementById('updateConfirmText');
+  const updateConfirmYes  = document.getElementById('updateConfirmYes');
+  const updateConfirmNo   = document.getElementById('updateConfirmNo');
+
+  const cancelConfirmYes  = document.getElementById('cancelConfirmYes');
+  const cancelConfirmNo   = document.getElementById('cancelConfirmNo');
+
+  daysInfo.textContent = '(' + rentalDays + ' ngày)';
 
   // Hết 30 phút hoặc đã đổi >= 3 lần → khóa form đổi
   if (remainingMinutes <= 0 || changeCount >= 3) {
@@ -603,23 +761,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Validate submit
-  document.getElementById('updateForm').addEventListener('submit', function(e) {
+  // Submit ĐỔI: validate → mở modal, không dùng confirm()
+  updateForm.addEventListener('submit', function(e) {
     if (!validateForm()) {
       e.preventDefault();
-      return false;
+      return;
     }
 
-    if (!confirm('Xác nhận đổi đơn hàng #${vm.orderId}?\n\nNgày mới: '
-        + newStartInput.value + ' → ' + newEndInput.value
-        + '\nSố ngày: ' + rentalDays + ' ngày')) {
-      e.preventDefault();
-      return false;
-    }
+    e.preventDefault(); // chặn submit ngay lập tức
+    updateFormRef = updateForm;
 
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-    submitBtn.disabled = true;
+    const startVal = newStartInput.value;
+    const endVal   = newEndInput.value;
+
+    if (updateConfirmText) {
+        updateConfirmText.textContent =
+          'Bạn xác nhận đổi đơn #' + orderId +
+          ' sang khoảng ' + startVal + ' → ' + endVal +
+          ' (' + rentalDays + ' ngày)?';
+      }
+
+
+    openUpdateModal();
   });
+
+  if (updateConfirmNo) {
+    updateConfirmNo.addEventListener('click', closeUpdateModal);
+  }
+
+  if (updateConfirmYes) {
+    updateConfirmYes.addEventListener('click', () => {
+      if (!updateFormRef) {
+        closeUpdateModal();
+        return;
+      }
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+        submitBtn.disabled = true;
+      }
+      closeUpdateModal();
+      updateFormRef.submit();
+    });
+  }
+
+  // Đóng modal ĐỔI khi click nền
+  const updateBackdrop = document.getElementById('updateConfirmModal');
+  if (updateBackdrop) {
+    updateBackdrop.addEventListener('click', (e) => {
+      if (e.target === updateBackdrop) {
+        closeUpdateModal();
+      }
+    });
+  }
+
+  // Hết thời gian đổi/hủy → disable nút hủy luôn cho rõ
+  if (remainingMinutes <= 0 && cancelBtn) {
+    cancelBtn.disabled = true;
+    cancelBtn.innerHTML = '<i class="fas fa-clock"></i> Không thể hủy (hết 30 phút)';
+  }
+
+  // Modal HỦY: nút Không
+  if (cancelConfirmNo) {
+    cancelConfirmNo.addEventListener('click', closeCancelModal);
+  }
+
+  // Modal HỦY: nút Đồng ý
+  if (cancelConfirmYes) {
+    cancelConfirmYes.addEventListener('click', () => {
+      if (!pendingCancelForm) {
+        closeCancelModal();
+        return;
+      }
+      if (cancelBtn) {
+        cancelBtn.disabled = true;
+        cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang hủy...';
+      }
+      closeCancelModal();
+      pendingCancelForm.submit();
+    });
+  }
+
+  const cancelBackdrop = document.getElementById('cancelConfirmModal');
+  if (cancelBackdrop) {
+    cancelBackdrop.addEventListener('click', (e) => {
+      if (e.target === cancelBackdrop) {
+        closeCancelModal();
+      }
+    });
+  }
 
   // Kiểm tra ngày hiện tại nếu đã có value
   if (newStartInput.value) {
@@ -628,14 +857,13 @@ document.addEventListener('DOMContentLoaded', function() {
     checkDateValidity(currentStart, currentEnd);
   }
 
-  // Hết thời gian đổi/hủy → disable nút hủy luôn cho rõ
-  if (remainingMinutes <= 0) {
-    const cancelBtn = document.getElementById('cancelBtn');
-    if (cancelBtn) {
-      cancelBtn.disabled = true;
-      cancelBtn.innerHTML = '<i class="fas fa-clock"></i> Không thể hủy (hết 30 phút)';
+  // ESC để đóng modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeUpdateModal();
+      closeCancelModal();
     }
-  }
+  });
 });
 
 function calculateNewEndDate(startDate, days) {
@@ -672,10 +900,12 @@ function showWarning(message, disableSubmit = false) {
   const warningText = document.getElementById('warningText');
   const submitBtn   = document.getElementById('submitBtn');
 
+  if (!dateWarning || !warningText) return;
+
   warningText.textContent = message;
   dateWarning.style.display = 'flex';
 
-  if (disableSubmit) {
+  if (disableSubmit && submitBtn) {
     submitBtn.disabled = true;
   }
 }
@@ -683,33 +913,41 @@ function showWarning(message, disableSubmit = false) {
 function hideWarning() {
   const dateWarning = document.getElementById('dateWarning');
   const submitBtn   = document.getElementById('submitBtn');
-  dateWarning.style.display = 'none';
-  submitBtn.disabled = false;
+  if (dateWarning) {
+    dateWarning.style.display = 'none';
+  }
+  if (submitBtn) {
+    submitBtn.disabled = false;
+  }
 }
 
+// ==== validateForm: dùng banner warning, KHÔNG dùng alert() nữa ====
 function validateForm() {
-  const newStart = document.getElementById('newStart').value;
-  const newEnd   = document.getElementById('newEnd').value;
+  const newStartVal = document.getElementById('newStart').value;
+  const newEndVal   = document.getElementById('newEnd').value;
 
-  if (!newStart || !newEnd) {
-    alert('Vui lòng chọn đầy đủ ngày nhận và ngày trả.');
+  hideWarning();
+
+  if (!newStartVal || !newEndVal) {
+    showWarning('Vui lòng chọn đầy đủ ngày nhận và ngày trả.', true);
     return false;
   }
 
-  const startDate = new Date(newStart);
-  const endDate   = new Date(newEnd);
+  const startDate = new Date(newStartVal);
+  const endDate   = new Date(newEndVal);
   const today     = new Date();
   today.setHours(0, 0, 0, 0);
 
   if (startDate < today) {
-    alert('Không thể chọn ngày trong quá khứ.');
+    showWarning('Không thể chọn ngày trong quá khứ.', true);
     return false;
   }
   if (startDate > endDate) {
-    alert('Ngày nhận phải trước ngày trả.');
+    showWarning('Ngày nhận phải trước ngày trả.', true);
     return false;
   }
 
+  hideWarning();
   return true;
 }
 
@@ -720,26 +958,20 @@ function resetDates() {
   hideWarning();
 }
 
-// Confirm HỦY ĐƠN – cảnh báo BAN ACC ở lần thứ 3
-function confirmCancel() {
-  const refundAmount    = ${vm.refundAmount};
-  const formattedAmount = new Intl.NumberFormat('vi-VN').format(refundAmount);
+// Confirm HỦY ĐƠN – chuyển sang modal, không dùng confirm()
+function confirmCancel(e) {
+  const cancelBtn = document.getElementById('cancelBtn');
 
-  let message = 'Bạn có CHẮC CHẮN muốn hủy đơn hàng #${vm.orderId}?\n\n'
-      + 'Số tiền ' + formattedAmount + ' đ (cọc + 30% tổng tiền thuê) sẽ được hoàn vào ví.\n\n';
-
-  if (cancelCount >= 2) {
-    // Đây là lần hủy thứ 3 trở lên
-    message += 'LƯU Ý QUAN TRỌNG: Đây là LẦN HỦY THỨ 3. '
-             + 'Sau khi hủy, tài khoản của bạn sẽ bị KHÓA và bạn sẽ bị đăng xuất khỏi hệ thống.\n\n';
-  } else {
-    message += 'Nếu bạn hủy nhiều lần (từ 3 lần trở lên trong thời gian ngắn), '
-             + 'tài khoản sẽ bị khóa theo chính sách RideNow.\n\n';
+  // Nếu nút đã bị disable (hết 30 phút) thì không cho submit
+  if (cancelBtn && cancelBtn.disabled) {
+    e.preventDefault();
+    return false;
   }
 
-  message += 'Hành động này KHÔNG THỂ hoàn tác. Đơn hàng sẽ bị hủy vĩnh viễn.';
-
-  return confirm(message);
+  pendingCancelForm = e.target; // form đang submit
+  openCancelModal();
+  e.preventDefault();
+  return false;
 }
 
 function disableForm() {
@@ -754,6 +986,35 @@ function disableForm() {
   }
 
   showWarning('Đã quá 30 phút hoặc đơn đã đạt giới hạn 3 lần đổi. Không thể đổi đơn nữa.', true);
+}
+
+// ==== HÀM MỞ/ĐÓNG MODAL ====
+function openUpdateModal() {
+  const backdrop = document.getElementById('updateConfirmModal');
+  if (!backdrop) return;
+  backdrop.hidden = false;
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+function closeUpdateModal() {
+  const backdrop = document.getElementById('updateConfirmModal');
+  if (!backdrop) return;
+  backdrop.classList.remove('open');
+  setTimeout(() => { backdrop.hidden = true; }, 180);
+}
+
+function openCancelModal() {
+  const backdrop = document.getElementById('cancelConfirmModal');
+  if (!backdrop) return;
+  backdrop.hidden = false;
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+function closeCancelModal() {
+  const backdrop = document.getElementById('cancelConfirmModal');
+  if (!backdrop) return;
+  backdrop.classList.remove('open');
+  setTimeout(() => { backdrop.hidden = true; }, 180);
 }
 </script>
 </body>

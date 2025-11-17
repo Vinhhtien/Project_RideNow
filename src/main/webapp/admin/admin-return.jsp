@@ -150,8 +150,20 @@
                 </div>
             </header>
 
+            <!-- FLASH MESSAGE -> BOOTSTRAP TOAST -->
             <c:if test="${not empty sessionScope.flash}">
-                <div class="notice"><i class="fas fa-info-circle"></i> ${sessionScope.flash}</div>
+                <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+                    <div id="flashToast" class="toast align-items-center text-bg-primary border-0" role="alert"
+                         aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-info-circle me-2"></i> ${sessionScope.flash}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                    data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
                 <c:remove var="flash" scope="session"/>
             </c:if>
 
@@ -286,8 +298,10 @@
                                                         </c:when>
 
                                                         <c:when test="${canReturn && !isOverdue}">
+                                                            <!-- FORM TRẢ XE ĐÚNG HẠN: BỎ confirm(), DÙNG TOAST XÁC NHẬN -->
                                                             <form method="post" action="${ctx}/adminreturn"
-                                                                  onsubmit="return confirm('Xác nhận khách đã trả xe? Đơn hàng sẽ chuyển sang chờ kiểm tra để hoàn cọc.')">
+                                                                  class="return-form"
+                                                                  data-confirm="normal">
                                                                 <input type="hidden" name="orderId" value="${o[0]}">
                                                                 <input type="hidden" name="actionType" value="normal_return">
                                                                 <button type="submit" class="btn btn-primary btn-sm">
@@ -416,37 +430,117 @@
             </section>
         </main>
 
+        <!-- TOAST XÁC NHẬN TRẢ XE (CHO NÚT "Đã Trả Xe") -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+            <div id="confirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+                 data-bs-autohide="false">
+                <div class="toast-header">
+                    <i class="fas fa-question-circle me-2 text-warning"></i>
+                    <strong class="me-auto">Xác nhận</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <span id="confirmToastMessage"></span>
+                    <div class="mt-2 pt-2 border-top">
+                        <button type="button" class="btn btn-sm btn-primary me-2" id="confirmToastYes">Đồng ý</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="confirmToastNo" data-bs-dismiss="toast">Hủy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
         <script>
-                                                                                            // Giữ nguyên function Javascript cũ của bạn
-                                                                                            function setOverdueValues(button) {
-                                                                                                const modal = button.closest('.modal');
-                                                                                                const form = button.closest('form');
+            // Dùng toast thay cho confirm() / alert()
+            function setOverdueValues(button) {
+                const modal = button.closest('.modal');
+                const form = button.closest('form');
 
-                                                                                                // Tìm textarea và input phí trễ trong modal 
-                                                                                                const notesEl = modal.querySelector('textarea[name="notes"]');
-                                                                                                const lateFeeEl = modal.querySelector('input[name="lateFeeInput"]');
+                // Tìm textarea và input phí trễ trong modal 
+                const notesEl = modal.querySelector('textarea[name="notes"]');
+                const lateFeeEl = modal.querySelector('input[name="lateFeeInput"]');
 
-                                                                                                const notes = notesEl ? notesEl.value.trim() : '';
-                                                                                                const lateFee = lateFeeEl && lateFeeEl.value ? lateFeeEl.value : '0';
+                const notes = notesEl ? notesEl.value.trim() : '';
+                const lateFee = lateFeeEl && lateFeeEl.value ? lateFeeEl.value : '0';
 
-                                                                                                // Gán giá trị vào các input hidden của form submit
-                                                                                                form.querySelector('input[name="notes"]').value = notes;
-                                                                                                form.querySelector('input[name="lateFee"]').value = lateFee;
+                // Gán giá trị vào các input hidden của form submit
+                form.querySelector('input[name="notes"]').value = notes;
+                form.querySelector('input[name="lateFee"]').value = lateFee;
 
-                                                                                                return confirm('Xác nhận khách đã trả xe quá hạn và đã nhập phí trễ?');
-                                                                                            }
+                // Không dùng confirm() nữa, submit luôn; thông báo hiển thị bằng toast sau khi redirect
+                return true;
+            }
 
-                                                                                            document.addEventListener('DOMContentLoaded', function () {
-                                                                                                const notice = document.querySelector('.notice');
-                                                                                                if (notice) {
-                                                                                                    setTimeout(() => {
-                                                                                                        notice.style.opacity = '0';
-                                                                                                        notice.style.transition = 'opacity 0.5s ease';
-                                                                                                        setTimeout(() => notice.remove(), 500);
-                                                                                                    }, 5000);
-                                                                                                }
-                                                                                            });
+            document.addEventListener('DOMContentLoaded', function () {
+                // Flash toast (message từ sessionScope.flash)
+                const flashToastEl = document.getElementById('flashToast');
+                if (flashToastEl && typeof bootstrap !== 'undefined') {
+                    const flashToast = new bootstrap.Toast(flashToastEl);
+                    flashToast.show();
+                }
+
+                // Fallback cho .notice nếu trang khác còn dùng kiểu cũ
+                const notice = document.querySelector('.notice');
+                if (notice) {
+                    setTimeout(() => {
+                        notice.style.opacity = '0';
+                        notice.style.transition = 'opacity 0.5s ease';
+                        setTimeout(() => notice.remove(), 500);
+                    }, 5000);
+                }
+
+                // Toast xác nhận cho form trả xe đúng hạn
+                const confirmToastEl = document.getElementById('confirmToast');
+                let confirmToastInstance = null;
+                let confirmToastCallback = null;
+
+                if (confirmToastEl && typeof bootstrap !== 'undefined') {
+                    confirmToastInstance = new bootstrap.Toast(confirmToastEl, { autohide: false });
+
+                    const yesBtn = document.getElementById('confirmToastYes');
+                    const noBtn = document.getElementById('confirmToastNo');
+                    const msgSpan = document.getElementById('confirmToastMessage');
+
+                    if (yesBtn) {
+                        yesBtn.addEventListener('click', function () {
+                            if (typeof confirmToastCallback === 'function') {
+                                confirmToastCallback();
+                            }
+                            confirmToastCallback = null;
+                            confirmToastInstance.hide();
+                        });
+                    }
+
+                    if (noBtn) {
+                        noBtn.addEventListener('click', function () {
+                            confirmToastCallback = null;
+                        });
+                    }
+
+                    // Gắn listener cho các form trả xe đúng hạn
+                    document.querySelectorAll('form.return-form[data-confirm="normal"]').forEach(function (form) {
+                        form.addEventListener('submit', function (e) {
+                            // Nếu đã xác nhận và submit rồi thì cho qua
+                            if (form.dataset.submitted === 'true') {
+                                return;
+                            }
+
+                            e.preventDefault();
+
+                            if (msgSpan) {
+                                msgSpan.textContent = 'Xác nhận khách đã trả xe? Đơn hàng sẽ chuyển sang chờ kiểm tra để hoàn cọc.';
+                            }
+
+                            confirmToastCallback = function () {
+                                form.dataset.submitted = 'true';
+                                form.submit();
+                            };
+
+                            confirmToastInstance.show();
+                        });
+                    });
+                }
+            });
         </script>
     </body>
 </html>

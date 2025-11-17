@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap cho toast -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <!-- Giữ admin.css để đồng bộ layout/side bar -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin.css">
 
@@ -17,36 +19,35 @@
         /* ===== Minimal, clean, readable ===== */
         :root {
             /* Surface */
-            --bg: #f6f7fb; /* nền trang */
-            --panel: #ffffff; /* bề mặt lớn */
-            --card: #ffffff; /* thẻ trắng */
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --card: #ffffff;
             --card-2: #ffffff;
 
             /* Text & border */
-            --text: #0f172a; /* chữ chính */
-            --muted: #475569; /* chữ phụ */
-            --line: #e5e7eb; /* viền mảnh */
+            --text: #0f172a;
+            --muted: #475569;
+            --line: #e5e7eb;
             --ring: rgba(37, 99, 235, .35);
 
-            /* Accent (một màu nhấn duy nhất) */
-            --primary: #2563eb; /* blue-600 */
+            /* Accent */
+            --primary: #2563eb;
             --primary-2: #2563eb;
 
             /* State */
-            --success: #16a34a; /* green-600 */
-            --warning: #d97706; /* amber-600 */
-            --danger: #dc2626; /* red-600 */
-            --info: #0ea5e9; /* sky-600 */
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --info: #0ea5e9;
 
             /* Radius & shadow */
             --radius: 14px;
             --radius-sm: 10px;
             --shadow-1: 0 6px 16px rgba(2, 6, 23, .08);
             --shadow-2: 0 10px 24px rgba(2, 6, 23, .10);
-            --blur: none; /* bỏ blur để mượt mắt */
+            --blur: none;
         }
 
-        /* Nền trang phẳng, dễ nhìn */
         body.admin {
             background: var(--bg);
             color: var(--text);
@@ -60,7 +61,6 @@
             padding: 0 1rem;
         }
 
-        /* Header gọn, không gradient rực */
         .customer-header {
             position: relative;
             border-radius: var(--radius);
@@ -76,7 +76,6 @@
             content: none;
         }
 
-        /* bỏ hiệu ứng tròn */
         .header-content {
             display: flex;
             justify-content: space-between;
@@ -136,7 +135,6 @@
             flex-wrap: wrap
         }
 
-        /* Grid */
         .customer-grid {
             display: grid;
             gap: 1.25rem;
@@ -149,7 +147,6 @@
             }
         }
 
-        /* Card phẳng, bóng nhẹ */
         .card {
             background: var(--card);
             border: 1px solid var(--line);
@@ -184,7 +181,6 @@
             padding: 14px 16px;
         }
 
-        /* Info rows – đơn giản */
         .info-grid {
             display: grid;
             gap: .75rem
@@ -230,7 +226,6 @@
             color: var(--muted)
         }
 
-        /* Badges rõ, ít màu */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -246,7 +241,7 @@
         }
 
         .status-badge.success {
-            background: #e9fbeF;
+            background: #e9fbef;
             border-color: #b7f0c7;
             color: #166534;
         }
@@ -269,7 +264,6 @@
             color: #0c4a6e;
         }
 
-        /* Buttons nhất quán theo 1 accent */
         .btn {
             appearance: none;
             border: none;
@@ -322,7 +316,6 @@
             box-shadow: 0 6px 14px rgba(2, 6, 23, .08);
         }
 
-        /* Wallet card: sắc nét, không gradient đậm */
         .wallet-card {
             position: relative;
             border-radius: 12px;
@@ -386,7 +379,6 @@
             color: #e5e7eb
         }
 
-        /* Stats */
         .stats-grid {
             display: grid;
             grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -450,7 +442,6 @@
             font-weight: 600
         }
 
-        /* Table */
         .table-container {
             border: 1px solid var(--line);
             border-radius: 12px;
@@ -490,7 +481,6 @@
             background: #f8fafc;
         }
 
-        /* Empty */
         .empty-state {
             padding: 2rem;
             text-align: center;
@@ -508,7 +498,6 @@
             color: #111827
         }
 
-        /* Flash */
         .flash-message {
             display: flex;
             align-items: center;
@@ -533,7 +522,6 @@
             color: #7f1d1d
         }
 
-        /* Utilities */
         .panel {
             margin-bottom: 1.25rem
         }
@@ -563,7 +551,6 @@
             text-decoration: underline
         }
 
-        /* Responsive */
         @media (max-width: 820px) {
             .info-content {
                 flex-direction: column;
@@ -642,12 +629,23 @@
         </div>
     </header>
 
-    <div class="customer-detail-container">
-        <!-- Flash -->
-        <c:if test="${not empty flash}">
-            <div class="flash-message success"><i class="fas fa-check-circle"></i>${flash}</div>
-        </c:if>
+    <!-- Flash -> toast -->
+    <c:if test="${not empty flash}">
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+            <div id="flashToast" class="toast align-items-center text-bg-success border-0" role="alert"
+                 aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-check-circle me-2"></i>${flash}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </c:if>
 
+    <div class="customer-detail-container">
         <c:if test="${empty detail}">
             <div class="flash-message error"><i class="fas fa-exclamation-triangle"></i>Không tìm thấy thông tin khách
                 hàng hoặc có lỗi xảy ra.
@@ -669,20 +667,23 @@
                             <div class="customer-subtitle">
                                 <span class="customer-id">ID: #${detail.id}</span>
                                 <span class="status-badge ${detail.banned ? 'danger' : 'success'}">
-                  <i class="fas ${detail.banned ? 'fa-ban' : 'fa-check'}"></i>
-                  ${detail.banned ? 'BANNED' : 'ACTIVE'}
-                </span>
+                                    <i class="fas ${detail.banned ? 'fa-ban' : 'fa-check'}"></i>
+                                    ${detail.banned ? 'BANNED' : 'ACTIVE'}
+                                </span>
                             </div>
                         </div>
                     </div>
                     <div class="header-actions">
-                        <form method="post" action="${pageContext.request.contextPath}/admin/customers"
-                              style="display: inline;">
+                        <form method="post"
+                              action="${pageContext.request.contextPath}/admin/customers"
+                              style="display: inline;"
+                              class="needs-confirm"
+                              data-confirm-message="${detail.banned ? 'Bạn có chắc chắn muốn mở khóa tài khoản này?' : 'Bạn có chắc chắn muốn khóa tài khoản này?'}">
                             <input type="hidden" name="action" value="toggle">
                             <input type="hidden" name="customerId" value="${detail.id}">
                             <button type="submit" class="btn ${detail.banned ? 'btn-success' : 'btn-warning'}">
                                 <i class="fas ${detail.banned ? 'fa-unlock' : 'fa-lock'}"></i>
-                                    ${detail.banned ? 'UNBAN TÀI KHOẢN' : 'BAN TÀI KHOẢN'}
+                                ${detail.banned ? 'UNBAN TÀI KHOẢN' : 'BAN TÀI KHOẢN'}
                             </button>
                         </form>
                         <a href="${pageContext.request.contextPath}/admin/customers" class="btn btn-secondary">
@@ -709,9 +710,9 @@
                                         <span class="info-label">Email:</span>
                                         <span class="info-value">${detail.email}</span>
                                         <span class="status-badge ${detail.emailVerified ? 'success' : 'warning'}">
-                      <i class="fas ${detail.emailVerified ? 'fa-check' : 'fa-exclamation'}"></i>
-                      ${detail.emailVerified ? 'Đã xác minh' : 'Chưa xác minh'}
-                    </span>
+                                            <i class="fas ${detail.emailVerified ? 'fa-check' : 'fa-exclamation'}"></i>
+                                            ${detail.emailVerified ? 'Đã xác minh' : 'Chưa xác minh'}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -736,11 +737,11 @@
                                     <div class="info-content">
                                         <span class="info-label">Ngày sinh:</span>
                                         <span class="info-value">
-                      <c:if test="${not empty detail.dob}">
-                          <fmt:formatDate value="${detail.dob}" pattern="dd/MM/yyyy"/>
-                      </c:if>
-                      <c:if test="${empty detail.dob}">N/A</c:if>
-                    </span>
+                                            <c:if test="${not empty detail.dob}">
+                                                <fmt:formatDate value="${detail.dob}" pattern="dd/MM/yyyy"/>
+                                            </c:if>
+                                            <c:if test="${empty detail.dob}">N/A</c:if>
+                                        </span>
                                     </div>
                                 </div>
 
@@ -748,8 +749,9 @@
                                     <i class="fas fa-calendar-plus info-icon"></i>
                                     <div class="info-content">
                                         <span class="info-label">Ngày tạo:</span>
-                                        <span class="info-value"><fmt:formatDate value="${detail.createdAt}"
-                                                                                 pattern="dd/MM/yyyy HH:mm"/></span>
+                                        <span class="info-value">
+                                            <fmt:formatDate value="${detail.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                        </span>
                                     </div>
                                 </div>
 
@@ -758,11 +760,11 @@
                                     <div class="info-content">
                                         <span class="info-label">Đăng nhập cuối:</span>
                                         <span class="info-value">
-                      <c:if test="${not empty detail.lastLogin}">
-                          <fmt:formatDate value="${detail.lastLogin}" pattern="dd/MM/yyyy HH:mm"/>
-                      </c:if>
-                      <c:if test="${empty detail.lastLogin}">N/A</c:if>
-                    </span>
+                                            <c:if test="${not empty detail.lastLogin}">
+                                                <fmt:formatDate value="${detail.lastLogin}" pattern="dd/MM/yyyy HH:mm"/>
+                                            </c:if>
+                                            <c:if test="${empty detail.lastLogin}">N/A</c:if>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -792,12 +794,17 @@
                                             <tr>
                                                 <td><strong>#${order.orderId}</strong></td>
                                                 <td>${order.bikeName}</td>
-                                                <td><span style="font-weight:800;">
-                            <fmt:formatNumber value="${order.total}" type="currency" currencyCode="VND"/>
-                          </span></td>
-                                                <td><span class="status-badge info">${order.status}</span></td>
-                                                <td><fmt:formatDate value="${order.createdAt}"
-                                                                    pattern="dd/MM/yyyy HH:mm"/></td>
+                                                <td>
+                                                    <span style="font-weight:800;">
+                                                        <fmt:formatNumber value="${order.total}" type="currency" currencyCode="VND"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="status-badge info">${order.status}</span>
+                                                </td>
+                                                <td>
+                                                    <fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                                </td>
                                             </tr>
                                         </c:forEach>
                                         </tbody>
@@ -834,14 +841,14 @@
                                     <div class="wallet-item">
                                         <span>Số dư hiện tại:</span>
                                         <span class="wallet-amount ${detail.wallet > 0 ? 'positive' : detail.wallet < 0 ? 'negative' : 'zero'}">
-                      <fmt:formatNumber value="${detail.wallet}" type="currency" currencyCode="VND"/>
-                    </span>
+                                            <fmt:formatNumber value="${detail.wallet}" type="currency" currencyCode="VND"/>
+                                        </span>
                                     </div>
                                     <div class="wallet-item">
                                         <span>Tổng chi tiêu:</span>
                                         <span class="wallet-amount">
-                      <fmt:formatNumber value="${detail.totalSpent}" type="currency" currencyCode="VND"/>
-                    </span>
+                                            <fmt:formatNumber value="${detail.totalSpent}" type="currency" currencyCode="VND"/>
+                                        </span>
                                     </div>
                                     <div class="wallet-item">
                                         <span>Số đơn hàng:</span>
@@ -850,11 +857,11 @@
                                     <div class="wallet-item">
                                         <span>Đơn hàng cuối:</span>
                                         <span>
-                      <c:if test="${not empty detail.lastOrderAt}">
-                          <fmt:formatDate value="${detail.lastOrderAt}" pattern="dd/MM/yyyy HH:mm"/>
-                      </c:if>
-                      <c:if test="${empty detail.lastOrderAt}">N/A</c:if>
-                    </span>
+                                            <c:if test="${not empty detail.lastOrderAt}">
+                                                <fmt:formatDate value="${detail.lastOrderAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                            </c:if>
+                                            <c:if test="${empty detail.lastOrderAt}">N/A</c:if>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -870,8 +877,9 @@
                             <div class="stats-grid">
                                 <div class="stat-card">
                                     <div class="stat-icon wallet"><i class="fas fa-wallet"></i></div>
-                                    <div class="stat-value"><fmt:formatNumber value="${detail.wallet}" type="currency"
-                                                                              currencyCode="VND"/></div>
+                                    <div class="stat-value">
+                                        <fmt:formatNumber value="${detail.wallet}" type="currency" currencyCode="VND"/>
+                                    </div>
                                     <div class="stat-label">Số dư ví</div>
                                 </div>
 
@@ -883,8 +891,9 @@
 
                                 <div class="stat-card">
                                     <div class="stat-icon spent"><i class="fas fa-money-bill-wave"></i></div>
-                                    <div class="stat-value"><fmt:formatNumber value="${detail.totalSpent}"
-                                                                              type="currency" currencyCode="VND"/></div>
+                                    <div class="stat-value">
+                                        <fmt:formatNumber value="${detail.totalSpent}" type="currency" currencyCode="VND"/>
+                                    </div>
                                     <div class="stat-label">Tổng chi tiêu</div>
                                 </div>
 
@@ -907,17 +916,78 @@
     </div>
 </main>
 
+<!-- Toast confirm -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="confirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+         data-bs-autohide="false">
+        <div class="toast-header">
+            <i class="fas fa-question-circle me-2 text-warning"></i>
+            <strong class="me-auto">Xác nhận</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <span id="confirmToastMessage"></span>
+            <div class="mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-sm btn-primary me-2" id="confirmToastYes">Đồng ý</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="confirmToastNo" data-bs-dismiss="toast">Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Confirm ban/unban
-        const banButton = document.querySelector('button[class*="btn-warning"], button[class*="btn-success"]');
-        if (banButton) {
-            banButton.addEventListener('click', function (e) {
-                const isBan = this.classList.contains('btn-warning');
-                const message = isBan
-                    ? 'Bạn có chắc chắn muốn khóa tài khoản này?'
-                    : 'Bạn có chắc chắn muốn mở khóa tài khoản này?';
-                if (!confirm(message)) e.preventDefault();
+        // Flash toast
+        const flashToastEl = document.getElementById('flashToast');
+        if (flashToastEl && typeof bootstrap !== 'undefined') {
+            const flashToast = new bootstrap.Toast(flashToastEl);
+            flashToast.show();
+        }
+
+        // Confirm toast
+        const confirmToastEl = document.getElementById('confirmToast');
+        let confirmToastInstance = null;
+        let confirmToastCallback = null;
+        const msgSpan = document.getElementById('confirmToastMessage');
+        const yesBtn = document.getElementById('confirmToastYes');
+        const noBtn = document.getElementById('confirmToastNo');
+
+        if (confirmToastEl && typeof bootstrap !== 'undefined') {
+            confirmToastInstance = new bootstrap.Toast(confirmToastEl, { autohide: false });
+
+            if (yesBtn) {
+                yesBtn.addEventListener('click', function () {
+                    if (typeof confirmToastCallback === 'function') {
+                        confirmToastCallback();
+                    }
+                    confirmToastCallback = null;
+                    confirmToastInstance.hide();
+                });
+            }
+
+            if (noBtn) {
+                noBtn.addEventListener('click', function () {
+                    confirmToastCallback = null;
+                });
+            }
+
+            document.querySelectorAll('form.needs-confirm').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed === 'true') {
+                        return;
+                    }
+                    e.preventDefault();
+                    const msg = form.dataset.confirmMessage || 'Xác nhận thực hiện hành động này?';
+                    if (msgSpan) {
+                        msgSpan.textContent = msg;
+                    }
+                    confirmToastCallback = function () {
+                        form.dataset.confirmed = 'true';
+                        form.submit();
+                    };
+                    confirmToastInstance.show();
+                });
             });
         }
     });

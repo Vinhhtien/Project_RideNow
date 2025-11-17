@@ -9,6 +9,7 @@
     <title>Quản lý Khách hàng - RideNow Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin.css">
     <style>
         /* Enhanced Styles for Customers Management */
@@ -398,11 +399,6 @@
         <a href="${pageContext.request.contextPath}/admin/schedule" class="nav-item">
             <i class="fas fa-calendar-alt"></i><span>View Schedule</span>
         </a>
-
-        <!--      <a href="${pageContext.request.contextPath}/adminpaymentverify" class="nav-item">
-        <i class="fas fa-money-check-alt"></i>
-        <span>Verify Payments</span>
-      </a>-->
         <a href="${pageContext.request.contextPath}/adminpickup" class="nav-item">
             <i class="fas fa-shipping-fast"></i>
             <span>Vehicle Pickup</span>
@@ -451,11 +447,19 @@
         </div>
     </header>
 
-    <!-- Flash Message -->
+    <!-- Flash -> Toast -->
     <c:if test="${not empty flash}">
-        <div class="flash-message success">
-            <i class="fas fa-check-circle"></i>
-                ${flash}
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+            <div id="flashToast" class="toast align-items-center text-bg-success border-0" role="alert"
+                 aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-check-circle me-2"></i>${flash}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
         </div>
     </c:if>
 
@@ -514,15 +518,9 @@
                         <label for="walletFilter"><i class="fas fa-wallet"></i> Số dư ví</label>
                         <select id="walletFilter" name="walletFilter">
                             <option value="all" ${param.walletFilter == 'all' ? 'selected' : ''}>Tất cả</option>
-                            <option value="has_balance" ${param.walletFilter == 'has_balance' ? 'selected' : ''}>Có số
-                                dư
-                            </option>
-                            <option value="no_balance" ${param.walletFilter == 'no_balance' ? 'selected' : ''}>Không có
-                                số dư
-                            </option>
-                            <option value="high_balance" ${param.walletFilter == 'high_balance' ? 'selected' : ''}>Số dư
-                                cao (> 1M)
-                            </option>
+                            <option value="has_balance" ${param.walletFilter == 'has_balance' ? 'selected' : ''}>Có số dư</option>
+                            <option value="no_balance" ${param.walletFilter == 'no_balance' ? 'selected' : ''}>Không có số dư</option>
+                            <option value="high_balance" ${param.walletFilter == 'high_balance' ? 'selected' : ''}>Số dư cao (&gt; 1M)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -594,9 +592,9 @@
                             <td>
                                 <div class="customer-name">
                                     <div class="avatar-small">
-                                            ${c.fullName.charAt(0)}
+                                        ${c.fullName.charAt(0)}
                                     </div>
-                                        ${c.fullName}
+                                    ${c.fullName}
                                 </div>
                             </td>
                             <td>${c.email}</td>
@@ -607,33 +605,30 @@
                             <td>
                                 <c:choose>
                                     <c:when test="${c.wallet > 0}">
-                                                <span class="wallet-amount positive">
-                                                    <i class="fas fa-wallet"></i>
-                                                    <fmt:formatNumber value="${c.wallet}" type="currency"
-                                                                      currencyCode="VND"/>
-                                                </span>
+                                        <span class="wallet-amount positive">
+                                            <i class="fas fa-wallet"></i>
+                                            <fmt:formatNumber value="${c.wallet}" type="currency" currencyCode="VND"/>
+                                        </span>
                                     </c:when>
                                     <c:when test="${c.wallet < 0}">
-                                                <span class="wallet-amount negative">
-                                                    <i class="fas fa-wallet"></i>
-                                                    <fmt:formatNumber value="${c.wallet}" type="currency"
-                                                                      currencyCode="VND"/>
-                                                </span>
+                                        <span class="wallet-amount negative">
+                                            <i class="fas fa-wallet"></i>
+                                            <fmt:formatNumber value="${c.wallet}" type="currency" currencyCode="VND"/>
+                                        </span>
                                     </c:when>
                                     <c:otherwise>
-                                                <span class="wallet-amount zero">
-                                                    <i class="fas fa-wallet"></i>
-                                                    <fmt:formatNumber value="${c.wallet}" type="currency"
-                                                                      currencyCode="VND"/>
-                                                </span>
+                                        <span class="wallet-amount zero">
+                                            <i class="fas fa-wallet"></i>
+                                            <fmt:formatNumber value="${c.wallet}" type="currency" currencyCode="VND"/>
+                                        </span>
                                     </c:otherwise>
                                 </c:choose>
                             </td>
                             <td>
-                                        <span class="status-badge ${c.banned ? 'danger' : 'success'}">
-                                            <i class="fas ${c.banned ? 'fa-ban' : 'fa-check'}"></i>
-                                            ${c.banned ? 'BANNED' : 'ACTIVE'}
-                                        </span>
+                                <span class="status-badge ${c.banned ? 'danger' : 'success'}">
+                                    <i class="fas ${c.banned ? 'fa-ban' : 'fa-check'}"></i>
+                                    ${c.banned ? 'BANNED' : 'ACTIVE'}
+                                </span>
                             </td>
                             <td>
                                 <fmt:formatDate value="${c.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
@@ -644,17 +639,15 @@
                                        class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> Chi tiết
                                     </a>
-                                    <!--                                            <a href="${pageContext.request.contextPath}/admin/customers/wallet?id=${c.id}"
-                                               class="btn btn-sm btn-wallet">
-                                                <i class="fas fa-wallet"></i> Ví
-                                            </a>-->
-                                    <form method="post" style="display: inline;">
+                                    <form method="post" style="display: inline;"
+                                          class="needs-confirm"
+                                          data-confirm-message="${c.banned ? 'Bạn có chắc chắn muốn mở khóa tài khoản này?' : 'Bạn có chắc chắn muốn khóa tài khoản này?'}">
                                         <input type="hidden" name="action" value="toggle">
                                         <input type="hidden" name="customerId" value="${c.id}">
                                         <button type="submit"
                                                 class="btn btn-sm ${c.banned ? 'btn-success' : 'btn-warning'}">
                                             <i class="fas ${c.banned ? 'fa-unlock' : 'fa-lock'}"></i>
-                                                ${c.banned ? 'Unban' : 'Ban'}
+                                            ${c.banned ? 'Unban' : 'Ban'}
                                         </button>
                                     </form>
                                 </div>
@@ -781,24 +774,83 @@
     }
 </style>
 
+<!-- Toast confirm -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="confirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+         data-bs-autohide="false">
+        <div class="toast-header">
+            <i class="fas fa-question-circle me-2 text-warning"></i>
+            <strong class="me-auto">Xác nhận</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <span id="confirmToastMessage"></span>
+            <div class="mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-sm btn-primary me-2" id="confirmToastYes">Đồng ý</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="confirmToastNo" data-bs-dismiss="toast">Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         console.log('Customers management page loaded');
 
-        // Add confirmation for ban/unban actions
-        const banButtons = document.querySelectorAll('button[class*="btn-warning"], button[class*="btn-success"]');
-        banButtons.forEach(button => {
-            button.addEventListener('click', function (e) {
-                const isBan = this.classList.contains('btn-warning');
-                const message = isBan
-                    ? 'Bạn có chắc chắn muốn khóa tài khoản này?'
-                    : 'Bạn có chắc chắn muốn mở khóa tài khoản này?';
+        // Flash toast
+        const flashToastEl = document.getElementById('flashToast');
+        if (flashToastEl && typeof bootstrap !== 'undefined') {
+            const flashToast = new bootstrap.Toast(flashToastEl);
+            flashToast.show();
+        }
 
-                if (!confirm(message)) {
+        // Confirm toast setup
+        const confirmToastEl = document.getElementById('confirmToast');
+        let confirmToastInstance = null;
+        let confirmToastCallback = null;
+        const msgSpan = document.getElementById('confirmToastMessage');
+        const yesBtn = document.getElementById('confirmToastYes');
+        const noBtn = document.getElementById('confirmToastNo');
+
+        if (confirmToastEl && typeof bootstrap !== 'undefined') {
+            confirmToastInstance = new bootstrap.Toast(confirmToastEl, { autohide: false });
+
+            if (yesBtn) {
+                yesBtn.addEventListener('click', function () {
+                    if (typeof confirmToastCallback === 'function') {
+                        confirmToastCallback();
+                    }
+                    confirmToastCallback = null;
+                    confirmToastInstance.hide();
+                });
+            }
+
+            if (noBtn) {
+                noBtn.addEventListener('click', function () {
+                    confirmToastCallback = null;
+                });
+            }
+
+            // Attach to forms with class needs-confirm
+            document.querySelectorAll('form.needs-confirm').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed === 'true') {
+                        return;
+                    }
                     e.preventDefault();
-                }
+                    const msg = form.dataset.confirmMessage || 'Xác nhận thực hiện hành động này?';
+                    if (msgSpan) {
+                        msgSpan.textContent = msg;
+                    }
+                    confirmToastCallback = function () {
+                        form.dataset.confirmed = 'true';
+                        form.submit();
+                    };
+                    confirmToastInstance.show();
+                });
             });
-        });
+        }
     });
 </script>
 </body>

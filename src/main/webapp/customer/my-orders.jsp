@@ -380,14 +380,7 @@
                                         </a>
                                     </c:if>
 
-                                    <!-- HỦY ĐƠN: dùng logic isCanCancel() trong OrderVM -->
-                                    <!<!-- comment  <c:if test="${canCancel}">
-                                        <button type="button"
-                                                class="btn btn-danger"
-                                                onclick="confirmCancel(${o.orderId})">
-                                            <i class="fas fa-xmark"></i> Hủy đơn
-                                        </button>
-                                    </c:if>-->
+                                    
 
                                     <!-- Đánh giá -->
                                     <c:if test="${o.canReview}">

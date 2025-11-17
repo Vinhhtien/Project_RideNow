@@ -9,6 +9,7 @@
     --ai-bg:#0b1224; --ai-panel:#0f172a; --ai-card:#111827; --ai-border:#243244;
     --ai-text:#e5e7eb; --ai-muted:#9ca3af; --ai-accent:#3b82f6;
   }
+
   .ai-fab{
     position:fixed;right:22px;bottom:22px;z-index:9998;width:56px;height:56px;border-radius:50%;
     border:1px solid var(--ai-border);background:linear-gradient(180deg,#1f2937,#0b1224);color:#fff;
@@ -25,28 +26,53 @@
   }
   .ai-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
 
-  .ai-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;background:linear-gradient(180deg,#131c31,#0f172a);border-bottom:1px solid var(--ai-border);border-radius:16px 16px 0 0;position:relative}
+  .ai-header{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;
+    background:linear-gradient(180deg,#131c31,#0f172a);border-bottom:1px solid var(--ai-border);
+    border-radius:16px 16px 0 0;position:relative;
+  }
   .ai-title{font-weight:700;letter-spacing:.2px}
   .ai-sub{font-size:12px;color:var(--ai-muted);margin-top:2px}
-  .ai-close{width:36px;height:36px;border-radius:10px;background:#0b1224;color:#e5e7eb;border:1px solid var(--ai-border);cursor:pointer}
-  
-  .ai-clear-history{width:36px;height:36px;border-radius:10px;background:#0b1224;color:var(--ai-muted);border:1px solid var(--ai-border);cursor:pointer;font-size:14px}
+  .ai-close{
+    width:36px;height:36px;border-radius:10px;background:#0b1224;color:#e5e7eb;
+    border:1px solid var(--ai-border);cursor:pointer;
+  }
+
+  .ai-clear-history{
+    width:36px;height:36px;border-radius:10px;background:#0b1224;color:var(--ai-muted);
+    border:1px solid var(--ai-border);cursor:pointer;font-size:14px;
+  }
   .ai-clear-history:hover{background:rgba(239,68,68,0.1);color:#ef4444}
 
-  .ai-messages{height:360px;overflow:auto;padding:14px 12px 8px;background:var(--ai-bg)}
+  .ai-messages{
+    height:360px;overflow:auto;padding:14px 12px 8px;background:var(--ai-bg);
+  }
   .msg{display:flex;margin:10px 0;animation:fadeIn 0.3s ease-in}
   .msg.user{justify-content:flex-end}
-  .bubble{max-width:85%;padding:10px 12px;border-radius:12px;line-height:1.45;background:var(--ai-card);border:1px solid var(--ai-border);white-space:pre-wrap;word-break:break-word}
+  .bubble{
+    max-width:85%;padding:10px 12px;border-radius:12px;line-height:1.45;
+    background:var(--ai-card);border:1px solid var(--ai-border);
+    white-space:pre-wrap;word-break:break-word;
+  }
   .msg.user .bubble{background:#1b2540;border-color:#2b3a55}
   .msg.bot .bubble a{color:var(--ai-accent);text-decoration:none;font-weight:500}
   .msg.bot .bubble a:hover{text-decoration:underline}
   .msg.bot .bubble ul{margin:6px 0;padding-left:16px}
   .msg.bot .bubble li{margin:4px 0;padding:4px 0}
 
-  .ai-input{display:flex;gap:8px;padding:10px;border-top:1px solid var(--ai-border);background:linear-gradient(180deg,#0f172a,#0b1224);border-radius:0 0 16px 16px}
-  .ai-input input{flex:1;height:40px;border-radius:10px;background:#0a1328;color:#e5e7eb;border:1px solid #22314a;padding:0 12px;outline:none;font-family:inherit}
+  .ai-input{
+    display:flex;gap:8px;padding:10px;border-top:1px solid var(--ai-border);
+    background:linear-gradient(180deg,#0f172a,#0b1224);border-radius:0 0 16px 16px;
+  }
+  .ai-input input{
+    flex:1;height:40px;border-radius:10px;background:#0a1328;color:#e5e7eb;
+    border:1px solid #22314a;padding:0 12px;outline:none;font-family:inherit;
+  }
   .ai-input input:focus{border-color:#3b82f6}
-  .ai-send{padding:0 14px;border-radius:10px;border:1px solid #28406b;cursor:pointer;color:#fff;background:linear-gradient(180deg,#2563eb,#1d4ed8);font-family:inherit}
+  .ai-send{
+    padding:0 14px;border-radius:10px;border:1px solid #28406b;cursor:pointer;
+    color:#fff;background:linear-gradient(180deg,#2563eb,#1d4ed8);font-family:inherit;
+  }
   .ai-send:hover{background:linear-gradient(180deg,#1d4ed8,#1e40af)}
   .ai-send:disabled{opacity:0.6;cursor:not-allowed}
 
@@ -59,15 +85,84 @@
   }
 
   /* Quick suggestions */
-  .ai-suggestions{margin:10px 0;padding:12px;background:rgba(59,130,246,0.1);border-radius:12px;border:1px solid rgba(59,130,246,0.3)}
+  .ai-suggestions{
+    margin:10px 0;padding:12px;background:rgba(59,130,246,0.1);
+    border-radius:12px;border:1px solid rgba(59,130,246,0.3);
+  }
   .suggestion-title{font-size:12px;color:#93c5fd;margin-bottom:8px;font-weight:600}
-  .suggestion-btn{display:block;width:100%;padding:8px 12px;margin:4px 0;background:rgba(255,255,255,0.05);border:1px solid #334155;border-radius:8px;color:#e5e7eb;cursor:pointer;text-align:left;font-size:13px;transition:all 0.2s;font-family:inherit}
+  .suggestion-btn{
+    display:block;width:100%;padding:8px 12px;margin:4px 0;
+    background:rgba(255,255,255,0.05);border:1px solid #334155;border-radius:8px;
+    color:#e5e7eb;cursor:pointer;text-align:left;font-size:13px;
+    transition:all 0.2s;font-family:inherit;
+  }
   .suggestion-btn:hover{background:rgba(59,130,246,0.2);border-color:#3b82f6}
 
   /* Status colors */
   .status-available{color:#10b981}
   .status-rented{color:#ef4444}
   .status-maintenance{color:#f59e0b}
+
+  /* ===== AI CONFIRM MODAL ===== */
+  .ai-modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.75);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease-out;
+    font-family:'Inter',system-ui,Segoe UI,Roboto,Arial;
+  }
+  .ai-modal-backdrop.open{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .ai-modal{
+    width:min(360px,90vw);
+    background:#020617;
+    border-radius:16px;
+    border:1px solid var(--ai-border);
+    box-shadow:0 18px 60px rgba(0,0,0,.7);
+    padding:18px 18px 14px;
+  }
+  .ai-modal-title{
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .ai-modal-text{
+    font-size:14px;
+    color:var(--ai-muted);
+    margin-bottom:14px;
+  }
+  .ai-modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+  }
+  .ai-btn{
+    border-radius:10px;
+    border:1px solid #334155;
+    background:#020617;
+    color:var(--ai-text);
+    padding:8px 14px;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .ai-btn:hover{
+    background:#02091f;
+  }
+  .ai-btn-danger{
+    background:linear-gradient(180deg,#ef4444,#b91c1c);
+    border-color:#b91c1c;
+    color:#fff;
+  }
+  .ai-btn-danger:hover{
+    background:linear-gradient(180deg,#dc2626,#991b1b);
+  }
 </style>
 
 <button id="ai-fab" class="ai-fab" aria-controls="ai-panel" aria-expanded="false" title="Mở trợ lý AI">🤖</button>
@@ -97,9 +192,25 @@
     <button type="submit" class="ai-send" aria-label="Gửi" id="ai-send-btn">Gửi</button>
   </form>
 </div>
- <script>
+
+<!-- Modal xóa lịch sử chat -->
+<div id="ai-confirm-backdrop" class="ai-modal-backdrop" hidden>
+  <div class="ai-modal" role="alertdialog" aria-modal="true" aria-labelledby="ai-confirm-title">
+    <div class="ai-modal-title" id="ai-confirm-title">Xóa lịch sử trò chuyện?</div>
+    <div class="ai-modal-text">
+      Tất cả tin nhắn trong trợ lý AI sẽ bị xóa khỏi trình duyệt này.<br/>
+      Bạn sẽ không thể hoàn tác thao tác này.
+    </div>
+    <div class="ai-modal-actions">
+      <button type="button" class="ai-btn" id="ai-confirm-cancel">Hủy</button>
+      <button type="button" class="ai-btn ai-btn-danger" id="ai-confirm-yes">Xóa lịch sử</button>
+    </div>
+  </div>
+</div>
+
+<script>
   (() => {
-    // SỬA LỖI: Thay thế request.getContextPath() bằng pageContext.request.contextPath
+    // Lấy context path từ JSP
     const ctx = '${pageContext.request.contextPath}';
     const CHAT_HISTORY_KEY = 'ridenow_chat_history';
 
@@ -112,6 +223,11 @@
     const $msgs = document.getElementById('ai-messages');
     const $typing = document.getElementById('typing-indicator');
     const $sendBtn = document.getElementById('ai-send-btn');
+
+    // Modal xác nhận xóa lịch sử
+    const $confirmBackdrop = document.getElementById('ai-confirm-backdrop');
+    const $confirmYes = document.getElementById('ai-confirm-yes');
+    const $confirmCancel = document.getElementById('ai-confirm-cancel');
 
     // ========= LỊCH SỬ CHAT =========
     function loadChatHistory() {
@@ -153,12 +269,24 @@
     }
 
     function clearChatHistory() {
-      if (confirm('Bạn có chắc muốn xóa toàn bộ lịch sử trò chuyện?')) {
-        localStorage.removeItem(CHAT_HISTORY_KEY);
-        $msgs.innerHTML = '';
-        showWelcomeMessage();
-        console.log('Đã xóa lịch sử trò chuyện');
-      }
+      localStorage.removeItem(CHAT_HISTORY_KEY);
+      $msgs.innerHTML = '';
+      showWelcomeMessage();
+      console.log('Đã xóa lịch sử trò chuyện');
+    }
+
+    function openClearHistoryModal() {
+      $confirmBackdrop.hidden = false;
+      requestAnimationFrame(() => {
+        $confirmBackdrop.classList.add('open');
+      });
+    }
+
+    function closeClearHistoryModal() {
+      $confirmBackdrop.classList.remove('open');
+      setTimeout(() => {
+        $confirmBackdrop.hidden = true;
+      }, 180);
     }
 
     function showWelcomeMessage() {
@@ -238,10 +366,34 @@
     // ========= EVENT LISTENERS =========
     $fab.addEventListener('click', () => $panel.hidden ? openPanel() : closePanel());
     $close.addEventListener('click', closePanel);
-    $clear.addEventListener('click', clearChatHistory);
+
+    // Mở modal khi bấm nút thùng rác
+    $clear.addEventListener('click', openClearHistoryModal);
+
+    // Nút Hủy trong modal
+    $confirmCancel.addEventListener('click', closeClearHistoryModal);
+
+    // Nút Xóa lịch sử trong modal
+    $confirmYes.addEventListener('click', () => {
+      clearChatHistory();
+      closeClearHistoryModal();
+    });
+
+    // Click ra ngoài modal để đóng
+    $confirmBackdrop.addEventListener('click', (e) => {
+      if (e.target === $confirmBackdrop) {
+        closeClearHistoryModal();
+      }
+    });
     
     document.addEventListener('keydown', e => { 
-      if(e.key === 'Escape' && !$panel.hidden) closePanel(); 
+      if (e.key === 'Escape') {
+        if (!$confirmBackdrop.hidden) {
+          closeClearHistoryModal();
+        } else if (!$panel.hidden) {
+          closePanel();
+        }
+      }
     });
 
     $form.addEventListener('submit', async (e) => {

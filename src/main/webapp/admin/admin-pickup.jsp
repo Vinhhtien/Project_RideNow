@@ -152,10 +152,19 @@
                 </div>
             </header>
 
+            <!-- FLASH -> TOAST -->
             <c:if test="${not empty sessionScope.flash}">
-                <div class="notice">
-                    <i class="fas fa-info-circle"></i>
-                    ${sessionScope.flash}
+                <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+                    <div id="flashToast" class="toast align-items-center text-bg-primary border-0" role="alert"
+                         aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-info-circle me-2"></i> ${sessionScope.flash}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                    data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
                 </div>
                 <c:remove var="flash" scope="session"/>
             </c:if>
@@ -232,7 +241,7 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <!-- ===== BẮT ĐẦU PHÂN TRANG TRONG JSP (10 items/page) ===== -->
+                            <!-- ===== PHÂN TRANG TRONG JSP (10 items/page) ===== -->
                             <c:set var="pageSize" value="10"/>
                             <c:set var="page" value="${param.page != null ? param.page : 1}"/>
                             <c:set var="totalOrders" value="${not empty orders ? orders.size() : 0}"/>
@@ -242,7 +251,6 @@
                             <c:if test="${end >= totalOrders}">
                                 <c:set var="end" value="${totalOrders - 1}"/>
                             </c:if>
-                            <!-- ===== KẾT THÚC PHẦN TÍNH TOÁN ===== -->
 
                             <div class="table-container">
                                 <table class="data-table">
@@ -317,7 +325,10 @@
                                                                 </div>
                                                             </c:when>
                                                             <c:when test="${canPickup && !isOverdue}">
-                                                                <form method="post" action="${ctx}/adminpickup" onsubmit="return confirm('Xác nhận khách đã nhận xe?');">
+                                                                <!-- Form giao xe đúng hạn: dùng toast xác nhận -->
+                                                                <form method="post" action="${ctx}/adminpickup"
+                                                                      class="pickup-form"
+                                                                      data-confirm="normal">
                                                                     <input type="hidden" name="orderId" value="${o[0]}"/>
                                                                     <input type="hidden" name="actionType" value="normal_pickup"/>
                                                                     <button type="submit" class="btn btn-primary btn-sm">
@@ -420,27 +431,106 @@
             </section>
         </main>
 
+        <!-- TOAST XÁC NHẬN GIAO XE -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+            <div id="confirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+                 data-bs-autohide="false">
+                <div class="toast-header">
+                    <i class="fas fa-question-circle me-2 text-warning"></i>
+                    <strong class="me-auto">Xác nhận</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <span id="confirmToastMessage"></span>
+                    <div class="mt-2 pt-2 border-top">
+                        <button type="button" class="btn btn-sm btn-primary me-2" id="confirmToastYes">Đồng ý</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="confirmToastNo" data-bs-dismiss="toast">Hủy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bootstrap JS -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                                                                                                // JavaScript để xử lý ghi chú trong modal
-                                                                                                document.addEventListener('DOMContentLoaded', function () {
-                                                                                                    var modals = document.querySelectorAll('.modal');
-                                                                                                    modals.forEach(function (modal) {
-                                                                                                        modal.addEventListener('show.bs.modal', function () {
-                                                                                                            var textarea = this.querySelector('textarea');
-                                                                                                            var forms = this.querySelectorAll('form');
-                                                                                                            forms.forEach(function (form) {
-                                                                                                                var hiddenNotes = form.querySelector('input[name="notes"]');
-                                                                                                                form.addEventListener('submit', function () {
-                                                                                                                    hiddenNotes.value = textarea.value;
-                                                                                                                });
-                                                                                                            });
-                                                                                                        });
-                                                                                                    });
-                                                                                                });
+            document.addEventListener('DOMContentLoaded', function () {
+                // Flash toast
+                const flashToastEl = document.getElementById('flashToast');
+                if (flashToastEl && typeof bootstrap !== 'undefined') {
+                    const flashToast = new bootstrap.Toast(flashToastEl);
+                    flashToast.show();
+                }
+
+                // Toast xác nhận cho form giao xe đúng hạn
+                const confirmToastEl = document.getElementById('confirmToast');
+                let confirmToastInstance = null;
+                let confirmToastCallback = null;
+
+                if (confirmToastEl && typeof bootstrap !== 'undefined') {
+                    confirmToastInstance = new bootstrap.Toast(confirmToastEl, { autohide: false });
+
+                    const yesBtn = document.getElementById('confirmToastYes');
+                    const noBtn = document.getElementById('confirmToastNo');
+                    const msgSpan = document.getElementById('confirmToastMessage');
+
+                    if (yesBtn) {
+                        yesBtn.addEventListener('click', function () {
+                            if (typeof confirmToastCallback === 'function') {
+                                confirmToastCallback();
+                            }
+                            confirmToastCallback = null;
+                            confirmToastInstance.hide();
+                        });
+                    }
+
+                    if (noBtn) {
+                        noBtn.addEventListener('click', function () {
+                            confirmToastCallback = null;
+                        });
+                    }
+
+                    // Gắn listener cho form pickup bình thường
+                    document.querySelectorAll('form.pickup-form[data-confirm="normal"]').forEach(function (form) {
+                        form.addEventListener('submit', function (e) {
+                            if (form.dataset.submitted === 'true') {
+                                return;
+                            }
+                            e.preventDefault();
+
+                            if (msgSpan) {
+                                msgSpan.textContent = 'Xác nhận khách đã nhận xe?';
+                            }
+
+                            confirmToastCallback = function () {
+                                form.dataset.submitted = 'true';
+                                form.submit();
+                            };
+
+                            confirmToastInstance.show();
+                        });
+                    });
+                }
+
+                // JavaScript để xử lý ghi chú trong modal (đơn quá hạn)
+                var modals = document.querySelectorAll('.modal');
+                modals.forEach(function (modal) {
+                    modal.addEventListener('show.bs.modal', function () {
+                        var textarea = this.querySelector('textarea');
+                        var forms = this.querySelectorAll('form');
+                        forms.forEach(function (form) {
+                            var hiddenNotes = form.querySelector('input[name="notes"]');
+                            if (!hiddenNotes) return;
+                            if (form.dataset.notesHandlerAttached === 'true') return;
+
+                            form.addEventListener('submit', function () {
+                                hiddenNotes.value = textarea ? textarea.value : '';
+                            });
+                            form.dataset.notesHandlerAttached = 'true';
+                        });
+                    });
+                });
+            });
         </script>
     </body>
-
 </html>

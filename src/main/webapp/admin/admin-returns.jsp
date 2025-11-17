@@ -9,6 +9,7 @@
         <title>Quản lý hoàn cọc - RideNow Admin</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin.css">
         <style>
             /* ... CSS Styles (giữ nguyên) ... */
@@ -205,10 +206,22 @@
                 </div>
             </header>
 
+            <!-- FLASH -> TOAST -->
             <c:if test="${not empty sessionScope.flash}">
-                <div class="notice"><i class="fas fa-info-circle"></i>${sessionScope.flash}</div>
-                    <c:remove var="flash" scope="session"/>
-                </c:if>
+                <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+                    <div id="flashToast" class="toast align-items-center text-bg-primary border-0" role="alert"
+                         aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-info-circle me-2"></i>${sessionScope.flash}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                    data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+                <c:remove var="flash" scope="session"/>
+            </c:if>
 
             <section class="stats-grid">
                 <div class="stat-card">
@@ -383,8 +396,8 @@
                                                         <c:when test="${req.bikeCondition eq 'damaged'}"><span
                                                                 class="badge damaged"><i
                                                                     class="fas fa-tools"></i>Hư hỏng</span></c:when>
-                                                            <c:otherwise>${req.bikeCondition}</c:otherwise>
-                                                        </c:choose>
+                                                        <c:otherwise>${req.bikeCondition}</c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                                 <td><fmt:formatDate value="${req.inspectedAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                                                 <td>
@@ -414,12 +427,13 @@
 
                                                             <form method="post"
                                                                   action="${pageContext.request.contextPath}/adminreturns"
-                                                                  style="display:inline;">
+                                                                  style="display:inline;"
+                                                                  class="needs-confirm"
+                                                                  data-confirm-message="Xác nhận từ chối yêu cầu hoàn cọc này?">
                                                                 <input type="hidden" name="inspectionId"
                                                                        value="${req.inspectionId}"/>
                                                                 <input type="hidden" name="action" value="cancel"/>
-                                                                <button type="submit" class="btn btn-danger btn-sm"
-                                                                        onclick="return confirm('Xác nhận từ chối yêu cầu hoàn cọc này?')">
+                                                                <button type="submit" class="btn btn-danger btn-sm">
                                                                     <i class="fas fa-times"></i> Từ chối
                                                                 </button>
                                                             </form>
@@ -428,28 +442,30 @@
                                                         <c:if test="${req.status eq 'processing'}">
                                                             <form method="post"
                                                                   action="${pageContext.request.contextPath}/adminreturns"
-                                                                  style="display:inline;">
+                                                                  style="display:inline;"
+                                                                  class="needs-confirm"
+                                                                  data-confirm-message="Xác nhận hoàn <fmt:formatNumber value='${req.refundAmount}' type='currency'/> về ví khách hàng?">
                                                                 <input type="hidden" name="orderId" value="${req.orderId}"/>
                                                                 <input type="hidden" name="inspectionId"
                                                                        value="${req.inspectionId}"/>
                                                                 <input type="hidden" name="action" value="complete_refund"/>
                                                                 <input type="hidden" name="refundMethod" value="wallet"/>
-                                                                <button type="submit" class="btn btn-primary btn-sm"
-                                                                        onclick="return confirm('Xác nhận hoàn ${req.refundAmount} VNĐ về ví khách hàng?')">
+                                                                <button type="submit" class="btn btn-primary btn-sm">
                                                                     <i class="fas fa-wallet"></i> Về ví
                                                                 </button>
                                                             </form>
 
                                                             <form method="post"
                                                                   action="${pageContext.request.contextPath}/adminreturns"
-                                                                  style="display:inline;">
+                                                                  style="display:inline;"
+                                                                  class="needs-confirm"
+                                                                  data-confirm-message="Xác nhận đã hoàn <fmt:formatNumber value='${req.refundAmount}' type='currency'/> tiền mặt cho khách?">
                                                                 <input type="hidden" name="orderId" value="${req.orderId}"/>
                                                                 <input type="hidden" name="inspectionId"
                                                                        value="${req.inspectionId}"/>
                                                                 <input type="hidden" name="action" value="complete_refund"/>
                                                                 <input type="hidden" name="refundMethod" value="cash"/>
-                                                                <button type="submit" class="btn btn-secondary btn-sm"
-                                                                        onclick="return confirm('Xác nhận đã hoàn ${req.refundAmount} VNĐ tiền mặt cho khách?')">
+                                                                <button type="submit" class="btn btn-secondary btn-sm">
                                                                     <i class="fas fa-money-bill"></i> Tiền mặt
                                                                 </button>
                                                             </form>
@@ -466,5 +482,82 @@
                 </div>
             </section>
         </main>
+
+        <!-- TOAST CONFIRM ACTION -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+            <div id="confirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+                 data-bs-autohide="false">
+                <div class="toast-header">
+                    <i class="fas fa-question-circle me-2 text-warning"></i>
+                    <strong class="me-auto">Xác nhận</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <span id="confirmToastMessage"></span>
+                    <div class="mt-2 pt-2 border-top">
+                        <button type="button" class="btn btn-sm btn-primary me-2" id="confirmToastYes">Đồng ý</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="confirmToastNo" data-bs-dismiss="toast">Hủy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Flash toast
+                const flashToastEl = document.getElementById('flashToast');
+                if (flashToastEl && typeof bootstrap !== 'undefined') {
+                    const flashToast = new bootstrap.Toast(flashToastEl);
+                    flashToast.show();
+                }
+
+                // Confirm toast
+                const confirmToastEl = document.getElementById('confirmToast');
+                let confirmToastInstance = null;
+                let confirmToastCallback = null;
+                const msgSpan = document.getElementById('confirmToastMessage');
+                const yesBtn = document.getElementById('confirmToastYes');
+                const noBtn = document.getElementById('confirmToastNo');
+
+                if (confirmToastEl && typeof bootstrap !== 'undefined') {
+                    confirmToastInstance = new bootstrap.Toast(confirmToastEl, { autohide: false });
+
+                    if (yesBtn) {
+                        yesBtn.addEventListener('click', function () {
+                            if (typeof confirmToastCallback === 'function') {
+                                confirmToastCallback();
+                            }
+                            confirmToastCallback = null;
+                            confirmToastInstance.hide();
+                        });
+                    }
+
+                    if (noBtn) {
+                        noBtn.addEventListener('click', function () {
+                            confirmToastCallback = null;
+                        });
+                    }
+
+                    document.querySelectorAll('form.needs-confirm').forEach(function (form) {
+                        form.addEventListener('submit', function (e) {
+                            if (form.dataset.confirmed === 'true') {
+                                return;
+                            }
+                            e.preventDefault();
+                            const msg = form.dataset.confirmMessage || 'Xác nhận thực hiện hành động này?';
+                            if (msgSpan) {
+                                msgSpan.textContent = msg;
+                            }
+                            confirmToastCallback = function () {
+                                form.dataset.confirmed = 'true';
+                                form.submit();
+                            };
+                            confirmToastInstance.show();
+                        });
+                    });
+                }
+            });
+        </script>
     </body>
 </html>

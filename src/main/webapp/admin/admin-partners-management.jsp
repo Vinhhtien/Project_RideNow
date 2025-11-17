@@ -8,6 +8,8 @@
     <title>Quản lý Partners - RideNow</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap cho toast -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin.css">
 </head>
 <body class="admin">
@@ -96,19 +98,38 @@
         </div>
     </header>
 
-    <div class="container">
-        <!-- Hiển thị thông báo -->
-        <c:if test="${not empty success}">
-            <div class="alert alert-success" role="alert" aria-live="assertive">
-                <i class="fas fa-check-circle"></i> ${success}
+    <!-- Toast flash message -->
+    <c:if test="${not empty success}">
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080;">
+            <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert"
+                 aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-check-circle me-2"></i>${success}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
             </div>
-        </c:if>
-        <c:if test="${not empty error}">
-            <div class="alert alert-error" role="alert" aria-live="assertive">
-                <i class="fas fa-exclamation-circle"></i> ${error}
-            </div>
-        </c:if>
+        </div>
+    </c:if>
 
+    <c:if test="${not empty error}">
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080;">
+            <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert"
+                 aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-exclamation-circle me-2"></i>${error}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </c:if>
+
+    <div class="container">
         <!-- KPI Cards for Partner Management -->
         <section class="kpi-grid">
             <div class="kpi-card">
@@ -223,19 +244,19 @@
                                             </div>
                                         </td>
                                         <td data-label="Trạng thái">
-                                                <span class="status-badge status-active">
-                                                    <i class="status-dot"></i>
-                                                    Đang hoạt động
-                                                </span>
+                                            <span class="status-badge status-active">
+                                                <i class="status-dot"></i>
+                                                Đang hoạt động
+                                            </span>
                                         </td>
                                         <td data-label="Hành động" class="actions">
                                             <div class="action-buttons">
                                                 <form method="post"
                                                       action="${pageContext.request.contextPath}/admin/partners"
-                                                      class="delete-form">
+                                                      class="delete-form needs-confirm"
+                                                      data-confirm-message="Bạn có chắc muốn xóa partner &quot;${partner.fullname}&quot;?">
                                                     <input type="hidden" name="partnerId" value="${partner.partnerId}">
-                                                    <button type="submit" class="btn btn-danger btn-sm"
-                                                            onclick="return confirm('Bạn có chắc muốn xóa partner &quot;${partner.fullname}&quot;?')">
+                                                    <button type="submit" class="btn btn-danger btn-sm">
                                                         <i class="fas fa-trash"></i>
                                                         <span>Xóa</span>
                                                     </button>
@@ -266,17 +287,29 @@
     </div>
 </main>
 
-<script>
-    // Hiển thị thông báo tự động ẩn sau 5 giây
-    setTimeout(function () {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            alert.style.transition = 'opacity 0.5s ease';
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
-        });
-    }, 5000);
+<!-- Toast xác nhận xóa -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+    <div id="confirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+         data-bs-autohide="false">
+        <div class="toast-header">
+            <i class="fas fa-question-circle me-2 text-warning"></i>
+            <strong class="me-auto">Xác nhận</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <span id="confirmToastMessage"></span>
+            <div class="mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-sm btn-primary me-2" id="confirmToastYes">Đồng ý</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="confirmToastNo"
+                        data-bs-dismiss="toast">Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
     // Client-side utilities: search, sort, count, CSV export
     (function () {
         const table = document.getElementById('partnersTable');
@@ -286,7 +319,6 @@
         const totalCountEl = document.getElementById('totalCount');
 
         if (!table) {
-            // Handle empty state
             if (totalCountEl) totalCountEl.textContent = '0';
             if (visibleCountEl) visibleCountEl.textContent = '0';
             return;
@@ -294,6 +326,7 @@
 
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
+
         const getCellValue = (row, key) => {
             switch (key) {
                 case 'id':
@@ -309,7 +342,6 @@
             }
         };
 
-        // Initialize counts
         totalCountEl.textContent = rows.length.toString();
         visibleCountEl.textContent = rows.length.toString();
 
@@ -323,7 +355,11 @@
             searchInput.addEventListener('input', function () {
                 const q = (this.value || '').trim().toLowerCase();
                 rows.forEach(row => {
-                    const hay = [getCellValue(row, 'name'), getCellValue(row, 'address'), getCellValue(row, 'phone')].join(' ');
+                    const hay = [
+                        getCellValue(row, 'name'),
+                        getCellValue(row, 'address'),
+                        getCellValue(row, 'phone')
+                    ].join(' ');
                     row.style.display = hay.indexOf(q) > -1 ? '' : 'none';
                 });
                 updateVisibleCount();
@@ -347,7 +383,6 @@
                     currentSortDir = 'asc';
                 }
 
-                // Update sort indicators
                 headerCells.forEach(h => {
                     h.classList.remove('sort-asc', 'sort-desc');
                     const icon = h.querySelector('.sort-indicator');
@@ -359,7 +394,6 @@
                 this.classList.add(currentSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
                 const icon = this.querySelector('.sort-indicator');
                 if (icon) {
-                    // Sửa lỗi: thay vì dùng EL, dùng JavaScript thuần
                     const direction = currentSortDir === 'asc' ? 'up' : 'down';
                     icon.className = 'sort-indicator fas fa-sort-' + direction;
                 }
@@ -380,7 +414,6 @@
                     return currentSortDir === 'asc' ? cmp : -cmp;
                 });
 
-                // Re-append in sorted order
                 const fragment = document.createDocumentFragment();
                 visibleRows.forEach(r => fragment.appendChild(r));
                 tbody.appendChild(fragment);
@@ -395,7 +428,6 @@
                 const visibleRows = rows.filter(r => r.style.display !== 'none');
                 const data = visibleRows.map(r => {
                     const cols = Array.from(r.children).slice(0, 5).map(td => {
-                        // Extract clean text content without icons or badges
                         const content = td.cloneNode(true);
                         const icons = content.querySelectorAll('i, .status-dot, .id-badge');
                         icons.forEach(el => el.remove());
@@ -403,14 +435,15 @@
                     });
                     return cols;
                 });
-                const csvRows = [header].concat(data).map(cols => cols.map(v => '"' + v.replace(/"/g, '""') + '"').join(','));
+                const csvRows = [header].concat(data)
+                    .map(cols => cols.map(v => '"' + v.replace(/"/g, '""') + '"').join(','));
                 const csv = csvRows.join('\n');
                 const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
                 const now = new Date();
                 const ts = now.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+                a.href = url;
                 a.download = `partners-${ts}.csv`;
                 document.body.appendChild(a);
                 a.click();
@@ -419,6 +452,68 @@
             });
         }
     })();
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Flash toasts
+        if (typeof bootstrap !== 'undefined') {
+            const successToastEl = document.getElementById('successToast');
+            if (successToastEl) {
+                const successToast = new bootstrap.Toast(successToastEl);
+                successToast.show();
+            }
+            const errorToastEl = document.getElementById('errorToast');
+            if (errorToastEl) {
+                const errorToast = new bootstrap.Toast(errorToastEl);
+                errorToast.show();
+            }
+        }
+
+        // Confirm toast cho form.needs-confirm
+        const confirmToastEl = document.getElementById('confirmToast');
+        if (confirmToastEl && typeof bootstrap !== 'undefined') {
+            const msgEl = document.getElementById('confirmToastMessage');
+            const yesBtn = document.getElementById('confirmToastYes');
+            const noBtn = document.getElementById('confirmToastNo');
+            const confirmToast = new bootstrap.Toast(confirmToastEl, {autohide: false});
+            let callback = null;
+
+            if (yesBtn) {
+                yesBtn.addEventListener('click', function () {
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                    callback = null;
+                    confirmToast.hide();
+                });
+            }
+
+            if (noBtn) {
+                noBtn.addEventListener('click', function () {
+                    callback = null;
+                });
+            }
+
+            document.querySelectorAll('form.needs-confirm').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed === 'true') {
+                        return;
+                    }
+                    e.preventDefault();
+                    const msg = form.dataset.confirmMessage || 'Xác nhận thực hiện hành động này?';
+                    if (msgEl) {
+                        msgEl.textContent = msg;
+                    }
+                    callback = function () {
+                        form.dataset.confirmed = 'true';
+                        form.submit();
+                    };
+                    confirmToast.show();
+                });
+            });
+        }
+    });
 </script>
 </body>
 </html>
